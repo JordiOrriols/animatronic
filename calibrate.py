@@ -1,6 +1,21 @@
 import time
 from adafruit_servokit import ServoKit
 
+# Declaration
+
+servos_data = [
+    {'type': 'big', 'physical_limits': {'min': 0, 'max': 180}}, #0
+    {'type': 'big', 'physical_limits': {'min': 0, 'max': 180}}, #1
+
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #2
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #3
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #4
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #5
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #6
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #7
+    {'type': 'blue', 'physical_limits': {'min': 0, 'max': 180}}, #8
+]
+
 
 # Configuration
 
@@ -27,15 +42,26 @@ def validate_servo(servo):
 
     return servo
 
-def validate_position(position):
+
+def validate_position(servo, position):
 
     if position < 0:
         print('Position minimum exedeed ', position, '. Moved to: 0')
         position = 0
 
+    minimum_phisical_limit = servos_data[servo]['phisical_limit']['min']
+    if position < minimum_phisical_limit:
+        print('Minimum phisical limit exedeed ', position, '. Moved to: ', minimum_phisical_limit)
+        position = minimum_phisical_limit
+
     if position > 180:
         print('Position maximum exedeed ', position, '. Moved to: 180')
         position = 180
+
+    maximum_phisical_limit = servos_data[servo]['phisical_limit']['max']
+    if position < maximum_phisical_limit:
+        print('Maximum phisical limit exedeed ', position, '. Moved to: ', maximum_phisical_limit)
+        position = maximum_phisical_limit
 
     return position
 
@@ -47,9 +73,9 @@ def move_servo_to_angle(servo, position):
 
     time.sleep(1)
 
-    servo = validate_servo(int(servo))
-    position = validate_position(int(position))
-    
+    servo = validate_servo(servo)
+    position = validate_position(servo, position)
+
     print('Moving servo #', servo, 'to position ', position, ' deg.')
 
     time.sleep(3)
@@ -63,6 +89,6 @@ def move_servo_to_angle(servo, position):
 while 1:
     servo = input('Select Servo:\n')
     position = input('Select position in degrees?\n')
-    move_servo_to_angle(servo, position)
-    
+    move_servo_to_angle(int(servo), int(position))
+
     time.sleep(1)
