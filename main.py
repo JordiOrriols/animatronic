@@ -15,9 +15,10 @@ kit.servo[0].angle = 90
 time.sleep(1)
 
 deg = 90
+print('Moving to position ', deg, ' deg.')
 
 while deg != 0:
-    deg = int(input('Starting at ', deg, ' deg. Do you want to move to another position?\n'))
+    deg = int(input('Do you want to move to another position?\n'))
     print('Moving to position ', deg, ' deg.')
 
     time.sleep(1)
@@ -28,3 +29,5 @@ while deg != 0:
         deg = 180
 
     kit.servo[0].angle = deg
+    
+    time.sleep(1)
