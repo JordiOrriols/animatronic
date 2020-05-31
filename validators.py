@@ -10,7 +10,7 @@ def validate_servo(servo):
         print('Servo index minimum exedeed ', servo, '. Moved to: 0', '\n')
         servo = 0
 
-    available_servos = len(servos_data) - 1
+    available_servos = len(config.servos_data) - 1
 
     if servo > available_servos:
         print('Servo index maximum exedeed ', servo,
