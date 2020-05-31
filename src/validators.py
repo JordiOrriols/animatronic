@@ -1,5 +1,5 @@
-from cat.jordiorriols.config import servos_data
-from cat.jordiorriols.helpers import get_fabric_data
+from src.config import servos_data
+from src.helpers import get_fabric_data
 
 # Validators
 

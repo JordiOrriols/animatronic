@@ -1,7 +1,7 @@
 import time
 from adafruit_servokit import ServoKit
 
-from cat.jordiorriols.helpers import move_servo_to_angle, initialize_servos
+from src.helpers import move_servo_to_angle, initialize_servos
 
 
 # Initialization
