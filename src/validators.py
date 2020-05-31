@@ -1,5 +1,5 @@
-from .config import servos_data
-from .helpers import get_fabric_data
+from config import servos_data
+from helpers import get_fabric_data
 
 # Validators
 

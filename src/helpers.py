@@ -1,7 +1,7 @@
 
 import time
-from .config import fabric_servo_data, servos_data
-from .validators import validate_servo, validate_servo_position
+from config import fabric_servo_data, servos_data
+from validators import validate_servo, validate_servo_position
 
 def get_fabric_data(servo):
     servo = validate_servo(servo)
