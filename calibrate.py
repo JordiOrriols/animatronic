@@ -43,13 +43,19 @@ def validate_position(position):
 # Helpers
 
 def move_servo_to_angle(servo, position):
-    print('Moving servo #', servo, 'to position ', position, ' deg.')
+    print('Validating servo #', servo, ' and position ', position, ' deg.')
 
-    time.sleep(2)
+    time.sleep(1)
+
     servo = validate_servo(int(servo))
     position = validate_position(int(position))
+    
+    print('Moving servo #', servo, 'to position ', position, ' deg.')
+
+    time.sleep(3)
 
     kit.servo[servo].angle = position
+    kit.servo[0].angle = position
 
 
 # Run code
@@ -58,3 +64,5 @@ while 1:
     servo = input('Select Servo:\n')
     position = input('Select position in degrees?\n')
     move_servo_to_angle(servo, position)
+    
+    time.sleep(1)
