@@ -1,4 +1,3 @@
-import time
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos, move_servo_to_angle
@@ -15,5 +14,3 @@ while 1:
     servo = input('Select Servo: ')
     position = input('Select position in degrees? ')
     move_servo_to_angle(kit, int(servo), int(position))
-
-    time.sleep(1)

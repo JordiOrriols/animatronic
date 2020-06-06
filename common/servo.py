@@ -14,7 +14,7 @@ def move_servo_to_angle(kit, servo, position):
 
     print('Validated servo #', servo, 'to position ', position, ' deg.', '\n')
 
-    time.sleep(5)
+    time.sleep(2)
     kit.servo[servo].angle = position
 
 
