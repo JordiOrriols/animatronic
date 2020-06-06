@@ -37,7 +37,7 @@ def initialize_servos(kit):
     available_servos = len(servos_data) - 1
     print('INITIALIZING SERVOS ', available_servos, '\n')
 
-    while i < available_servos:
+    while i <= available_servos:
         print('Configurating Servo #', i, '\n')
 
         fabric_data = get_fabric_data(i)
