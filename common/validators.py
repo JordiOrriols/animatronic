@@ -53,7 +53,7 @@ def validate_servo_position(servo, position):
         position = fabric_data['actuation_range']
 
     maximum_phisical_limit = servos_data[servo]['physical_limits']['max']
-    if position < maximum_phisical_limit:
+    if position > maximum_phisical_limit:
         print('Maximum phisical limit exedeed ', position,
               '. Moved to: ', maximum_phisical_limit, '\n')
         position = maximum_phisical_limit
