@@ -10,7 +10,7 @@ def validate_servo(servo):
         print('Servo index minimum exedeed ', servo, '. Moved to: 0', '\n')
         servo = 0
 
-    available_servos = len(common.Config.servos_data) - 1
+    available_servos = len(servos_data) - 1
 
     if servo > available_servos:
         print('Servo index maximum exedeed ', servo,
@@ -39,7 +39,7 @@ def validate_servo_position(servo, position):
         print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
         position = 0
 
-    minimum_phisical_limit = common.Config.servos_data[servo]['phisical_limit']['min']
+    minimum_phisical_limit = servos_data[servo]['phisical_limit']['min']
     if position < minimum_phisical_limit:
         print('Minimum phisical limit exedeed ', position,
               '. Moved to: ', minimum_phisical_limit, '\n')
@@ -47,12 +47,12 @@ def validate_servo_position(servo, position):
 
     fabric_data = common.Helpers.get_fabric_data(servo)
 
-    if position > common.Config.fabric_data['actuation_range']:
+    if position > fabric_data['actuation_range']:
         print('Position maximum exedeed ', position,
-              '. Moved to: ', common.Config.fabric_data['actuation_range'], '\n')
-        position = common.Config.fabric_data['actuation_range']
+              '. Moved to: ', fabric_data['actuation_range'], '\n')
+        position = fabric_data['actuation_range']
 
-    maximum_phisical_limit = common.Config.servos_data[servo]['phisical_limit']['max']
+    maximum_phisical_limit = servos_data[servo]['phisical_limit']['max']
     if position < maximum_phisical_limit:
         print('Maximum phisical limit exedeed ', position,
               '. Moved to: ', maximum_phisical_limit, '\n')
