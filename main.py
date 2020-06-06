@@ -1,7 +1,7 @@
 import time
 from adafruit_servokit import ServoKit
 
-from common.helpers import initialize_servos, move_servo_to_angle
+from common.servo import initialize_servos, move_servo_to_angle
 
 # Initialization
 kit = ServoKit(channels=16)
