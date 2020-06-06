@@ -4,7 +4,7 @@ from common.config import servos_data
 # Validators
 
 
-def validate_servo(servo):
+def validate_servo(servo: int):
 
     if servo < 0:
         print('Servo index minimum exedeed ', servo, '\n')
@@ -28,7 +28,7 @@ def validate_servo(servo):
     return True
 
 
-def validate_position(position):
+def validate_position(position: int):
 
     if position < 0:
         print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
@@ -41,7 +41,7 @@ def validate_position(position):
     return position
 
 
-def validate_servo_position(servo, position):
+def validate_servo_position(servo: int, position: int):
 
     if position < 0:
         print('Position minimum exedeed ', position, '. Moved to: 0', '\n')

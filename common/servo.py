@@ -3,7 +3,7 @@ from common.helpers import get_fabric_data
 from common.validators import validate_servo, validate_servo_position
 
 
-def validate_and_move(kit, servo, position):
+def validate_and_move(kit, servo: int, position: int):
 
     if validate_servo(servo) != True:
         return
@@ -15,15 +15,15 @@ def validate_and_move(kit, servo, position):
     kit.servo[servo].angle = servo_position
 
 
-def move_servo_to_angle(kit, servo, position):
+def move_servo_to_angle(kit, servo: int, position: int):
 
     validate_and_move(kit, servo, position)
 
     if servos_data[servo]['connection']:
 
-      connection = servos_data[servo]['connection']
+        connection = servos_data[servo]['connection']
 
-       if connection['type'] == 'normal':
+        if connection['type'] == 'normal':
             connection_position = position
         elif connection['type'] == 'inverted':
             connection_position = 180 - position
