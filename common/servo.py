@@ -1,12 +1,8 @@
-
-import time
-
 from common.config import servos_data, fabric_servo_data
 from common.helpers import get_fabric_data
 from common.validators import validate_servo, validate_servo_position
 
-
-def move_servo_to_angle(kit, servo, position):
+def validate_and_move(kit, servo, position):
     print('Validating servo #', servo, ' and position ', position, ' deg.', '\n')
 
     servo = validate_servo(servo)
@@ -14,8 +10,16 @@ def move_servo_to_angle(kit, servo, position):
 
     print('Validated servo #', servo, 'to position ', position, ' deg.', '\n')
 
-    time.sleep(2)
     kit.servo[servo].angle = position
+
+
+def move_servo_to_angle(kit, servo, position):
+    validate_and_move(kit, servo, position)
+    
+    if servos_data[servo]['pair']:
+        pair_servo = servos_data[servo]['pair']
+        pair_position = 180 - position
+        validate_and_move(kit, servo, pair_position)
 
 
 def initialize_servos(kit):

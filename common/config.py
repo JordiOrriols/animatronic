@@ -9,8 +9,8 @@ fabric_servo_data = {
 }
 
 servos_data = [
-    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180}}, #0
-    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180}}, #1
+    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180}, 'pair': 1}, #0
+    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180}, 'pair': 0}, #1
 
     {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}}, #2
     {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}}, #3
