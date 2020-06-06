@@ -7,17 +7,25 @@ from common.config import servos_data
 def validate_servo(servo):
 
     if servo < 0:
-        print('Servo index minimum exedeed ', servo, '. Moved to: 0', '\n')
-        servo = 0
+        print('Servo index minimum exedeed ', servo, '\n')
+        return False
 
     available_servos = len(servos_data) - 1
 
     if servo > available_servos:
-        print('Servo index maximum exedeed ', servo,
-              '. Moved to: ', available_servos, '\n')
-        servo = available_servos
+        print('Servo index maximum exedeed ', servo, '\n')
+        return False
 
-    return servo
+    if servos_data[servo].type != 'disabled':
+        print('Servo disabled ', servo, '\n')
+        return False
+
+    for s in servos_data:
+        if(s.connection.servo == servo):
+            print('Servo ', servo, ' is controlled by ', s.connection.servo, '\n')
+            return False
+
+    return True
 
 
 def validate_position(position):
@@ -39,7 +47,7 @@ def validate_servo_position(servo, position):
         print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
         position = 0
 
-    minimum_phisical_limit = servos_data[servo]['physical_limits']['min']
+    minimum_phisical_limit = servos_data[servo].physical_limits.min
     if position < minimum_phisical_limit:
         print('Minimum phisical limit exedeed ', position,
               '. Moved to: ', minimum_phisical_limit, '\n')
@@ -47,12 +55,12 @@ def validate_servo_position(servo, position):
 
     fabric_data = get_fabric_data(servo)
 
-    if position > fabric_data['actuation_range']:
+    if position > fabric_data.actuation_range:
         print('Position maximum exedeed ', position,
-              '. Moved to: ', fabric_data['actuation_range'], '\n')
+              '. Moved to: ', fabric_data.actuation_range, '\n')
         position = fabric_data['actuation_range']
 
-    maximum_phisical_limit = servos_data[servo]['physical_limits']['max']
+    maximum_phisical_limit = servos_data[servo].physical_limits.max
     if position > maximum_phisical_limit:
         print('Maximum phisical limit exedeed ', position,
               '. Moved to: ', maximum_phisical_limit, '\n')
