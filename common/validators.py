@@ -1,5 +1,5 @@
-import common.Helpers
-import common.Config
+from common.helpers import get_fabric_data
+from common.config import servos_data
 
 # Validators
 
@@ -45,7 +45,7 @@ def validate_servo_position(servo, position):
               '. Moved to: ', minimum_phisical_limit, '\n')
         position = minimum_phisical_limit
 
-    fabric_data = common.Helpers.get_fabric_data(servo)
+    fabric_data = get_fabric_data(servo)
 
     if position > fabric_data['actuation_range']:
         print('Position maximum exedeed ', position,

@@ -1,10 +1,3 @@
-from helpers import get_fabric_data
-from helpers import move_servo_to_angle
-from helpers import initialize_servos
-
-from validators import validate_servo
-from validators import validate_position
-from validators import validate_servo_position
-
-from config import fabric_servo_data
-from config import servos_data
+from common.helpers import get_fabric_data, move_servo_to_angle, initialize_servos
+from common.validators import validate_servo, validate_position, validate_servo_position
+from common.config import fabric_servo_data, servos_data
