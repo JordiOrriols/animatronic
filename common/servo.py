@@ -30,11 +30,12 @@ def move_servo_to_angle(kit, servo: int, position: int):
 
 def initialize_servos(kit):
 
-    i = 0
-    available_servos = len(servos_data) - 1
-    print('INITIALIZING SERVOS ', available_servos, '\n\n')
+    print('INITIALIZING SERVOS ', '\n\n')
 
-    while i <= available_servos:
+    for i in range(len(servos_data)):
+
+        if servos_data[i].type == 'disabled':
+            continue
 
         fabric_data = get_fabric_data(i)
         min = fabric_data['pulse_width']['min']
@@ -46,6 +47,5 @@ def initialize_servos(kit):
 
         kit.servo[i].set_pulse_width_range(min, max)
         kit.servo[i].actuation_range = actuation_range
-        i += 1
 
     print('END INITIALIZATION ', '\n\n')
