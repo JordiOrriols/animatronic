@@ -23,7 +23,7 @@ while 1:
     
     print( 'Type "+" or "-" to adjust the position. Press any other key to exit.', '\n')
 
-    while servo:
+    while servo != None:
         operation = input('Adjusting: ')
         if operation == '+':
             position = position + 5
