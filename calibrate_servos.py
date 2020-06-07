@@ -12,5 +12,5 @@ initialize_servos(kit)
 while 1:
     print('\n\n\n', 'Next movement')
     servo = input('Select Servo: ')
-    position = input('Select position in degrees? ')
+    position = input('Select position in degrees: ')
     move_servo_to_angle(kit, int(servo), int(position))

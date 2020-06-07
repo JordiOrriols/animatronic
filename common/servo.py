@@ -1,4 +1,4 @@
-from common.config import servos_data, servos_connection, fabric_servo_data
+from common.config import servos_data, fabric_servo_data
 from common.helpers import get_fabric_data
 from common.validators import validate_servo, validate_servo_position
 
@@ -27,7 +27,6 @@ def move_servo_to_angle(kit, servo: int, position: int):
             connection_position = position
 
         validate_and_move(kit, connection['servo'], connection_position)
-
 
 def initialize_servos(kit):
 
