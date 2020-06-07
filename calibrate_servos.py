@@ -32,5 +32,5 @@ while 1:
         else:
             servo = None
 
-        if servo:
+        if servo != None:
             move_servo_to_angle(kit, servo, position)
