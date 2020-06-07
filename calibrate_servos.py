@@ -12,13 +12,13 @@ initialize_servos(kit)
 
 while 1:
     print('\n\n\n', 'Next adjustment')
-    servo = input('Select Servo: ')
+    servo = int(input('Select Servo: '))
 
     if validate_controllable_servo(servo) == False:
         continue
 
-    position = input('Select start position in degrees: ')
-    move_servo_to_angle(kit, int(servo), int(position))
+    position = int(input('Select start position in degrees: '))
+    move_servo_to_angle(kit, servo, position)
 
     
     print( 'Type "+" or "-" to adjust the position. Press any other key to exit.', '\n')
@@ -26,11 +26,11 @@ while 1:
     while servo:
         operation = input('Adjusting: ')
         if operation == '+':
-            position = int(position) + 5
+            position = position + 5
         elif operation == '-':
-            position = int(position) - 5
+            position = position - 5
         else:
             servo = None
 
         if servo:
-            move_servo_to_angle(kit, int(servo), int(position))
+            move_servo_to_angle(kit, servo, position)
