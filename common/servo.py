@@ -17,7 +17,7 @@ def move_servo_to_angle(kit, servo: int, position: int):
 
     validate_and_move(kit, servo, position)
 
-    if servos_data[servo]['connection']:
+    if 'connection' in servos_data[servo]:
 
         connection = servos_data[servo]['connection']
 
