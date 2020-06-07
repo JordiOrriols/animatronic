@@ -34,7 +34,7 @@ def initialize_servos(kit):
 
     for i in range(len(servos_data)):
 
-        if servos_data[i].type == 'disabled':
+        if servos_data[i]['type'] == 'disabled':
             continue
 
         fabric_data = get_fabric_data(i)
