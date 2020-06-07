@@ -4,10 +4,6 @@ from common.validators import validate_servo, validate_servo_position
 
 
 def validate_and_move(kit, servo: int, position: int):
-
-    if validate_servo(servo) == False:
-        return
-
     servo_position = validate_servo_position(servo, position)
     print('Moving servo #', servo, 'to position ', servo_position, ' deg.', '\n')
     kit.servo[servo].angle = servo_position
@@ -15,11 +11,17 @@ def validate_and_move(kit, servo: int, position: int):
 
 def move_servo_to_angle(kit, servo: int, position: int):
 
+    if validate_controllable_servo(servo) == False:
+        return
+
     validate_and_move(kit, servo, position)
 
     if 'connection' in servos_data[servo]:
 
         connection = servos_data[servo]['connection']
+
+        if validate_servo(connection['servo']) == False:
+            return
 
         if connection['type'] == 'inverted':
             connection_position = 180 - position
@@ -27,6 +29,7 @@ def move_servo_to_angle(kit, servo: int, position: int):
             connection_position = position
 
         validate_and_move(kit, connection['servo'], connection_position)
+
 
 def initialize_servos(kit):
 

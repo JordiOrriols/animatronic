@@ -3,6 +3,19 @@ from common.config import servos_data
 
 # Validators
 
+def validate_controllable_servo(servo: int):
+
+    valid_servo = validate_servo(servo)
+
+    if valid_servo == False:
+        return False
+
+    for s in servos_data:
+        if 'connection' in s and s['connection']['servo'] == servo:
+            print('Servo ', servo, ' is controlled by ', s['connection']['servo'], '\n')
+            return False
+
+    return True
 
 def validate_servo(servo: int):
 
@@ -19,11 +32,6 @@ def validate_servo(servo: int):
     if servos_data[servo]['type'] == 'disabled':
         print('Servo disabled ', servo, '\n')
         return False
-
-    for s in servos_data:
-        if 'connection' in s and s['connection']['servo'] == servo:
-            print('Servo ', servo, ' is controlled by ', s['connection']['servo'], '\n')
-            return False
 
     return True
 
