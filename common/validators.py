@@ -21,7 +21,7 @@ def validate_servo(servo: int):
         return False
 
     for s in servos_data:
-        if 'connection' in s & s['connection']['servo'] == servo:
+        if 'connection' in s and s['connection']['servo'] == servo:
             print('Servo ', servo, ' is controlled by ', s['connection']['servo'], '\n')
             return False
 
