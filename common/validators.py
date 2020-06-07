@@ -21,8 +21,8 @@ def validate_servo(servo: int):
         return False
 
     for s in servos_data:
-        if 'connection' in s & s.connection.servo == servo:
-            print('Servo ', servo, ' is controlled by ', s.connection.servo, '\n')
+        if 'connection' in s & s['connection']['servo'] == servo:
+            print('Servo ', servo, ' is controlled by ', s['connection']['servo'], '\n')
             return False
 
     return True
@@ -47,7 +47,7 @@ def validate_servo_position(servo: int, position: int):
         print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
         position = 0
 
-    minimum_phisical_limit = servos_data[servo].physical_limits.min
+    minimum_phisical_limit = servos_data[servo]['physical_limits']['min']
     if position < minimum_phisical_limit:
         print('Minimum phisical limit exedeed ', position,
               '. Moved to: ', minimum_phisical_limit, '\n')
@@ -55,12 +55,12 @@ def validate_servo_position(servo: int, position: int):
 
     fabric_data = get_fabric_data(servo)
 
-    if position > fabric_data.actuation_range:
+    if position > fabric_data['actuation_range']:
         print('Position maximum exedeed ', position,
-              '. Moved to: ', fabric_data.actuation_range, '\n')
+              '. Moved to: ', fabric_data['actuation_range'], '\n')
         position = fabric_data['actuation_range']
 
-    maximum_phisical_limit = servos_data[servo].physical_limits.max
+    maximum_phisical_limit = servos_data[servo]['physical_limits']['max']
     if position > maximum_phisical_limit:
         print('Maximum phisical limit exedeed ', position,
               '. Moved to: ', maximum_phisical_limit, '\n')
