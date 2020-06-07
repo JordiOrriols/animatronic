@@ -1,6 +1,6 @@
 from common.config import servos_data, fabric_servo_data
 from common.helpers import get_fabric_data
-from common.validators import validate_servo, validate_servo_position
+from common.validators import validate_controllable_servo, validate_servo, validate_servo_position
 
 
 def validate_and_move(kit, servo: int, position: int):
