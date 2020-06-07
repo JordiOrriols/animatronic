@@ -5,7 +5,7 @@ from common.validators import validate_controllable_servo, validate_servo, valid
 
 def validate_and_move(kit, servo: int, position: int):
     servo_position = validate_servo_position(servo, position)
-    print('Moving servo #', servo, 'to position ', servo_position, ' deg.', '\n')
+    print('Moving servo #', servo, 'to position ', servo_position, ' deg.')
     kit.servo[servo].angle = servo_position
 
 
