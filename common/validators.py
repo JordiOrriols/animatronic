@@ -16,7 +16,7 @@ def validate_servo(servo: int):
         print('Servo index maximum exedeed ', servo, '\n')
         return False
 
-    if servos_data[servo].type != 'disabled':
+    if servos_data[servo]['type'] != 'disabled':
         print('Servo disabled ', servo, '\n')
         return False
 
