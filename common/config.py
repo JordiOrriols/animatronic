@@ -16,11 +16,11 @@ servos_data = [
 
     {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 2
     {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 3
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 4
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 5
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 6
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 7
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 8
+    {'type': blue_type, 'physical_limits': {'min': 15, 'max': 125}},  # 4
+    {'type': blue_type, 'physical_limits': {'min': 30, 'max': 150}},  # 5
+    {'type': blue_type, 'physical_limits': {'min': 45, 'max': 110}},  # 6
+    {'type': blue_type, 'physical_limits': {'min': 85, 'max': 135}},  # 7
+    {'type': blue_type, 'physical_limits': {'min': 30, 'max': 95}},  # 8
 
     {'type': 'disabled'},
 
