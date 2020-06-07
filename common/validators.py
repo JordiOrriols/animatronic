@@ -10,9 +10,9 @@ def validate_controllable_servo(servo: int):
     if valid_servo == False:
         return False
 
-    for s in servos_data:
-        if 'connection' in s and s['connection']['servo'] == servo:
-            print('Servo ', servo, ' is controlled by ', s['connection']['servo'], '\n')
+    for i in range(len(servos_data)):
+        if 'connection' in servos_data[i] and servos_data[i]['connection']['servo'] == servo:
+            print('Servo ', servo, ' is controlled by ', i, '\n')
             return False
 
     return True
