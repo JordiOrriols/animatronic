@@ -1,9 +1,10 @@
 import tkinter as tk
 from common.config import servos_data
+from common.validators import validate_controllable_servo
 
 window = tk.Tk()
 window.title('Calibrate Phonemes')
-window.geometry('800x400')
+window.geometry('1000x300')
 
 
 def show_servo_scale(servo: int, min: int, max: int):
@@ -23,7 +24,7 @@ def show_servo_scale(servo: int, min: int, max: int):
 
 for i in range(len(servos_data)):
 
-    if servos_data[i]['type'] == 'disabled':
+    if validate_controllable_servo(i) == False:
         continue
 
     min = servos_data[i]['physical_limits']['min']
