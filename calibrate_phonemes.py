@@ -16,5 +16,6 @@ def show_servo_scale(servo: int):
     s.pack()
  
 show_servo_scale(0)
+show_servo_scale(1)
 
 window.mainloop()
