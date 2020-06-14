@@ -27,7 +27,7 @@ def show_servo_scale(servo: int, min: int, max: int):
 
     def print_selection(v):
         l.config(text=v)
-        move_servo_to_angle(kit, servo, v)
+        move_servo_to_angle(kit, servo, int(v))
 
     s = Scale(frameControl, from_=min, to=max, length=200,
                  showvalue=0, tickinterval=2, resolution=5, command=print_selection)
