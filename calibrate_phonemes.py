@@ -6,7 +6,7 @@ window.title('Calibrate Phonemes')
 window.geometry('800x400') 
 
 def show_servo_scale(servo: int):
-    l = tk.Label(window, bg='white', fg='black', width=20, text='...')
+    l = tk.Label(window, bg='white', fg='black', width=7, text='...')
     l.pack()
     
     def print_selection(v):
