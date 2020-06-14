@@ -11,7 +11,7 @@ def show_servo_scale(servo: int):
     def print_selection(v):
         l.config(text=v)
 
-    label = 'Servo ' + servo
+    label = 'Servo ' + str(servo)
     s = tk.Scale(window, label=label, from_=0, to=10, length=200, showvalue=0, tickinterval=2, resolution=0.01, command=print_selection)
     s.pack()
  
