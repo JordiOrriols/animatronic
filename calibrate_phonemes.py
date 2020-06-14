@@ -14,7 +14,7 @@ def show_servo_scale(servo: int, min: int, max: int):
         l.config(text=v)
 
     label = 'S#' + str(servo)
-    s = tk.Scale(window, label=label, from_=min, to=max, length=200, threshold=90,
+    s = tk.Scale(window, label=label, from_=min, to=max, length=200,
                  showvalue=0, tickinterval=2, resolution=5, command=print_selection)
 
     s.pack(side='left', padx=5)
@@ -25,7 +25,8 @@ for i in range(len(servos_data)):
     if servos_data[i]['type'] == 'disabled':
         continue
 
-    show_servo_scale(i, servos_data[i]['physical_limits']
-                     ['min'], servos_data[i]['physical_limits']['max'])
+    min = servos_data[i]['physical_limits']['min']
+    max = servos_data[i]['physical_limits']['max']
+    show_servo_scale(i, min, max)
 
 window.mainloop()
