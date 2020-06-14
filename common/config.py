@@ -10,12 +10,12 @@ fabric_servo_data = {
 }
 
 servos_data = [
-    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180},
+    {'type': big_type, 'physical_limits': {'min': 70, 'max': 90},
         'connection': {'servo': 1, 'type': 'inverted'}},  # 0
-    {'type': big_type, 'physical_limits': {'min': 0, 'max': 180}},  # 1
+    {'type': big_type, 'physical_limits': {'min': 90, 'max': 110}},  # 1
 
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 2
-    {'type': blue_type, 'physical_limits': {'min': 0, 'max': 180}},  # 3
+    {'type': blue_type, 'physical_limits': {'min': 40, 'max': 155}},  # 2
+    {'type': blue_type, 'physical_limits': {'min': 30, 'max': 135}},  # 3
     {'type': blue_type, 'physical_limits': {'min': 15, 'max': 125}},  # 4
     {'type': blue_type, 'physical_limits': {'min': 30, 'max': 150}},  # 5
     {'type': blue_type, 'physical_limits': {'min': 45, 'max': 110}},  # 6
