@@ -8,21 +8,24 @@ window.geometry('1000x300')
 
 
 def show_servo_scale(servo: int, min: int, max: int):
+
+    frameControl = tk.Frame(window)
+    frameControl.pack(side='left')
     
     label = '#' + str(servo)
-    n = tk.Label(window, fg='black', width=3, text=label)
-    n.pack(side='top')
+    n = tk.Label(frameControl, fg='black', width=3, text=label)
+    n.pack(side='top', expand=True)
 
     def print_selection(v):
         l.config(text=v)
 
-    s = tk.Scale(window, from_=min, to=max, length=200,
+    s = tk.Scale(frameControl, from_=min, to=max, length=200,
                  showvalue=0, tickinterval=2, resolution=5, command=print_selection)
 
-    s.pack(side='left')
+    s.pack(side='top', expand=True)
 
-    l = tk.Label(window, bg='white', fg='black', width=3, text='...')
-    l.pack(side='left')
+    l = tk.Label(frameControl, bg='white', fg='black', width=3, text='...')
+    l.pack(side='top', expand=True)
 
 for i in range(len(servos_data)):
 
