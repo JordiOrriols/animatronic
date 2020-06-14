@@ -6,14 +6,14 @@ window.title('Calibrate Phonemes')
 window.geometry('800x400') 
 
 def show_servo_scale(servo: int):
-    l = tk.Label(window, bg='white', fg='black', width=20, text='Waiting')
+    l = tk.Label(window, bg='white', fg='black', width=20, text='...')
     l.pack()
     
     def print_selection(v):
         l.config(text=v)
 
-    label = 'Servo ' + str(servo)
-    s = tk.Scale(window, label=label, from_=0, to=100, orient=tk.HORIZONTAL, length=200, showvalue=0, tickinterval=2, resolution=5, command=print_selection)
+    label = 'S#' + str(servo)
+    s = tk.Scale(window, label=label, from_=0, to=100, length=200, showvalue=0, tickinterval=2, resolution=5, command=print_selection)
     
     s.pack(side = 'left', padx = 10, pady = 10)
 
