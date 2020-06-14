@@ -19,7 +19,7 @@ window.geometry('1000x300')
 def show_servo_scale(servo: int, min: int, max: int):
 
     frameControl = Frame(window)
-    frameControl.pack(side='left', padx=10)
+    frameControl.pack(side='left', padx=15)
     
     label = '#' + str(servo)
     n = Label(frameControl, fg='black', width=3, text=label)
