@@ -12,7 +12,7 @@ initialize_servos(kit)
 
 window = Tk()
 window.title('Calibrate Phonemes')
-window.geometry('1000x300')
+window.geometry('850x300')
 
 # Run code
 
