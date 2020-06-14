@@ -3,7 +3,7 @@ from common.config import servos_data
  
 window = tk.Tk()
 window.title('Calibrate Phonemes')
-window.geometry('500x600') 
+window.geometry('800x400') 
 
 def show_servo_scale(servo: int):
     l = tk.Label(window, bg='white', fg='black', width=20, text='Waiting')
@@ -14,7 +14,8 @@ def show_servo_scale(servo: int):
 
     label = 'Servo ' + str(servo)
     s = tk.Scale(window, label=label, from_=0, to=100, orient=tk.HORIZONTAL, length=200, showvalue=0, tickinterval=2, resolution=5, command=print_selection)
-    s.pack()
+    
+    s.pack(side = 'left', padx = 10, pady = 10)
 
 for i in range(len(servos_data)):
 
