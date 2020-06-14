@@ -33,7 +33,7 @@ servos_data = [
 ]
 
 phonemes_data = {
-    ' ': [
+    'RELAX': [
         { 'servo': 0, 'angle': 70},
         { 'servo': 2, 'angle': 155},
         { 'servo': 3, 'angle': 30},
