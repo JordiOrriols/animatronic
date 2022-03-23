@@ -1,7 +1,7 @@
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from common.mouth import adopt_phoneme
+from mouth.mouth import adopt_phoneme
 
 # Initialization
 kit = ServoKit(channels=16)
