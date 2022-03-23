@@ -2,7 +2,7 @@ from adafruit_servokit import ServoKit
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import initialize_servos, move_servo_to_angle
-from common.config import servos_data
+from mouth.config import servos_data
 from common.validators import validate_controllable_servo
 
 # Initialization
