@@ -1,26 +1,22 @@
 # Configuration
 
 from common.config import mg996r_type, mg90s_type, ghs37a_type
+from common.servo import AniServo
 
-servos_data = [
+servos_data: list[AniServo] = [
+    AniServo(0, mg996r_type, 0, 180),
 
-    {'type': mg996r_type, 'physical_limits': {'min': 0, 'max': 180}},  # 0
+    AniServo(1, mg90s_type, 0, 180),
+    AniServo(2, mg90s_type, 0, 180),
+    AniServo(3, mg90s_type, 0, 180),
+    AniServo(4, mg90s_type, 0, 180),
+    AniServo(5, mg90s_type, 0, 180),
+    AniServo(6, mg90s_type, 0, 180),
+    AniServo(7, mg90s_type, 0, 180),
 
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 1
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 2
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 3
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 4
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 5
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 6
-    {'type': mg90s_type, 'physical_limits': {'min': 0, 'max': 180}},  # 7
-
-    {'type': ghs37a_type, 'physical_limits': {'min': 0, 'max': 180}},  # 8
-    {'type': ghs37a_type, 'physical_limits': {'min': 0, 'max': 180}},  # 9
-    {'type': ghs37a_type, 'physical_limits': {'min': 0, 'max': 180}},  # 10
-    {'type': ghs37a_type, 'physical_limits': {'min': 0, 'max': 180}},  # 11
-    {'type': ghs37a_type, 'physical_limits': {'min': 0, 'max': 180}},  # 12
-
-    {'type': 'disabled'},
-    {'type': 'disabled'},
-    {'type': 'disabled'},
+    AniServo(8, ghs37a_type, 0, 180),
+    AniServo(9, ghs37a_type, 0, 180),
+    AniServo(10, ghs37a_type, 0, 180),
+    AniServo(11, ghs37a_type, 0, 180),
+    AniServo(12, ghs37a_type, 0, 180),
 ]

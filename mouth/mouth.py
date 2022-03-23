@@ -1,7 +1,7 @@
 from common.config import phonemes_data
-from common.servo import move_servo_to_angle
+from common.servo import AniServo
 
-def adopt_phoneme(kit, phoneme: str, servos_data: list[dict]):
+def adopt_phoneme(kit, phoneme: str, servos_data: list[AniServo]):
 
     if phoneme not in phonemes_data.keys():
         print('Not defined phoneme', phoneme)
