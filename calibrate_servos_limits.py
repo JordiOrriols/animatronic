@@ -1,7 +1,6 @@
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos, move_servo_to_angle
-from common.validators import validate_controllable_servo
 from mouth.config import servos_data
 
 # Initialization
@@ -13,16 +12,21 @@ initialize_servos(kit, servos_data)
 
 while 1:
     print('\n\n\n', 'Next adjustment')
-    servo = int(input('Select Servo: '))
 
-    if validate_controllable_servo(servo) == False:
+    servo = None
+    selected_servo = int(input('Select Servo: '))
+
+    for current_servo in servos_data:
+        if(current_servo.pin == selected_servo):
+            servo = current_servo
+
+    if servo == None:
         continue
 
     position = int(input('Select start position in degrees: '))
-    move_servo_to_angle(kit, servo, position, servos_data)
+    servo.move_to_angle(position)
 
-    
-    print( 'Type "+" or "-" to adjust the position. Press any other key to exit.', '\n')
+    print('Type "+" or "-" to adjust the position. Press any other key to exit.', '\n')
 
     while servo != None:
         operation = input('Adjusting: ')
@@ -34,4 +38,4 @@ while 1:
             servo = None
 
         if servo != None:
-            move_servo_to_angle(kit, servo, position, servos_data)
+            servo.move_to_angle(position)
