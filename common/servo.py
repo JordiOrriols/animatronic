@@ -30,10 +30,12 @@ class AniServo:
         kit.servo[self.pin].actuation_range = actuation_range
         self.kit = kit
 
+        self.sleep()
+
         if(self.connection):
             self.connection.start()
     
-    def stop(self):
+    def sleep(self):
         self.move_to_angle(self.rest_position)
 
     def __validate_position(self, position: int):
