@@ -25,10 +25,9 @@ with open('scheleton/animation.json') as json_file:
         start = input('Press any key to start: ')
 
         current_frame = 0
-        frame_duration_millis = 1000 / data.fps
 
         for servo in servos_data:
             new_position = data.positions[servo.getName()][current_frame]
             servo.move_to_angle(new_position)
-            time.sleep(frame_duration_millis)
+            time.sleep(1 / data.fps)
 
