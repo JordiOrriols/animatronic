@@ -1,4 +1,4 @@
-from common.config import phonemes_data
+from mouth.config import phonemes_data
 from common.servo import AniServo
 
 

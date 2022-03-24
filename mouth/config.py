@@ -6,7 +6,7 @@ from common.servo import AniServo
 servos_data: list[AniServo] = [
 
     AniServo(0, mg996r_type, 70, 90)
-    .connect(AniServo(1, mg996r_type, 90, 110)),  
+    .connect(AniServo(1, mg996r_type, 90, 110), 'inverted'),  
 
     AniServo(2, mg92b_type, 40, 155), 
     AniServo(3, mg92b_type, 30, 135), 
