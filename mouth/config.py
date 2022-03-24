@@ -5,23 +5,23 @@ from common.servo import AniServo
 
 servos_data: list[AniServo] = [
 
-    AniServo(0, mg996r_type, 70, 90)
-    .connect(AniServo(1, mg996r_type, 90, 110), 'inverted'),  
+    AniServo(0, mg996r_type, 70, 90, 80)
+    .connect(AniServo(1, mg996r_type, 90, 110, 100), 'inverted'),  
 
-    AniServo(2, mg92b_type, 40, 155), 
-    AniServo(3, mg92b_type, 30, 135), 
-    AniServo(4, mg92b_type, 15, 125), 
-    AniServo(5, mg92b_type, 30, 150), 
-    AniServo(6, mg92b_type, 45, 110), 
-    AniServo(7, mg92b_type, 85, 135), 
-    AniServo(8, mg92b_type, 30, 95), 
+    AniServo(2, mg92b_type, 40, 155, 90), 
+    AniServo(3, mg92b_type, 30, 135, 90), 
+    AniServo(4, mg92b_type, 15, 125, 90), 
+    AniServo(5, mg92b_type, 30, 150, 90), 
+    AniServo(6, mg92b_type, 45, 110, 90), 
+    AniServo(7, mg92b_type, 85, 135, 90), 
+    AniServo(8, mg92b_type, 30, 95, 90), 
 
-    AniServo(10, mg92b_type, 0, 180),  
-    AniServo(11, mg92b_type, 0, 180),  
-    AniServo(12, mg92b_type, 0, 180),  
-    AniServo(13, mg92b_type, 0, 180),  
-    AniServo(14, mg92b_type, 0, 180),  
-    AniServo(15, mg92b_type, 0, 180),  
+    AniServo(10, mg92b_type, 0, 180, 90),  
+    AniServo(11, mg92b_type, 0, 180, 90),  
+    AniServo(12, mg92b_type, 0, 180, 90),  
+    AniServo(13, mg92b_type, 0, 180, 90),  
+    AniServo(14, mg92b_type, 0, 180, 90),  
+    AniServo(15, mg92b_type, 0, 180, 90),  
 ]
 
 phonemes_data = {

@@ -2,13 +2,12 @@ from common.config import fabric_servo_data
 
 
 class AniServo:
-    def __init__(self, pin: int, type: str, min: int, max: int):
+    def __init__(self, pin: int, type: str, min: int, max: int, rest_position: int):
         self.pin = pin
         self.type = type
-        self.physical_limits = {
-            'min': min,
-            'max': max
-        }
+        self.physical_limits_min = min
+        self.physical_limits_max = max
+        self.rest_position = rest_position
         self.fabric_data = fabric_servo_data[type]
 
     def connect(self, servo: 'AniServo', direction: str):
@@ -33,6 +32,9 @@ class AniServo:
 
         if(self.connection):
             self.connection.start()
+    
+    def stop(self):
+        self.move_to_angle(self.rest_position)
 
     def __validate_position(self, position: int):
 
@@ -40,7 +42,7 @@ class AniServo:
             print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
             position = 0
 
-        minimum_phisical_limit = self.physical_limits['min']
+        minimum_phisical_limit = self.physical_limits_min
         if position < minimum_phisical_limit:
             print('Minimum phisical limit exedeed ', position,
                   '. Moved to: ', minimum_phisical_limit, '\n')
@@ -51,7 +53,7 @@ class AniServo:
                   '. Moved to: ', self.fabric_data['actuation_range'], '\n')
             position = self.fabric_data['actuation_range']
 
-        maximum_phisical_limit = self.physical_limits['max']
+        maximum_phisical_limit = self.physical_limits_max
         if position > maximum_phisical_limit:
             print('Maximum phisical limit exedeed ', position,
                   '. Moved to: ', maximum_phisical_limit, '\n')
