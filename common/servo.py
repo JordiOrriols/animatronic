@@ -122,7 +122,7 @@ class AniServo:
 
         self.__move(position)
 
-        if 'connection' in self:
+        if (self.__connection):
 
             if self.__connectionDirection == 'inverted':
                 connection_position = 180 - position
