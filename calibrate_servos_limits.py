@@ -14,10 +14,10 @@ while 1:
     print('\n\n\n', 'Next adjustment')
 
     servo = None
-    selected_servo = int(input('Select Servo: '))
+    selected_servo = input('Select Servo: ')
 
     for current_servo in servos_data:
-        if(current_servo.getPin() == selected_servo):
+        if(current_servo.getPin() == int(selected_servo)):
             servo = current_servo
 
     if servo == None:
