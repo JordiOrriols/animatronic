@@ -67,8 +67,8 @@ class AniServo:
             ' max: ', max,
             ' actuation_range: ', actuation_range)
 
-        kit.servo[self.pin].set_pulse_width_range(min, max)
-        kit.servo[self.pin].actuation_range = actuation_range
+        kit.servo[self.__pin].set_pulse_width_range(min, max)
+        kit.servo[self.__pin].actuation_range = actuation_range
         self.__kit = kit
 
         self.sleep()
