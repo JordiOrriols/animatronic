@@ -38,5 +38,5 @@ with open('scheleton/animation.json') as json_file:
                     print('Servo not found on animation: ', servo.getName(), servo.getPin())
             
             time.sleep(1 / fps)
-            time.sleep(5)
+            time.sleep(1)
 
