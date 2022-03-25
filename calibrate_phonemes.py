@@ -21,7 +21,7 @@ def show_servo_scale(servo: AniServo, min: int, max: int):
     frameControl = Frame(window)
     frameControl.pack(side='left', padx=15)
 
-    label = '#' + str(servo.pin)
+    label = '#' + str(servo.getPin())
     n = Label(frameControl, fg='black', width=3, text=label)
     n.pack(side='top', expand=True)
 
