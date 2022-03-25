@@ -3,7 +3,7 @@
 from common.config import mg996r_type, mg92b_type
 from common.servo import AniServo
 
-servos_data: list[AniServo] = [
+servos_data = [
 
     AniServo('ReplaceNameServo', 0, mg996r_type, 70, 90, 80)
     .connect(AniServo('ReplaceNameServo', 1, mg996r_type, 90, 110, 100), 'inverted'),

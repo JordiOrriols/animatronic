@@ -3,7 +3,7 @@
 from common.config import mg996r_type, mg90s_type, ghs37a_type
 from common.servo import AniServo
 
-servos_data: list[AniServo] = [
+servos_data = [
     AniServo('ReplaceNameServo', 0, mg996r_type, 0, 180, 90),
 
     AniServo('TestServo', 1, mg90s_type, 0, 180, 90),
