@@ -30,7 +30,7 @@ def show_servo_scale(servo: AniServo, min: int, max: int):
         servo.move_to_angle(int(v))
 
     s = Scale(frameControl, from_=min, to=max, length=200,
-              showvalue=0, tickinterval=2, resolution=1, command=print_selection)
+              showvalue=servo.getRestPosition(), tickinterval=2, resolution=5, command=print_selection)
 
     s.pack(side='top', expand=True)
 

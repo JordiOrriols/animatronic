@@ -30,6 +30,9 @@ class AniServo:
     def getPhysicalLimitMax(self):
         return self.__physical_limits_max
 
+    def getRestPosition(self):
+        return self.__rest_position
+
     # Connect
     # Connect
     # Connect
