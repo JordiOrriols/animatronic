@@ -2,7 +2,7 @@ from adafruit_servokit import ServoKit
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo, initialize_servos
-from mouth.config import servos_data
+from scheleton.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)
