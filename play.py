@@ -34,9 +34,6 @@ with open('scheleton/animation.json') as json_file:
                 if servo.getName() in positions.keys():
                     new_position = positions[servo.getName()][current_frame]
                     servo.move_to_angle(int(new_position))
-                else:
-                    print('Servo not found on animation: ', servo.getName(), servo.getPin())
             
             time.sleep(1 / fps)
-            time.sleep(1)
 
