@@ -132,7 +132,7 @@ class AniServo:
             self.__connection.move_to_angle(connection_position)
 
 
-def initialize_servos(kit, servos_data: list[AniServo]):
+def initialize_servos(kit, servos_data):
 
     print('INITIALIZING SERVOS ', '\n\n')
 
