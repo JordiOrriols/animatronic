@@ -39,6 +39,6 @@ def show_servo_scale(servo: AniServo, min: int, max: int):
 
 
 for servo in servos_data:
-    show_servo_scale(servo, servo.physical_limits_min, servo.physical_limits_max)
+    show_servo_scale(servo, servo.getPhysicalLimitMin(), servo.getPhysicalLimitMax())
 
 window.mainloop()
