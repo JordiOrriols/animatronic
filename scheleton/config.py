@@ -18,5 +18,5 @@ servos_data = [
     AniServo('ReplaceNameServo', 9, ghs37a_type, 0, 180, 90),
     AniServo('ReplaceNameServo', 10, ghs37a_type, 0, 180, 90),
     AniServo('ReplaceNameServo', 11, ghs37a_type, 0, 180, 90),
-    AniServo('ReplaceNameServo', 12, ghs37a_type, 0, 180, 90),
+    AniServo('ReplaceNameServo', 12, ghs37a_type, 0, 180, 90)
 ]

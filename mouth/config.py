@@ -4,7 +4,6 @@ from common.config import mg996r_type, mg92b_type
 from common.servo import AniServo
 
 servos_data = [
-
     AniServo('ReplaceNameServo', 0, mg996r_type, 70, 90, 80)
     .connect(AniServo('ReplaceNameServo', 1, mg996r_type, 90, 110, 100), 'inverted'),
 
@@ -21,7 +20,7 @@ servos_data = [
     AniServo('ReplaceNameServo', 12, mg92b_type, 0, 180, 90),
     AniServo('ReplaceNameServo', 13, mg92b_type, 0, 180, 90),
     AniServo('ReplaceNameServo', 14, mg92b_type, 0, 180, 90),
-    AniServo('ReplaceNameServo', 15, mg92b_type, 0, 180, 90),
+    AniServo('ReplaceNameServo', 15, mg92b_type, 0, 180, 90)
 ]
 
 phonemes_data = {
