@@ -80,6 +80,7 @@ class AniServo:
         self.sleep()
 
         if(self.__connection != None):
+            print('Jordi Test', type(self.__connection))
             self.__connection.start()
 
     # Sleep
