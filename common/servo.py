@@ -11,6 +11,9 @@ class AniServo:
         self.__rest_position = rest_position
         self.__fabric_data = fabric_servo_data[type]
 
+        self.__connection = None
+        self.__connectionDirection = None
+
     # Getters
     # Getters
     # Getters
@@ -73,7 +76,7 @@ class AniServo:
 
         self.sleep()
 
-        if(self.__connection):
+        if(self.__connection != None):
             self.__connection.start()
 
     # Sleep
@@ -122,7 +125,7 @@ class AniServo:
 
         self.__move(position)
 
-        if (self.__connection):
+        if (self.__connection != None):
 
             if self.__connectionDirection == 'inverted':
                 connection_position = 180 - position
