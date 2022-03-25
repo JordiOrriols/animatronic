@@ -1,8 +1,7 @@
 from mouth.config import phonemes_data
-from common.servo import AniServo
 
 
-def adopt_phoneme(phoneme: str, servos_data: list[AniServo]):
+def adopt_phoneme(phoneme: str, servos_data):
 
     if phoneme not in phonemes_data.keys():
         print('Not defined phoneme', phoneme)
