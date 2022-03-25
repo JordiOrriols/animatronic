@@ -36,4 +36,5 @@ with open('scheleton/animation.json') as json_file:
                     servo.move_to_angle(int(new_position))
             
             time.sleep(1 / fps)
+            current_frame = current_frame + 1
 
