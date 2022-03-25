@@ -1,6 +1,6 @@
 from adafruit_servokit import ServoKit
 
-from common.servo import initialize_servos, move_servo_to_angle
+from common.servo import initialize_servos
 from mouth.config import servos_data
 
 # Initialization
@@ -17,7 +17,7 @@ while 1:
     selected_servo = int(input('Select Servo: '))
 
     for current_servo in servos_data:
-        if(current_servo.pin == selected_servo):
+        if(current_servo.getPin() == selected_servo):
             servo = current_servo
 
     if servo == None:
