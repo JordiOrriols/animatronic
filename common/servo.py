@@ -17,13 +17,13 @@ class AniServo:
 
     def getName(self):
         return self.__name
-    
+
     def getPin(self):
         return self.__pin
 
     def getPhysicalLimitMin(self):
         return self.__physical_limits_min
-    
+
     def getPhysicalLimitMax(self):
         return self.__physical_limits_max
 
@@ -35,6 +35,20 @@ class AniServo:
         self.__connection = servo
         self.__connectionDirection = direction
 
+    # Log
+    # Log
+    # Log
+
+    def __log(self, message: str, level: str):
+        print(level, 'Servo ', self.__name,
+              ' on pin #', self.__pin,
+              ' - ',
+              message,
+              '\n')
+
+    def __error(self, message):
+        self.__log(message, 'ERROR: ')
+
     # Start
     # Start
     # Start
@@ -44,12 +58,11 @@ class AniServo:
         max = self.__fabric_data['pulse_width']['max']
         actuation_range = self.__fabric_data['actuation_range']
 
-        print('Servo #', self.__pin,
-              ' type:', self.__type,
-              ' min:', min,
-              ' max:', max,
-              ' actuation_range:', actuation_range,
-              '\n')
+        self.__log(
+            ' type: ' + self.__type +
+            ' min: ' + min +
+            ' max: ' + max +
+            ' actuation_range: ' + actuation_range)
 
         kit.servo[self.pin].set_pulse_width_range(min, max)
         kit.servo[self.pin].actuation_range = actuation_range
@@ -59,7 +72,7 @@ class AniServo:
 
         if(self.__connection):
             self.__connection.start()
-    
+
     # Sleep
     # Sleep
     # Sleep
@@ -74,32 +87,32 @@ class AniServo:
     def __validate_position(self, position: int):
 
         if position < 0:
-            print('Position minimum exedeed ', position, '. Moved to: 0', '\n')
+            self.__error('Position minimum exedeed ' +
+                         position + '. Moved to: 0')
             position = 0
 
         minimum_phisical_limit = self.__physical_limits_min
         if position < minimum_phisical_limit:
-            print('Minimum phisical limit exedeed ', position,
-                  '. Moved to: ', minimum_phisical_limit, '\n')
+            self.__error('Minimum phisical limit exedeed ' + position +
+                         '. Moved to: ' + minimum_phisical_limit)
             position = minimum_phisical_limit
 
         if position > self.__fabric_data['actuation_range']:
-            print('Position maximum exedeed ', position,
-                  '. Moved to: ', self.fabric_data['actuation_range'], '\n')
+            self.__error('Position maximum exedeed ' + position +
+                         '. Moved to: ' + self.fabric_data['actuation_range'])
             position = self.__fabric_data['actuation_range']
 
         maximum_phisical_limit = self.__physical_limits_max
         if position > maximum_phisical_limit:
-            print('Maximum phisical limit exedeed ', position,
-                  '. Moved to: ', maximum_phisical_limit, '\n')
+            self.__error('Maximum phisical limit exedeed ' + position +
+                         '. Moved to: ' + maximum_phisical_limit)
             position = maximum_phisical_limit
 
         return position
 
     def __move(self, position: int):
         servo_position = self.__validate_position(position)
-        print('Moving servo #', self.__pin,
-              'to position ', servo_position, ' deg.')
+        self.__log('Move to ' + servo_position + ' deg.')
         self.__kit.servo[self.__pin].angle = servo_position
 
     def move_to_angle(self, position: int):
