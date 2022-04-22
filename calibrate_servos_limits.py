@@ -6,8 +6,6 @@ from scheleton.config import servos_data
 # Initialization
 kit = ServoKit(channels=16)
 
-initialize_servos(kit, servos_data)
-
 # Run code
 
 while 1:
@@ -24,6 +22,7 @@ while 1:
         continue
 
     print(servo.getName(), '\n')
+    servo.start(kit)
 
     position = int(input('Select start position in degrees: '))
     servo.move_to_angle(position)
