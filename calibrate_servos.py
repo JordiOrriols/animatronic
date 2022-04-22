@@ -16,7 +16,7 @@ window.geometry('850x300')
 # Run code
 
 
-def show_servo_scale(servo: AniServo, min: int, max: int):
+def show_servo_scale(servo: AniServo):
 
     frameControl = Frame(window)
     frameControl.pack(side='left', padx=15)
@@ -29,8 +29,8 @@ def show_servo_scale(servo: AniServo, min: int, max: int):
         l.config(text=v)
         servo.move_to_angle(int(v))
 
-    s = Scale(frameControl, from_=min, to=max, length=200,
-              showvalue=0, tickinterval=2, resolution=5, command=print_selection)
+    s = Scale(frameControl, from_=servo.getPhysicalLimitMin(), to=servo.getPhysicalLimitMax(), length=200,
+              showvalue=servo.getRestPosition(), tickinterval=2, resolution=5, command=print_selection)
 
     s.pack(side='top', expand=True)
 
@@ -39,6 +39,6 @@ def show_servo_scale(servo: AniServo, min: int, max: int):
 
 
 for servo in servos_data:
-    show_servo_scale(servo, servo.getPhysicalLimitMin(), servo.getPhysicalLimitMax())
+    show_servo_scale(servo)
 
 window.mainloop()
