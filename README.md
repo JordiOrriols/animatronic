@@ -4,6 +4,10 @@
 
 
 ### On Raspberry Pi
+
+`sudo apt-get install python-smbus`
+`sudo apt-get install i2c-tools`
+
 `sudo pip3 install adafruit-circuitpython-servokit`
 
 Pending to validate
