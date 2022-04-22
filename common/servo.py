@@ -53,10 +53,10 @@ class AniServo:
     def __log(self, level: str, *message):
         if self.__debug:
             print(level, 'Servo ', self.__name,
-                ' on pin #', self.__pin,
-                ' - ',
-                message,
-                '\n')
+                  ' on pin #', self.__pin,
+                  ' - ',
+                  message,
+                  '\n')
 
     def __info(self, *message):
         self.__log('Info: ', message)
