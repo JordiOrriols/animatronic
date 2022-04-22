@@ -1,10 +1,11 @@
 import json
-import time
+
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
 from mouth.mouth import adopt_phoneme
 from scheleton.config import servos_data
+from common.animation import Animation
 
 # Initialization
 kit = ServoKit(channels=16)
@@ -15,42 +16,21 @@ initialize_servos(kit, servos_data)
 
 with open('scheleton/animation.json') as json_file:
     data = json.load(json_file)
-
-    print('Animation loaded')
+    animation = Animation(data)
 
     while 1:
-        print('\n\n', 'System Ready')
-        print('\n', 'Playing at ', data['fps'], 'fps')
-        print('\n', data['frames'], 'Frames')
-        print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
+
         start = input('Press any key to start: ')
+        animation.start()
 
-        current_frame = 0
-        positions = data['positions']
-        start = time.time()
-        frameDuration = 1 / data['fps']
+        while animation.inProgress():
 
-        while current_frame < data['frames']:
-
-            frameStart = time.time()
+            animation.refresh()
 
             for servo in servos_data:
-                if servo.getName() in positions.keys():
-                    new_position = positions[servo.getName()][current_frame]
+                if servo.getName() in animation.getPositions().keys():
+                    new_position = animation.getCurrentPosition(servo)
                     servo.move_to_angle(int(new_position))
-            
-            frameEnd = time.time()
-            frameElapsed = frameEnd - frameStart
-            sleepTime = frameDuration - frameElapsed
 
-            if sleepTime > 0:
-                time.sleep(sleepTime)
-            
-            current_frame = current_frame + 1
-        
-        end = time.time()
-
-        print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
-        print('\n', 'Final duration: ', end - start, ' seconds')
-
+        animation.end()
 
