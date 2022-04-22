@@ -23,6 +23,8 @@ while 1:
     if servo == None:
         continue
 
+    print(servo.getName(), '\n')
+
     position = int(input('Select start position in degrees: '))
     servo.move_to_angle(position)
 
