@@ -19,7 +19,7 @@ window.geometry('850x300')
 def show_servo_scale(servo: AniServo):
 
     frameControl = Frame(window)
-    frameControl.pack(side='left', padx=15)
+    frameControl.pack(side='left', padx=10)
 
     label = '#' + str(servo.getPin())
     n = Label(frameControl, fg='black', width=3, text=label)
@@ -30,8 +30,9 @@ def show_servo_scale(servo: AniServo):
         servo.move_to_angle(int(v))
 
     s = Scale(frameControl, from_=servo.getPhysicalLimitMin(), to=servo.getPhysicalLimitMax(), length=200,
-              showvalue=servo.getRestPosition(), tickinterval=2, resolution=5, command=print_selection)
+              showvalue=0, tickinterval=2, resolution=5, command=print_selection)
 
+    s.set(servo.getRestPosition())
     s.pack(side='top', expand=True)
 
     l = Label(frameControl, bg='white', fg='black', width=3, text='...')
