@@ -9,6 +9,7 @@
 `sudo apt-get install i2c-tools`
 
 `sudo pip3 install adafruit-circuitpython-servokit`
+`sudo pip3 install scipy`
 
 Pending to validate
 `sudo pip3 install tk`
