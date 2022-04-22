@@ -22,19 +22,25 @@ with open('scheleton/animation.json') as json_file:
         print('\n\n', 'System Ready')
         print('\n', 'Playing at ', data['fps'], 'fps')
         print('\n', data['frames'], 'Frames')
+        print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
         start = input('Press any key to start: ')
 
         current_frame = 0
-        fps = data['fps']
-        frames = data['frames']
         positions = data['positions']
+        start = time.time()
 
-        while current_frame < frames:
+        while current_frame < data['frames']:
             for servo in servos_data:
                 if servo.getName() in positions.keys():
                     new_position = positions[servo.getName()][current_frame]
                     servo.move_to_angle(int(new_position))
             
-            time.sleep(1 / fps)
+            time.sleep(1 / data['fps'])
             current_frame = current_frame + 1
+        
+        end = time.time()
+
+        print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
+        print('\n', 'Final duration: ', end - start, ' seconds')
+
 
