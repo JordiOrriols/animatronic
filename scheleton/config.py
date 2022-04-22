@@ -21,4 +21,3 @@ servos_data = [
 
     AniServo('mandible', 12, ghs37a_type, 0, 180, 90)
 ]
-å
