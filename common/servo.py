@@ -121,7 +121,7 @@ class AniServo:
 
     def __move(self, position: int):
         servo_position = self.__validate_position(position)
-        self.__info('Move to ', servo_position,  ' deg.')
+        # self.__info('Move to ', servo_position,  ' deg.')
         self.__kit.servo[self.__pin].angle = servo_position
 
     def move_to_angle(self, position: int):
