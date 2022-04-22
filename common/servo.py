@@ -14,6 +14,8 @@ class AniServo:
         self.__connection = None
         self.__connectionDirection = None
 
+        self.__debug = False
+
     # Getters
     # Getters
     # Getters
@@ -45,12 +47,16 @@ class AniServo:
     # Log
     # Log
 
+    def debug(self):
+        self.__debug = True
+
     def __log(self, level: str, *message):
-        print(level, 'Servo ', self.__name,
-              ' on pin #', self.__pin,
-              ' - ',
-              message,
-              '\n')
+        if self.__debug:
+            print(level, 'Servo ', self.__name,
+                ' on pin #', self.__pin,
+                ' - ',
+                message,
+                '\n')
 
     def __info(self, *message):
         self.__log('Info: ', message)
@@ -121,7 +127,6 @@ class AniServo:
 
     def __move(self, position: int):
         servo_position = self.__validate_position(position)
-        # self.__info('Move to ', servo_position,  ' deg.')
         self.__kit.servo[self.__pin].angle = servo_position
 
     def move_to_angle(self, position: int):
