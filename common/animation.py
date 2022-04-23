@@ -1,8 +1,6 @@
 import time
 import math
 
-from scipy.interpolate import interp1d
-
 from common.servo import AniServo
 
 
@@ -35,13 +33,15 @@ class Animation:
 
     def end(self):
         print('\n', 'Refresh count ', self.__refresh_count)
-        print('\n', 'Refresh rate ',  math.floor(self.__refresh_count / self.__elapsed_time), ' Hz')
-        print('\n', 'Interpolation factor ',  math.floor(self.__refresh_count / self.__frames), ' times better')
+        print('\n', 'Refresh rate ',  math.floor(
+            self.__refresh_count / self.__elapsed_time), ' Hz')
+        print('\n', 'Interpolation factor ',  math.floor(
+            self.__refresh_count / self.__frames), ' times better')
 
     # Private Getters
     # Private Getters
     # Private Getters
-    
+
     def __getCurrentFrame(self):
         return math.floor(self.__elapsed_time / self.__frame_duration)
 
@@ -54,6 +54,13 @@ class Animation:
     def __getFrameTime(self, frame: int):
         return self.__frame_duration * frame
 
+    # Interpolation
+    # Interpolation
+    # Interpolation
+
+    def __interpolation(d, x):
+        return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1])/(d[1][0] - d[0][0]))
+
     # Getters
     # Getters
     # Getters
@@ -65,13 +72,14 @@ class Animation:
         current_frame = self.__getCurrentFrame()
         next_frame = self.__getNextFrame()
 
-        X = [self.__getFrameTime(servo, current_frame), self.__getFrameTime(servo, next_frame)]
-        Y = [self.__getFramePosition(servo, current_frame), self.__getFramePosition(servo, next_frame)]
-        
-        # Finding the interpolation
-        y_interp = interp1d(X, Y)
+        data = [
+            [self.__getFrameTime(servo, current_frame),
+             self.__getFramePosition(servo, current_frame)],
+            [self.__getFrameTime(servo, next_frame),
+             self.__getFramePosition(servo, next_frame)]
+        ]
 
-        return y_interp(self.__elapsed_time)
+        return self.__interpolation(data, self.__elapsed_time)
 
     # Checkers
     # Checkers
