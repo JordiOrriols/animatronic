@@ -14,9 +14,9 @@ class Animation:
         self.__frame_duration = 1 / self.__fps
         self.__total_duration = self.__frames / self.__fps
 
-        print('\n', 'Animation at ', self.__fps, 'fps')
-        print('\n', 'Total ',  self.__frames, ' Frames')
-        print('\n', 'Estimated duration: ',
+        print('Animation at ', self.__fps, 'fps')
+        print('Total ',  self.__frames, ' Frames')
+        print('Estimated duration: ',
               self.__total_duration, ' seconds')
 
     def start(self):
@@ -32,10 +32,10 @@ class Animation:
         self.__elapsed_time = self.__refresh_time - self.__start_time
 
     def end(self):
-        print('\n', 'Refresh count ', self.__refresh_count)
-        print('\n', 'Refresh rate ',  math.floor(
+        print('Refresh count ', self.__refresh_count)
+        print('Refresh rate ',  math.floor(
             self.__refresh_count / self.__elapsed_time), ' Hz')
-        print('\n', 'Interpolation factor ',  math.floor(
+        print('Interpolation factor ',  math.floor(
             self.__refresh_count / self.__frames), ' times better')
 
     # Private Getters
@@ -73,9 +73,9 @@ class Animation:
         next_frame = self.__getNextFrame()
 
         data = [
-            [self.__getFrameTime(servo, current_frame),
+            [self.__getFrameTime(current_frame),
              self.__getFramePosition(servo, current_frame)],
-            [self.__getFrameTime(servo, next_frame),
+            [self.__getFrameTime( next_frame),
              self.__getFramePosition(servo, next_frame)]
         ]
 
