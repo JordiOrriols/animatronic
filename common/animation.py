@@ -82,6 +82,7 @@ class Animation:
     def getCurrentPosition(self, servo: AniServo):
         current_frame = self.__getCurrentFrame()
         next_frame = self.__getNextFrame()
+        current_position = self.__getFramePosition(servo, current_frame)
 
         data = [
             [self.__getFrameTime(current_frame),
@@ -90,7 +91,12 @@ class Animation:
              self.__getFramePosition(servo, next_frame)]
         ]
 
-        return self.__interpolation(data, self.__elapsed_time)
+        try:
+            current_position = self.__interpolation(data, self.__elapsed_time)
+        except:
+            print("An exception occurred")
+
+        return current_position
 
     # Checkers
     # Checkers
