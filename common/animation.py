@@ -33,11 +33,12 @@ class Animation:
         self.__elapsed_time = self.__refresh_time - self.__start_time
 
     def end(self):
+        decimal_multiplier = 100
         print('Refresh count ', self.__refresh_count)
         print('Refresh rate ',  math.floor(
             self.__refresh_count / self.__elapsed_time), ' Hz')
         print('Interpolation factor ',  math.floor(
-            self.__refresh_count / self.__frames), ' times better')
+            self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier, ' times better')
 
     # Private Getters
     # Private Getters
