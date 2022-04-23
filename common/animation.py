@@ -58,7 +58,7 @@ class Animation:
     # Interpolation
     # Interpolation
 
-    def __interpolation(d, x):
+    def __interpolation(self, d, x):
         return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1])/(d[1][0] - d[0][0]))
 
     # Getters
