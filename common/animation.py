@@ -9,6 +9,7 @@ class Animation:
         self.__data = data
         self.__fps = int(self.__data['fps'])
         self.__frames = int(self.__data['frames'])
+        self.__last_frame_position = self.__frames -1
         self.__positions = self.__data['positions']
 
         self.__frame_duration = 1 / self.__fps
@@ -43,13 +44,16 @@ class Animation:
     # Private Getters
 
     def __getCurrentFrame(self):
-        return math.floor(self.__elapsed_time / self.__frame_duration)
+        current_frame =  math.floor(self.__elapsed_time / self.__frame_duration)
+
+        if current_frame >= self.__last_frame_position:
+            return self.__last_frame_position
 
     def __getNextFrame(self):
         current_frame = self.__getCurrentFrame()
 
-        if current_frame >= self.__frames:
-            return current_frame
+        if current_frame >= self.__last_frame_position:
+            return self.__last_frame_position
 
         return current_frame + 1
 
