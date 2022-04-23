@@ -7,8 +7,8 @@ from common.servo import AniServo
 class Animation:
     def __init__(self, data):
         self.__data = data
-        self.__fps = self.__data['fps']
-        self.__frames = self.__data['frames']
+        self.__fps = int(self.__data['fps'])
+        self.__frames = int(self.__data['frames'])
         self.__positions = self.__data['positions']
 
         self.__frame_duration = 1 / self.__fps
@@ -49,7 +49,7 @@ class Animation:
         return self.__getCurrentFrame() + 1
 
     def __getFramePosition(self, servo: AniServo, frame: int):
-        return self.__positions[servo.getName()][frame]
+        return int(self.__positions[servo.getName()][frame])
 
     def __getFrameTime(self, frame: int):
         return self.__frame_duration * frame
