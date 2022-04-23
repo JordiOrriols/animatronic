@@ -46,7 +46,12 @@ class Animation:
         return math.floor(self.__elapsed_time / self.__frame_duration)
 
     def __getNextFrame(self):
-        return self.__getCurrentFrame() + 1
+        current_frame = self.__getCurrentFrame()
+
+        if current_frame >= self.__frames:
+            return current_frame
+
+        return current_frame + 1
 
     def __getFramePosition(self, servo: AniServo, frame: int):
         return int(self.__positions[servo.getName()][frame])
