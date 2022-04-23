@@ -39,6 +39,8 @@ class Animation:
             self.__refresh_count / self.__elapsed_time), ' Hz')
         print('Interpolation factor ',  math.floor(
             self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier, ' times better')
+        print('Interpolated animation at ',  math.floor(
+            self.__refresh_count / self.__elapsed_time * decimal_multiplier) / decimal_multiplier, 'fps')
 
     # Private Getters
     # Private Getters
