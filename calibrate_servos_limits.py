@@ -39,4 +39,5 @@ while 1:
             servo = None
 
         if servo != None:
+            print('Angle', position)
             servo.move_to_angle(position)
