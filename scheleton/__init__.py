@@ -1,1 +1,0 @@
-from scheleton.config import servos_data

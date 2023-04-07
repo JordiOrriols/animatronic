@@ -1,7 +1,7 @@
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from scheleton.config import servos_data
+from skeleton.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)
@@ -12,7 +12,7 @@ while 1:
     print('\n\n\n', 'Next adjustment')
 
     servo = None
-    selected_servo = input('Select Servo: ')
+    selected_servo = input('Write Servo Pin: ')
 
     for current_servo in servos_data:
         if(current_servo.getPin() == int(selected_servo)):

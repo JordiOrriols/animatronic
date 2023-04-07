@@ -2,7 +2,7 @@ from adafruit_servokit import ServoKit
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo, initialize_servos
-from scheleton.config import servos_data
+from skeleton.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)
@@ -14,7 +14,6 @@ window.title('Calibrate Phonemes')
 window.geometry('850x300')
 
 # Run code
-
 
 def show_servo_scale(servo: AniServo):
 

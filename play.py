@@ -3,8 +3,7 @@ import json
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from mouth.mouth import adopt_phoneme
-from scheleton.config import servos_data
+from skeleton.config import servos_data
 from common.animation import Animation
 
 # Initialization
@@ -33,4 +32,3 @@ with open('scheleton/animation.json') as json_file:
                     servo.move_to_angle(int(new_position))
 
         animation.end()
-
