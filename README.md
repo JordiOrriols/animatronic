@@ -80,4 +80,5 @@ To play this scripts it's important to know that python code from common and mou
 You must change the `mouth/config.py` with your servos information.
 
 `python3 play_phonemes.py`
+
 This script allow us to change the pose of a mouth with the different phonemes. It is intended to be used with some script to extract phonemes from an audio.
