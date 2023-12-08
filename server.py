@@ -4,24 +4,21 @@ from playsound import playsound
 from common.socket import url, port, messages
 
 async def handler(websocket):
-    async for message in websocket:
+    try:
+        async for message in websocket:
 
-        print(message)
-        await websocket.send(message)
+            print(message)
+            await websocket.send(message)
 
-    # while True:
-    #     try:
-    #         message = await websocket.recv()
-    #     except websockets.ConnectionClosedOK:
-    #         break
-    #     print(message)
+            if message == messages.ready:
+                await websocket.send(messages.waiting)
+                input('Press any key to start')
+                await websocket.send(messages.play)
+                playsound('sound/background.mp3', False)
+                playsound('sound/laugh.mp3', False)
 
-        if message == messages.ready:
-            await websocket.send(messages.waiting)
-            input('Press any key to start')
-            await websocket.send(messages.play)
-            playsound('sound/background.mp3', False)
-            playsound('sound/laugh.mp3', False)
+    except websockets.ConnectionClosedOK:
+        print('Server Closed')
 
 async def main():
     async with serve(handler, url, port):
