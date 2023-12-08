@@ -21,6 +21,10 @@ def initialize():
     print('Initializing for project: ', os.getenv('PROJECT_ID'), '\n')
     servos_data: list[AniServo] = servos_data_object[os.getenv('PROJECT_ID')]
 
+    if servos_data == None:
+        print('Servo Data not initialized. Wrong Project ID', os.getenv('PROJECT_ID'), '\n')
+        return 
+
     kit = ServoKit(channels=16)
     initialize_servos(kit, servos_data)
 
