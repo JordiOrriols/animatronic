@@ -18,6 +18,7 @@ servos_data_object = {
 def initialize():
     load_dotenv()
 
+    print('Initializing for project: ', os.getenv('PROJECT_ID'), '\n')
     servos_data: list[AniServo] = servos_data_object[os.getenv('PROJECT_ID')]
 
     kit = ServoKit(channels=16)

@@ -6,11 +6,11 @@
 ### On Raspberry Pi
 
 `sudo apt-get install python-smbus`
-
 `sudo apt-get install i2c-tools`
 
-
 `sudo pip3 install adafruit-circuitpython-servokit`
+`sudo pip3 install python-dotenv`
+`sudo echo "PROJECT_ID=skeleton" > .env`
 
 Pending to validate
 
@@ -30,7 +30,6 @@ NOTE: ServoKit will not work, but will avoid errors when coding
 
 
 ## Skeleton Scripts
-
 
 This scripts are used to run:
     Tim Hendriks
@@ -53,12 +52,10 @@ You need to select the servo Pin, and then select a start position. Recommended 
 `python3 calibrate_servos_app.py`
 
 This script opens a graphical interface with range controls. All servos will be set with their rest position defined on the configuration.
-
 After that, you can drag and drop the controls to move the servos and see the limits.
 
-
 ### Play Animation from JSON
-`python3 play_fps.py`
+`python3 play_deprecated.py`
 
 This script will play a JSON animation. Will work as a film, so will send the current position to the servo, and then wait until the new position time arrives. This will work like a film in frames per second.
 
@@ -79,6 +76,6 @@ To play this scripts it's important to know that python code from common and mou
 
 You must change the `mouth/config.py` with your servos information.
 
-`python3 play_phonemes.py`
+`python3 mouth/play_phonemes.py`
 
 This script allow us to change the pose of a mouth with the different phonemes. It is intended to be used with some script to extract phonemes from an audio.
