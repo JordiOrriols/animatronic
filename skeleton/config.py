@@ -5,7 +5,7 @@ from common.servo import AniServo
 
 skeleton_servos_data = [
     # BODY
-    AniServo('body-flexion', 0, mg996r_type, 35, 120, 80),
+    AniServo('body-flexion', 0, mg996r_type, 55, 120, 80),
     AniServo('body-rotation', 1, mg90s_type, 45, 145, 95),
 
     # HEAD
