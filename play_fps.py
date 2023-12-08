@@ -3,7 +3,7 @@ import time
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from skeleton.config import servos_data
+from skeletonV2.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)
@@ -12,7 +12,7 @@ initialize_servos(kit, servos_data)
 
 # Run code
 
-with open('scheleton/animation.json') as json_file:
+with open('skeletonV2/animation.json') as json_file:
     data = json.load(json_file)
 
     print('Animation loaded')

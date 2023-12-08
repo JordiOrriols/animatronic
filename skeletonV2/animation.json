@@ -1,0 +1,12 @@
+{
+    "description": "Blender Animation Servo Positions",
+    "fps": 24,
+    "frames": 0,
+    "seconds": 60,
+    "bones": 13,
+    "armature": "Phantom Armature",
+    "file": "Phantom Printing.blend",
+    "positions": {
+
+    }
+}

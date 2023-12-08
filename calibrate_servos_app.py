@@ -2,7 +2,7 @@ from adafruit_servokit import ServoKit
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo, initialize_servos
-from skeleton.config import servos_data
+from skeletonV2.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)

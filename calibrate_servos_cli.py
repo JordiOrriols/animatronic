@@ -1,7 +1,7 @@
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from skeleton.config import servos_data
+from skeletonV2.config import servos_data
 
 # Initialization
 kit = ServoKit(channels=16)

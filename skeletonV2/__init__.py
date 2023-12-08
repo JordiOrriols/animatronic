@@ -1,0 +1,1 @@
+from skeletonV2.config import servos_data

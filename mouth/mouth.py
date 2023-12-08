@@ -1,6 +1,5 @@
 from mouth.config import phonemes_data
 
-
 def adopt_phoneme(phoneme: str, servos_data):
 
     if phoneme not in phonemes_data.keys():
