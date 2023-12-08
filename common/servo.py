@@ -143,10 +143,7 @@ class AniServo:
 
 
 def initialize_servos(kit, servos_data):
-
-    print('INITIALIZING SERVOS ', '\n\n')
-
     for servo in servos_data:
         servo.start(kit)
 
-    print('END INITIALIZATION ', '\n\n')
+    print('Servos Initialized ', '\n')
