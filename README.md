@@ -10,19 +10,19 @@
 
 `sudo pip3 install adafruit-circuitpython-servokit`
 `sudo pip3 install python-dotenv`
+`sudo pip3 install websockets`
 `sudo echo "PROJECT_ID=skeleton" > .env`
 
 Pending to validate
 
 `sudo pip3 install tk`
-
 `sudo apt-get install python-tk python3-tk tk-dev`
 
 
 ### On MacOs
 
 `sudo pip3 install adafruit-circuitpython-servokit`
-
+`sudo pip3 install playsound`
 `brew install python-tk`
 
 
@@ -60,9 +60,11 @@ After that, you can drag and drop the controls to move the servos and see the li
 This script will play a JSON animation. Will work as a film, so will send the current position to the servo, and then wait until the new position time arrives. This will work like a film in frames per second.
 
 
-`python3 play.py`
+`python3 client.py`
 
 This script is similar to the `python3 play_fps.py`, but with the difference that instead of waiting for the next position, will send the position to the servo, and when the code has finished, will interpolate the position to be rendered from the animation JSON file. This will increase the FPS when possible and the animation should be smother.
+
+Also this file will be syncronized via websockets, so we can start the animation from the server where we can syncronize with the music.
 
 
 ## Mouth Scripts
