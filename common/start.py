@@ -7,22 +7,23 @@ from common.servo import initialize_servos
 from skeleton.config import skeleton_servos_data
 from skeletonV2.config import skeletonV2_servos_data
 from common.animation import Animation
+from common.servo import AniServo
 
 servos_data = None
 servos_data_object = {
     'skeleton': skeleton_servos_data,
-    'skeletonV2': skeleton_servos_data,
+    'skeletonV2': skeletonV2_servos_data,
 }
 
 def start():
     load_dotenv()
 
-    servos_data = servos_data_object[os.getenv('PROJECT_ID')]
+    servos_data: list[AniServo] = servos_data_object[os.getenv('PROJECT_ID')]
 
     kit = ServoKit(channels=16)
     initialize_servos(kit, servos_data)
 
-    return servos_data
+    return servos_data, kit
 
 def play(animation_name):
 

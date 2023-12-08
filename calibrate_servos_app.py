@@ -1,16 +1,13 @@
-from adafruit_servokit import ServoKit
 from tkinter import Tk, Frame, Scale, Label
 
-from common.servo import AniServo, initialize_servos
-from skeletonV2.config import servos_data
+from common.servo import AniServo
+from common.start import start
 
 # Initialization
-kit = ServoKit(channels=16)
-
-initialize_servos(kit, servos_data)
+servos_data = start()
 
 window = Tk()
-window.title('Calibrate Phonemes')
+window.title('Calibrate Animatronic')
 window.geometry('850x300')
 
 # Run code
