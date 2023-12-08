@@ -1,7 +1,7 @@
-from common.start import start
+from common.initialize import initialize
 
 # Initialization
-servos_data, kit = start()
+servos_data, kit = initialize()
 
 # Run code
 

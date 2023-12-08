@@ -15,7 +15,7 @@ servos_data_object = {
     'skeletonV2': skeletonV2_servos_data,
 }
 
-def start():
+def initialize():
     load_dotenv()
 
     servos_data: list[AniServo] = servos_data_object[os.getenv('PROJECT_ID')]

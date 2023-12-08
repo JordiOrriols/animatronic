@@ -2,10 +2,10 @@ import os
 import json
 import time
 
-from common.start import start
+from common.initialize import initialize
 
 # Initialization
-servos_data = start()
+servos_data = initialize()
 
 # Run code
 
@@ -19,11 +19,11 @@ with open(os.getenv('PROJECT_ID') + '/animation.json') as json_file:
         print('\n', 'Playing at ', data['fps'], 'fps')
         print('\n', data['frames'], 'Frames')
         print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
-        start = input('Press any key to start: ')
+        initialize = input('Press any key to start: ')
 
         current_frame = 0
         positions = data['positions']
-        start = time.time()
+        initialize = time.time()
         frameDuration = 1 / data['fps']
 
         while current_frame < data['frames']:
@@ -47,4 +47,4 @@ with open(os.getenv('PROJECT_ID') + '/animation.json') as json_file:
         end = time.time()
 
         print('\n', 'Estimated duration: ', data['frames'] / data['fps'], ' seconds')
-        print('\n', 'Final duration: ', end - start, ' seconds')
+        print('\n', 'Final duration: ', end - initialize, ' seconds')

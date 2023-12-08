@@ -1,7 +1,7 @@
-from common.start import start, play
+from common.initialize import initialize, play
 
 # Initialization
-start()
+initialize()
 
 # Run code
 

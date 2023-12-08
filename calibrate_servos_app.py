@@ -1,10 +1,10 @@
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo
-from common.start import start
+from common.initialize import initialize
 
 # Initialization
-servos_data = start()
+servos_data = initialize()
 
 window = Tk()
 window.title('Calibrate Animatronic')
