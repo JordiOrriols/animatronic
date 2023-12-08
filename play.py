@@ -10,8 +10,13 @@ initialize()
 animation_name = 'animation'
 
 with open(os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
+
     data = json.load(json_file)
-    
-    while 1:
-        input('Press any key to start: ')
-        play(data)
+    continue_loop = True
+
+    while continue_loop:
+        input = input('Press any key to start or write exit to stop: ')
+        if input != 'exit':
+            play(data)
+        else:
+            continue_loop = False

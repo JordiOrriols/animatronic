@@ -55,3 +55,7 @@ def play(json_file):
                 servo.move_to_angle(int(new_position))
 
     animation.end()
+
+    for servo in servos_data:
+        servo.sleep()
+
