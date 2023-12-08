@@ -9,10 +9,10 @@ async def handler(websocket):
         print(message)
         await websocket.send(message)
 
-        if message == messages.ready:
-            await websocket.send(messages.waiting)
+        if message == messages['ready'] or message == messages['finished']:
+            await websocket.send(messages['waiting'])
             input('Press any key to start')
-            await websocket.send(messages.play)
+            await websocket.send(messages['play'])
             playsound('sound/background.mp3', False)
             playsound('sound/laugh.mp3', False)
 
