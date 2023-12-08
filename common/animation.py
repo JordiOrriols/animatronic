@@ -1,12 +1,12 @@
 import time
 import math
+import json
 
 from common.servo import AniServo
 
-
 class Animation:
-    def __init__(self, data):
-        self.__data = data
+    def __init__(self, json_file):
+        self.__data = json.load(json_file)
         self.__fps = int(self.__data['fps'])
         self.__frames = int(self.__data['frames'])
         self.__last_frame_position = self.__frames -1

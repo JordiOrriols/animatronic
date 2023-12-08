@@ -1,6 +1,5 @@
 from common.config import fabric_servo_data
 
-
 class AniServo:
     def __init__(self, name: str, pin: int, type: str, min: int, max: int, rest_position: int):
         self.__name = name

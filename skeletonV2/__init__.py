@@ -1,1 +1,1 @@
-from skeletonV2.config import servos_data
+from skeletonV2.config import skeletonV2_servos_data
