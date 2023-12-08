@@ -56,6 +56,3 @@ def play(json_file):
 
     animation.end()
 
-    for servo in servos_data:
-        servo.sleep()
-
