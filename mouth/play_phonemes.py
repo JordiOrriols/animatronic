@@ -1,17 +1,12 @@
-from adafruit_servokit import ServoKit
-
-from common.servo import initialize_servos
 from mouth.mouth import adopt_phoneme
-from mouth.config import servos_data
+from common.initialize import initialize
 
 # Initialization
-kit = ServoKit(channels=16)
-
-initialize_servos(kit, servos_data)
+servos_data, kit = initialize()
 
 # Run code
 
 while 1:
     print('\n\n\n', 'Next movement')
     phoneme = input('Select Phoneme: ')
-    adopt_phoneme(kit, phoneme)
+    adopt_phoneme(phoneme, servos_data)
