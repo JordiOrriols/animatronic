@@ -7,7 +7,6 @@ from common.servo import initialize_servos
 from skeleton.config import skeleton_servos_data
 from skeletonV2.config import skeletonV2_servos_data
 from common.animation import Animation
-from common.servo import AniServo
 
 servos_data_object = {
     'skeleton': skeleton_servos_data,
@@ -31,31 +30,28 @@ def get_servos_data():
 
     if servos_data == None:
         print('Servo Data not initialized. Wrong Project ID', os.getenv('PROJECT_ID'), '\n')
-        return
+        return None
     
     return servos_data
 
-def play(animation_name):
+def play(json_file):
 
     servos_data = get_servos_data()
 
     if servos_data == None:
-        print('Servo Data not initialized. Execute start function.', '\n')
         return
 
-    with open(os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
+    animation = Animation(json_file)
 
-        animation = Animation(json_file)
+    animation.start()
 
-        animation.start()
+    while animation.inProgress():
 
-        while animation.inProgress():
+        animation.refresh()
 
-            animation.refresh()
+        for servo in servos_data:
+            if servo.getName() in animation.getPositions().keys():
+                new_position = animation.getCurrentPosition(servo)
+                servo.move_to_angle(int(new_position))
 
-            for servo in servos_data:
-                if servo.getName() in animation.getPositions().keys():
-                    new_position = animation.getCurrentPosition(servo)
-                    servo.move_to_angle(int(new_position))
-
-        animation.end()
+    animation.end()

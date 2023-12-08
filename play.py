@@ -1,3 +1,4 @@
+import os
 from common.initialize import initialize, play
 
 # Initialization
@@ -5,7 +6,10 @@ initialize()
 
 # Run code
 
-while 1:
-    input('Press any key to start: ')
+animation_name = 'animation'
 
-    play('animation')
+with open(os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
+
+    while 1:
+        input('Press any key to start: ')
+        play(json_file)
