@@ -1,4 +1,6 @@
 
+
+import asyncio
 from websockets.sync.client import connect
 
 from common.autodiscovery import AutoDiscovery
@@ -23,12 +25,16 @@ class WebSocketClient(Logger):
         self.info('Server found at ', current_ip)
         self.info('Connecting...')
 
-        with connect("ws://" + current_ip + ":" + str(WEBSOCKET_PORT)) as websocket:
+        loop = asyncio.get_event_loop()
+        self.__websocket = loop.run_until_complete(self.__connect_websocket(current_ip))
 
-            self.info("Connected successfully")
-            self.__websocket = websocket
-            self.send(WEBSOCKET_MESSAGES['connected'])
-        
+        self.info("Connected successfully")
+        self.send(WEBSOCKET_MESSAGES['connected'])
+
+    async def __connect_websocket(self, current_ip):
+        uri = "ws://" + current_ip + ":" + str(WEBSOCKET_PORT)
+        return await connect(uri)
+    
     def ready(self, handler):
 
         self.send(WEBSOCKET_MESSAGES['ready'])
