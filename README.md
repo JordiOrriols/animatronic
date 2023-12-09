@@ -2,8 +2,7 @@
 
 ## To Install
 
-
-### On Raspberry Pi
+### CLIENT On Raspberry Pi
 
 `sudo apt-get install python-smbus`
 `sudo apt-get install i2c-tools`
@@ -13,23 +12,20 @@
 `sudo pip3 install websockets`
 `sudo echo "PROJECT_ID=skeleton" > .env`
 
-Pending to validate
+### SERVER On MacOs
 
-`sudo pip3 install tk`
-`sudo apt-get install python-tk python3-tk tk-dev`
-
-
-### On MacOs
-
-`sudo pip3 install adafruit-circuitpython-servokit`
 `sudo pip3 install playsound`
 `brew install python-tk`
 
+### Connect to your Raspberry Pi
 
-NOTE: ServoKit will not work, but will avoid errors when coding
+This script is used to connect to the raspberry pi zero and start the project.
+You need to have the repository cloned to `git/animatronic` folder.
 
+`ssh pi@raspberrypi.local`
+`. git/animatronic/startup.sh`
 
-## Skeleton Scripts
+### Project Configuration
 
 This scripts are used to run:
     Tim Hendriks
@@ -39,7 +35,7 @@ This scripts are used to run:
 But can be used to run all kind of servo animations.
 To play this scripts it's important to know that python code from common and skeleton will be used.
 
-You must change the `skeleton/config.py` with your servos information.
+You must change the `projects/skeleton/config.py` with your servos information.
 
 
 ### Calibrate Servos
@@ -51,6 +47,7 @@ You need to select the servo Pin, and then select a start position. Recommended 
 
 `python3 calibrate_servos_app.py`
 
+This script will be deprecated.
 This script opens a graphical interface with range controls. All servos will be set with their rest position defined on the configuration.
 After that, you can drag and drop the controls to move the servos and see the limits.
 
@@ -78,6 +75,6 @@ To play this scripts it's important to know that python code from common and mou
 
 You must change the `mouth/config.py` with your servos information.
 
-`python3 mouth/play_phonemes.py`
+`python3 projects/mouth/play_phonemes.py`
 
 This script allow us to change the pose of a mouth with the different phonemes. It is intended to be used with some script to extract phonemes from an audio.
