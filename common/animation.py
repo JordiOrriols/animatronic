@@ -13,10 +13,11 @@ class Animation:
 
         self.__frame_duration = 1 / self.__fps
         self.__total_duration = self.__frames / self.__fps
+        self.__debug = False
 
-        print('Animation at ', self.__fps, 'fps')
-        print('Total ',  self.__frames, ' Frames')
-        print('Estimated duration: ',
+        self.__info('Animation at ', self.__fps, 'fps')
+        self.__info('Total ',  self.__frames, ' Frames')
+        self.__info('Estimated duration: ',
               self.__total_duration, ' seconds')
 
     def start(self):
@@ -33,10 +34,10 @@ class Animation:
 
     def end(self):
         decimal_multiplier = 100
-        print('Refresh count ', self.__refresh_count)
-        print('Refresh rate ',  math.floor(
+        self.__info('Refresh count ', self.__refresh_count)
+        self.__info('Refresh rate ',  math.floor(
             self.__refresh_count / self.__elapsed_time), ' Hz')
-        print('Interpolation factor ',  math.floor(
+        self.__info('Interpolation factor ',  math.floor(
             self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier, ' times better')
 
     # Private Getters
@@ -93,7 +94,27 @@ class Animation:
         try:
             return self.__interpolation(data, self.__elapsed_time)
         except:
+            self.__error('Interpolation failed')
             return self.__getFramePosition(servo, current_frame)
+
+    # Log
+    # Log
+    # Log
+
+    def debug(self):
+        self.__debug = True
+
+    def __log(self, level: str, *message):
+        if self.__debug:
+            print(level, 'Animation - ',
+                  message,
+                  '\n')
+
+    def __info(self, *message):
+        self.__log('Info: ', message)
+
+    def __error(self, *message):
+        self.__log('ERROR: ', message)
 
     # Checkers
     # Checkers
