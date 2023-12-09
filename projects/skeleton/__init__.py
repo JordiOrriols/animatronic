@@ -1,1 +1,0 @@
-from projects.skeleton.config import skeleton_servos_data
