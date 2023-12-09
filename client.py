@@ -1,59 +1,24 @@
 import os
 import json
 
-from websockets.sync.client import connect
-from socket import socket, AF_INET, SOCK_DGRAM
-
 from common.initialize import initialize, play
-from common.socket import DISCOVERY_PORT, DISCOVERY_MAGIC, WEBSOCKET_PORT, messages
 
-# Auto Discovery - UPD LISTENING
-
-s = socket(AF_INET, SOCK_DGRAM) # create UDP socket
-s.bind(('', DISCOVERY_PORT))
-
-current_ip = None
-
-print("AutoDiscovery - Listening for service")
-
-while current_ip == None:
-
-    data, addr = s.recvfrom(1024) # wait for a packet
-    print("AutoDiscovery - Data", data)
-
-    if data.startswith(str.encode(DISCOVERY_MAGIC)):
-        print("AutoDiscovery - Found service", data)
-        current_ip = data[len(DISCOVERY_MAGIC):].decode('utf-8')
-        print("AutoDiscovery - Current IP", current_ip)
+from common.websocket import WebSocketClient, messages
 
 # Start Websocket
+client = WebSocketClient()
+client.connect()
 
-print("Websocket - Connecting...")
+initialize()
 
-with connect("ws://" + current_ip + ":" + str(WEBSOCKET_PORT)) as websocket:
+animation_name = 'animation'
+with open('projects/' + os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
 
-    print("Websocket - Connected Successfully")
-    websocket.send(messages['connected'])
-    
-    initialize()
+    data = json.load(json_file)
 
-    animation_name = 'animation'
-    with open(os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
-    
-        data = json.load(json_file)
-        websocket.send(messages['ready'])
-        continue_loop = True
+    def handler(msg):
+        if msg == messages['play']:
+            play(data)
+            client.send(messages['finished'])
 
-        while continue_loop:
-
-            message = websocket.recv()
-            print(f"Websocket Event: {message}")
-
-            if message == messages['play']:
-                play(data)
-                websocket.send(messages['finished'])
-            elif message == messages['exit']:
-                continue_loop = False
-
-
-
+    client.ready(handler)
