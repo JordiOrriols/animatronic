@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 
 from common.servo import initialize_servos
-from skeleton.config import skeleton_servos_data
-from skeletonV2.config import skeletonV2_servos_data
+from projects.skeleton.config import skeleton_servos_data
+from projects.skeletonV2.config import skeletonV2_servos_data
+from projects.jackSparrow.config import jackSparrow_servos_data
 from common.animation import Animation
 
 servos_data_object = {
     'skeleton': skeleton_servos_data,
     'skeletonV2': skeletonV2_servos_data,
+    'jackSparrow': jackSparrow_servos_data
 }
 
 def initialize():
