@@ -1,6 +1,7 @@
 from common.project import Project
 
-from common.websocket import WebSocketClient, messages
+from common.websocket import WebSocketClient
+from common.config import WEBSOCKET_MESSAGES
 
 # Start Websocket
 client = WebSocketClient()
@@ -10,8 +11,8 @@ project = Project()
 project.load_animation('animation')
 
 def handler(msg):
-    if msg == messages['play']:
+    if msg == WEBSOCKET_MESSAGES['play']:
         project.play()
-        client.send(messages['finished'])
+        client.send(WEBSOCKET_MESSAGES['finished'])
 
 client.ready(handler)

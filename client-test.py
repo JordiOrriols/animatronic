@@ -1,6 +1,7 @@
 import time
 
-from common.websocket import WebSocketClient, messages
+from common.websocket import WebSocketClient
+from common.config import WEBSOCKET_MESSAGES
 
 client = WebSocketClient()
 
@@ -9,8 +10,8 @@ client = WebSocketClient()
 client.connect()
 
 def handler(msg):
-    if msg == messages['play']:
+    if msg == WEBSOCKET_MESSAGES['play']:
         time.sleep(5)
-        client.send(messages['finished'])
+        client.send(WEBSOCKET_MESSAGES['finished'])
 
 client.ready(handler)
