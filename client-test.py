@@ -1,9 +1,36 @@
 import time
+
 from websockets.sync.client import connect
-from common.socket import url, port, messages
+from socket import socket, AF_INET, SOCK_DGRAM
 
-with connect("ws://" + url + ":" + str(port)) as websocket:
+from common.socket import DISCOVERY_PORT, DISCOVERY_MAGIC, WEBSOCKET_PORT, messages
 
+# Auto Discovery - UPD LISTENING
+
+s = socket(AF_INET, SOCK_DGRAM) # create UDP socket
+s.bind(('', DISCOVERY_PORT))
+
+current_ip = None
+
+print("AutoDiscovery - Listening for service")
+
+while current_ip == None:
+    
+    data, addr = s.recvfrom(1024) # wait for a packet
+    print("AutoDiscovery - Data", data)
+
+    if data.startswith(str.encode(DISCOVERY_MAGIC)):
+        print("AutoDiscovery - Found service", data)
+        current_ip = data[len(DISCOVERY_MAGIC):].decode('utf-8')
+        print("AutoDiscovery - Current IP", current_ip)
+
+# Start Websocket
+
+print("Websocket - Connecting...")
+
+with connect("ws://" + current_ip + ":" + str(WEBSOCKET_PORT)) as websocket:
+
+    print("Websocket - Connected Successfully")
     websocket.send(messages['connected'])
 
     websocket.send(messages['ready'])
@@ -12,7 +39,7 @@ with connect("ws://" + url + ":" + str(port)) as websocket:
     while continue_loop:
 
         message = websocket.recv()
-        print(f"Socket Event: {message}")
+        print(f"Websocket Event: {message}")
 
         if message == messages['play']:
             time.sleep(5)

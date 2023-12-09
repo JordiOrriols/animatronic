@@ -1,6 +1,8 @@
 
-url = 'localhost'
-port = 8765
+WEBSOCKET_PORT = 8765
+
+DISCOVERY_PORT = 50000
+DISCOVERY_MAGIC = "jordiorriols-animatronic@"
 
 messages = {
     "connected": 'client-connected',
