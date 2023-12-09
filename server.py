@@ -65,6 +65,7 @@ async def handler(websocket):
         if message == WEBSOCKET_MESSAGES['ready'] or message == WEBSOCKET_MESSAGES['finished']:
             await websocket.send(WEBSOCKET_MESSAGES['waiting'])
             input('Press any key to start')
+            print("Playing Animation: ")
             await websocket.send(WEBSOCKET_MESSAGES['play'])
             playsound('sound/background.mp3', False)
             playsound('sound/laugh.mp3', False)
