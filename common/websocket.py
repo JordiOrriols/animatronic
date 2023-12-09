@@ -1,7 +1,7 @@
 
 from websockets.sync.client import connect
 from common.autodiscovery import AutoDiscovery
-from logger import Logger
+from common.logger import Logger
 
 WEBSOCKET_PORT = 8765
 messages = {

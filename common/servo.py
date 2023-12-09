@@ -1,5 +1,5 @@
 from common.config import fabric_servo_data
-from logger import Logger
+from common.logger import Logger
 
 class AniServo(Logger):
     def __init__(self, name: str, pin: int, type: str, min: int, max: int, rest_position: int):

@@ -1,6 +1,6 @@
 from socket import socket, AF_INET, SOCK_DGRAM
 
-from logger import Logger
+from common.logger import Logger
 
 DISCOVERY_PORT = 50000
 DISCOVERY_MAGIC = "jordiorriols-animatronic@"

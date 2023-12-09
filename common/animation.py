@@ -2,7 +2,7 @@ import time
 import math
 
 from common.servo import AniServo
-from logger import Logger
+from common.logger import Logger
 
 class Animation(Logger):
     def __init__(self, data):
