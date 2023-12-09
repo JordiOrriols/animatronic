@@ -67,6 +67,7 @@ async def handler(websocket):
             input('Press any key to start')
             print("Playing Animation: ")
             await websocket.send(WEBSOCKET_MESSAGES['play'])
+            sleep(1)
             playsound('sound/background.mp3', False)
             playsound('sound/laugh.mp3', False)
 

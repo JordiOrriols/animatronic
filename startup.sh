@@ -1,4 +1,5 @@
-# Wait for Network connection
+# If at some point you add this file to the startup of the raspberry pi
+# This waits for Network connection
 sleep 5
 
 cd git/animatronic/
