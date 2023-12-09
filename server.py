@@ -6,7 +6,7 @@ from websockets.server import serve
 from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, gethostbyname, gethostname
 from playsound import playsound
 
-from common.socket import DISCOVERY_PORT, DISCOVERY_MAGIC, WEBSOCKET_PORT, messages
+from common.autodiscovery import DISCOVERY_PORT, DISCOVERY_MAGIC, WEBSOCKET_PORT, messages
 
 # Init
 
