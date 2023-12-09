@@ -3,7 +3,7 @@ from common.logger import Logger
 
 class AniServo(Logger):
     def __init__(self, name: str, pin: int, type: str, min: int, max: int, rest_position: int):
-        super(self, 'AniServo ' + name + ' on pin #' + pin)
+        super(self, 'AniServo ' + str(name) + ' on pin #' + str(pin))
 
         self.__name = name
         self.__pin = pin
