@@ -1,9 +1,7 @@
 from socket import socket, AF_INET, SOCK_DGRAM
 
 from common.logger import Logger
-
-DISCOVERY_PORT = 50000
-DISCOVERY_MAGIC = "jordiorriols-animatronic@"
+from common.config import DISCOVERY_PORT, DISCOVERY_MAGIC
 
 class AutoDiscovery(Logger):
     def __init__(self):

@@ -2,10 +2,10 @@ import os
 import json
 import time
 
-from common.initialize import initialize
+from common.project import Project
 
 # Initialization
-servos_data = initialize()
+project = Project()
 
 # Run code
 
@@ -30,7 +30,7 @@ with open('projects/' + os.getenv('PROJECT_ID') + '/animation.json') as json_fil
 
             frameStart = time.time()
 
-            for servo in servos_data:
+            for servo in project.get_servos_data():
                 if servo.getName() in positions.keys():
                     new_position = positions[servo.getName()][current_frame]
                     servo.move_to_angle(int(new_position))

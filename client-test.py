@@ -8,7 +8,6 @@ client = WebSocketClient()
 client = WebSocketClient()
 client.connect()
 
-
 def handler(msg):
     if msg == messages['play']:
         time.sleep(5)

@@ -11,3 +11,16 @@ fabric_servo_data = {
     mg90s_type: {'pulse_width': {'min': 600, 'max': 2400}, 'actuation_range': 180},
     ghs37a_type: {'pulse_width': {'min': 600, 'max': 2400}, 'actuation_range': 180}
 }
+
+DISCOVERY_PORT = 50000
+DISCOVERY_MAGIC = "jordiorriols-animatronic@"
+
+WEBSOCKET_PORT = 8765
+WEBSOCKET_MESSAGES = {
+    "connected": 'client-connected',
+    "ready": 'client-ready',
+    "waiting": 'server-waiting',
+    "play": 'play-animation',
+    "finished": 'animation-finished',
+    "exit": 'exit',
+}

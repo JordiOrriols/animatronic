@@ -1,17 +1,9 @@
 
 from websockets.sync.client import connect
+
 from common.autodiscovery import AutoDiscovery
 from common.logger import Logger
-
-WEBSOCKET_PORT = 8765
-messages = {
-    "connected": 'client-connected',
-    "ready": 'client-ready',
-    "waiting": 'server-waiting',
-    "play": 'play-animation',
-    "finished": 'animation-finished',
-    "exit": 'exit',
-}
+from common.config import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 class WebSocketClient(Logger):
     def __init__(self):
@@ -35,11 +27,11 @@ class WebSocketClient(Logger):
 
             self.info("Connected successfully")
             self.__websocket = websocket
-            self.send(messages['connected'])
+            self.send(WEBSOCKET_MESSAGES['connected'])
         
     def ready(self, handler):
 
-        self.send(messages['ready'])
+        self.send(WEBSOCKET_MESSAGES['ready'])
         self.__continue_loop = True
 
         while self.__continue_loop:
@@ -47,7 +39,7 @@ class WebSocketClient(Logger):
             message = self.__websocket.recv()
             self.info(f"Message recieved: {message}")
 
-            if message == messages['exit']:
+            if message == WEBSOCKET_MESSAGES['exit']:
                 self.__continue_loop = False
             
             handler(message)

@@ -1,7 +1,7 @@
-from common.initialize import initialize
+from common.project import Project
 
 # Initialization
-servos_data, kit = initialize()
+project = Project(False)
 
 # Run code
 
@@ -11,7 +11,7 @@ while 1:
     servo = None
     selected_servo = input('Write Servo Pin: ')
 
-    for current_servo in servos_data:
+    for current_servo in project.get_servos_data():
         if(current_servo.getPin() == int(selected_servo)):
             servo = current_servo
 
@@ -19,7 +19,7 @@ while 1:
         continue
 
     print(servo.getName(), '\n')
-    servo.start(kit)
+    servo.start(project.kit)
 
     position = int(input('Select start position in degrees: '))
     servo.move_to_angle(position)

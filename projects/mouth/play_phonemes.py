@@ -1,12 +1,12 @@
 from mouth.mouth import adopt_phoneme
-from common.initialize import initialize
+from common.project import Project
 
 # Initialization
-servos_data, kit = initialize()
+project = Project()       
 
 # Run code
 
 while 1:
     print('\n\n\n', 'Next movement')
     phoneme = input('Select Phoneme: ')
-    adopt_phoneme(phoneme, servos_data)
+    adopt_phoneme(phoneme, project.get_servos_data())

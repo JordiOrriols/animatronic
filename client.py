@@ -1,7 +1,4 @@
-import os
-import json
-
-from common.initialize import initialize, play
+from common.project import Project
 
 from common.websocket import WebSocketClient, messages
 
@@ -9,16 +6,12 @@ from common.websocket import WebSocketClient, messages
 client = WebSocketClient()
 client.connect()
 
-initialize()
+project = Project()
+project.load_animation('animation')
 
-animation_name = 'animation'
-with open('projects/' + os.getenv('PROJECT_ID') + '/' + animation_name + '.json') as json_file:
+def handler(msg):
+    if msg == messages['play']:
+        project.play()
+        client.send(messages['finished'])
 
-    data = json.load(json_file)
-
-    def handler(msg):
-        if msg == messages['play']:
-            play(data)
-            client.send(messages['finished'])
-
-    client.ready(handler)
+client.ready(handler)

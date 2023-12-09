@@ -1,10 +1,10 @@
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo
-from common.initialize import initialize
+from common.project import Project
 
 # Initialization
-servos_data = initialize()
+project = Project()     
 
 window = Tk()
 window.title('Calibrate Animatronic')
@@ -35,7 +35,7 @@ def show_servo_scale(servo: AniServo):
     l.pack(side='top', expand=True)
 
 
-for servo in servos_data:
+for servo in project.get_servos_data():
     show_servo_scale(servo)
 
 window.mainloop()
