@@ -1,4 +1,4 @@
-from mouth.config import phonemes_data
+from projects.mouth.config import phonemes_data
 from common.servo import AniServo
 
 def adopt_phoneme(phoneme: str, servos_data: list[AniServo]):
