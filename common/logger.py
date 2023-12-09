@@ -2,7 +2,7 @@
 class Logger:
     def __init__(self, logName):
         self.logName = logName
-        self.__debug = False
+        self.__debug = True
 
     # Log
     # Log
