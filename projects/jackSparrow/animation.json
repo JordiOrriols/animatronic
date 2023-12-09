@@ -1,0 +1,12 @@
+{
+    "description": "Blender Animation Servo Positions",
+    "fps": 24,
+    "frames": 0,
+    "seconds": 60,
+    "bones": 13,
+    "armature": "jackSparrow Armature",
+    "file": "JackSparrow Printing.blend",
+    "positions": {
+
+    }
+}
