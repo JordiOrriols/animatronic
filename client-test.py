@@ -3,8 +3,6 @@ import time
 from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
 
-client = WebSocketClient()
-
 # Start Websocket
 client = WebSocketClient()
 client.connect()

@@ -4,7 +4,7 @@ from time import sleep
 from playsound import playsound
 
 from websockets.server import serve
-from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST
+from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, gethostbyname, gethostname
 
 from common.autodiscovery import DISCOVERY_PORT, DISCOVERY_MAGIC
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
@@ -22,7 +22,8 @@ def get_local_ip():
         return local_ip
     except socket.error as e:
         print(f"Error getting local IP address: {e}")
-        return None
+        current_ip = gethostbyname(gethostname()) # get our IP. Be careful if you have multiple network interfaces or IPs
+        return current_ip
 
 # Example usage
 current_ip = get_local_ip()
