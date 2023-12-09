@@ -9,7 +9,7 @@ servos_data = initialize()
 
 # Run code
 
-with open(os.getenv('PROJECT_ID') + '/animation.json') as json_file:
+with open('projects/' + os.getenv('PROJECT_ID') + '/animation.json') as json_file:
     data = json.load(json_file)
 
     print('Animation loaded')
