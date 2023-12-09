@@ -1,7 +1,10 @@
 from common.config import fabric_servo_data
+from logger import Logger
 
-class AniServo:
+class AniServo(Logger):
     def __init__(self, name: str, pin: int, type: str, min: int, max: int, rest_position: int):
+        super(self, 'AniServo ' + name + ' on pin #' + pin)
+
         self.__name = name
         self.__pin = pin
         self.__type = type
@@ -12,8 +15,6 @@ class AniServo:
 
         self.__connection = None
         self.__connectionDirection = None
-
-        self.__debug = False
 
     # Getters
     # Getters
@@ -42,27 +43,6 @@ class AniServo:
         self.__connection = servo
         self.__connectionDirection = direction
 
-    # Log
-    # Log
-    # Log
-
-    def debug(self):
-        self.__debug = True
-
-    def __log(self, level: str, *message):
-        if self.__debug:
-            print(level, 'Servo ', self.__name,
-                  ' on pin #', self.__pin,
-                  ' - ',
-                  message,
-                  '\n')
-
-    def __info(self, *message):
-        self.__log('Info: ', message)
-
-    def __error(self, *message):
-        self.__log('ERROR: ', message)
-
     # Start
     # Start
     # Start
@@ -72,7 +52,7 @@ class AniServo:
         max = self.__fabric_data['pulse_width']['max']
         actuation_range = self.__fabric_data['actuation_range']
 
-        self.__info(
+        self.info(
             ' type: ', self.__type,
             ' min: ', min,
             ' max: ', max,
@@ -101,24 +81,24 @@ class AniServo:
     def __validate_position(self, position: int):
 
         if position < 0:
-            self.__error('Position minimum exedeed ',
+            self.error('Position minimum exedeed ',
                          position,  '. Moved to: 0')
             position = 0
 
         minimum_phisical_limit = self.__physical_limits_min
         if position < minimum_phisical_limit:
-            self.__error('Minimum phisical limit exedeed ', position,
+            self.error('Minimum phisical limit exedeed ', position,
                          '. Moved to: ', minimum_phisical_limit)
             position = minimum_phisical_limit
 
         if position > self.__fabric_data['actuation_range']:
-            self.__error('Position maximum exedeed ', position,
+            self.error('Position maximum exedeed ', position,
                          '. Moved to: ', self.fabric_data['actuation_range'])
             position = self.__fabric_data['actuation_range']
 
         maximum_phisical_limit = self.__physical_limits_max
         if position > maximum_phisical_limit:
-            self.__error('Maximum phisical limit exedeed ', position,
+            self.error('Maximum phisical limit exedeed ', position,
                          '. Moved to: ', maximum_phisical_limit)
             position = maximum_phisical_limit
 
