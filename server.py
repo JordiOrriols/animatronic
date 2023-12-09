@@ -7,7 +7,6 @@ async def handler(websocket):
     async for message in websocket:
 
         print(message)
-        await websocket.send(message)
 
         if message == messages['ready'] or message == messages['finished']:
             await websocket.send(messages['waiting'])

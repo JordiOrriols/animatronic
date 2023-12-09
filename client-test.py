@@ -15,7 +15,6 @@ with connect("ws://" + url + ":" + str(port)) as websocket:
         print(f"Socket Event: {message}")
 
         if message == messages['play']:
-
             time.sleep(5)
             websocket.send(messages['finished'])
         elif message == messages['exit']:
