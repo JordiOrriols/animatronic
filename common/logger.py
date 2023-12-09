@@ -14,8 +14,7 @@ class Logger:
     def log(self, level: str, *message):
         if self.__debug:
             print(level, self.logName + ' - ',
-                  message,
-                  '\n')
+                  message)
 
     def info(self, *message):
         self.log('Info: ', message)
