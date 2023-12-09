@@ -4,27 +4,40 @@ from time import sleep
 from playsound import playsound
 
 from websockets.server import serve
-from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, gethostbyname, gethostname
+from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST
 
 from common.autodiscovery import DISCOVERY_PORT, DISCOVERY_MAGIC
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
-# Init
-
-current_ip = gethostbyname(gethostname()) # get our IP. Be careful if you have multiple network interfaces or IPs
-auto_discovery = True
-
 # Auto Discovery - UDP BROADCAST
 
-s = socket(AF_INET, SOCK_DGRAM) # Create UDP socket
-s.bind(('', 0))
-s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1) # This is a broadcast socket
+socket_ip = socket(AF_INET, SOCK_DGRAM) # Create UDP socket
+
+def get_local_ip():
+    try:
+        # Create a socket to get the local IP address
+        socket_ip.connect(("8.8.8.8", 80))  # Connect to a known external server (Google's public DNS)
+        local_ip = socket_ip.getsockname()[0]
+        socket_ip.close()
+        return local_ip
+    except socket.error as e:
+        print(f"Error getting local IP address: {e}")
+        return None
+
+# Example usage
+current_ip = get_local_ip()
+print("Local IP address:", current_ip)
+auto_discovery = True
+
+socket_broadcast = socket(AF_INET, SOCK_DGRAM) # Create UDP socket
+socket_broadcast.bind(('', 0))
+socket_broadcast.setsockopt(SOL_SOCKET, SO_BROADCAST, 1) # This is a broadcast socket
 
 def sendAutoDiscovery():
     while True:
         if(auto_discovery == True):
             data = DISCOVERY_MAGIC + str(current_ip)
-            s.sendto(str.encode(data), ('<broadcast>', DISCOVERY_PORT))
+            socket_broadcast.sendto(str.encode(data), ('<broadcast>', DISCOVERY_PORT))
             print("AutoDiscovery - Sent service announcement", data)
             sleep(5)
         else:
