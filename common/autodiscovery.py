@@ -5,7 +5,7 @@ from common.config import DISCOVERY_PORT, DISCOVERY_MAGIC
 
 class AutoDiscovery(Logger):
     def __init__(self):
-        super(self, 'AutoDiscovery')
+        super().__init__('AutoDiscovery')
         
         self.__current_ip = None
 

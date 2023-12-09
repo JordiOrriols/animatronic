@@ -2,14 +2,14 @@ from common.config import fabric_servo_data
 from common.logger import Logger
 
 class AniServo(Logger):
-    def __init__(self, name: str, pin: int, type: str, min: int, max: int, rest_position: int):
-        super(self, 'AniServo ' + str(name) + ' on pin #' + str(pin))
+    def __init__(self, name: str, pin: int, type: str, min_val: int, max_val: int, rest_position: int):
+        super().__init__('AniServo ' + str(name) + ' on pin #' + str(pin))
 
         self.__name = name
         self.__pin = pin
         self.__type = type
-        self.__physical_limits_min = min
-        self.__physical_limits_max = max
+        self.__physical_limits_min = min_val
+        self.__physical_limits_max = max_val
         self.__rest_position = rest_position
         self.__fabric_data = fabric_servo_data[type]
 

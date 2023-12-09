@@ -19,7 +19,7 @@ servos_data_object = {
 
 class Project(Logger):
     def __init__(self, init_servos = True):
-        super(self, 'Project')
+        super().__init__('Project')
 
         self.info('Loading environment...')
         load_dotenv()

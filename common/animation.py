@@ -6,7 +6,7 @@ from common.logger import Logger
 
 class Animation(Logger):
     def __init__(self, data):
-        super(self, 'Animation')
+        super().__init__('Animation')
         
         self.__data = data
         self.__fps = int(self.__data['fps'])

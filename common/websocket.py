@@ -7,7 +7,7 @@ from common.config import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 class WebSocketClient(Logger):
     def __init__(self):
-        super(self, 'WebSocketClient')
+        super().__init__('WebSocketClient')
 
         self.__continue_loop = True
         self.__websocket = None
