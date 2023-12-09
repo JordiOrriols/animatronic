@@ -1,1 +1,1 @@
-from jackSparrow.config import jackSparrow_servos_data
+from projects.jackSparrow.config import jackSparrow_servos_data

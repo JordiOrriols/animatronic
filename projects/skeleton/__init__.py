@@ -1,1 +1,1 @@
-from skeleton.config import skeleton_servos_data
+from projects.skeleton.config import skeleton_servos_data

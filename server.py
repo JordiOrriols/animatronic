@@ -1,13 +1,13 @@
 import asyncio
 import threading
 from time import sleep
+from playsound import playsound
 
 from websockets.server import serve
 from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST, gethostbyname, gethostname
-from playsound import playsound
 
 from common.autodiscovery import DISCOVERY_PORT, DISCOVERY_MAGIC
-from common.websocket import WEBSOCKET_PORT, messages
+from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 # Init
 
@@ -46,13 +46,13 @@ async def handler(websocket):
 
         print("Websocket Message: ", message)
 
-        if message == messages['connected']:
+        if message == WEBSOCKET_MESSAGES['connected']:
             auto_discovery = False
 
-        if message == messages['ready'] or message == messages['finished']:
-            await websocket.send(messages['waiting'])
+        if message == WEBSOCKET_MESSAGES['ready'] or message == WEBSOCKET_MESSAGES['finished']:
+            await websocket.send(WEBSOCKET_MESSAGES['waiting'])
             input('Press any key to start')
-            await websocket.send(messages['play'])
+            await websocket.send(WEBSOCKET_MESSAGES['play'])
             playsound('sound/background.mp3', False)
             playsound('sound/laugh.mp3', False)
 

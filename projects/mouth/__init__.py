@@ -1,2 +1,2 @@
-from mouth.config import servos_data, phonemes_data
-from mouth.mouth import adopt_phoneme
+from projects.mouth.config import servos_data, phonemes_data
+from projects.mouth.mouth import adopt_phoneme
