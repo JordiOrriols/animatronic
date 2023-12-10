@@ -7,7 +7,7 @@ from common.logger import Logger
 
 
 class GenerativeMovement(Logger):
-    def __init__(self, servo: AniServo, max_duration=5.0, min_duration=1.0):
+    def __init__(self, servo: AniServo, max_duration=10, min_duration=1):
         super().__init__("GenerativeMovement - Servo #" + servo.getName())
 
         self.__servo = servo
@@ -40,12 +40,8 @@ class GenerativeMovement(Logger):
         min_limit = self.__servo.getPhysicalLimitMin()
         max_limit = self.__servo.getPhysicalLimitMax()
 
-        rendom_multiplier = random.randint(0, 1)
-
         actual_range = max_limit - min_limit
-        limited_range = int(
-            (max_limit - min_limit) * (rendom_multiplier * random_factor)
-        )
+        limited_range = int((max_limit - min_limit) * (random_factor))
         offset = int((actual_range - limited_range) / 2)
         self.info(
             "Generating new position",
@@ -53,7 +49,6 @@ class GenerativeMovement(Logger):
                 "actual_range": actual_range,
                 "limited_range": limited_range,
                 "random_factor": random_factor,
-                "rendom_multiplier": rendom_multiplier,
                 "min_limit": min_limit,
                 "max_limit": max_limit,
                 "offset": offset,
