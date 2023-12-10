@@ -7,7 +7,7 @@ from common.logger import Logger
 
 
 class GenerativeMovement(Logger):
-    def __init__(self, servo: AniServo, max_duration=7, min_duration=1):
+    def __init__(self, servo: AniServo, max_duration=6, min_duration=1):
         super().__init__("GenerativeMovement - Servo #" + servo.getName())
 
         self.__servo = servo
@@ -68,7 +68,7 @@ class GenerativeMovement(Logger):
             self.__next_target_position = self.__get_new_position(random_factor)
             self.__next_duration = self.__get_new_duration()
 
-            self.info(
+            self.log(
                 "Generating new position",
                 {
                     "current_position": self.__current_position,
