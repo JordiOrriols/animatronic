@@ -11,10 +11,10 @@ from common.logger import Logger
 # Aquí deberías tener definidas las clases AniServo, fabric_servo_data y initialize_servos
 # ...
 
-class GenerativeMovement(Logger):
 
+class GenerativeMovement(Logger):
     def __init__(self, servo: AniServo, max_duration=5.0, min_duration=1.0):
-        super().__init__('GenerativeMovement')
+        super().__init__("GenerativeMovement")
 
         self.servo = servo
         self.__max_duration = max_duration
@@ -34,9 +34,8 @@ class GenerativeMovement(Logger):
             if progress >= 1.0:
                 progress = 1.0
 
-            current_position = (
-                self.__current_position
-                + progress * (target_position - self.__current_position)
+            current_position = self.__current_position + progress * (
+                target_position - self.__current_position
             )
             self.servo.move_to_angle(int(current_position))
 
@@ -51,13 +50,19 @@ class GenerativeMovement(Logger):
 
             # Generar una posición aleatoria dentro de los límites físicos del servo,
             # considerando el factor aleatorio para ajustar la frecuencia cerca de los límites
-            actual_range = (max_limit - min_limit)
-            limited_range = (max_limit - min_limit) * (random.randint(0, 1) * random_factor)
+            actual_range = max_limit - min_limit
+            limited_range = (max_limit - min_limit) * (
+                random.randint(0, 1) * random_factor
+            )
             offset = actual_range - limited_range / 2
-            self.__next_target_position = random.randint(min_limit + offset, max_limit - offset)
+            self.__next_target_position = random.randint(
+                min_limit + offset, max_limit - offset
+            )
 
             # Duración aleatoria para el movimiento
-            self.__next_duration = random.uniform(self.__min_duration, self.__max_duration)
+            self.__next_duration = random.uniform(
+                self.__min_duration, self.__max_duration
+            )
 
             # Guardar la posición actual para referencia futura
             self.__current_position = self.kit.servo[self.servo.getPin()].angle
@@ -79,6 +84,7 @@ class RandomMovementsController:
     def perform_all_movements(self, random_factor=1.0):
         for controller in self.animatronic_controllers:
             controller.perform_random_movement(random_factor)
+
 
 if __name__ == "__main__":
     # Crear una instancia de RandomMovementsController

@@ -1,5 +1,3 @@
 # Configuration
 
-jackSparrow_servos_data = [
-
-]
+jackSparrow_servos_data = []

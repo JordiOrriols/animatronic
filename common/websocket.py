@@ -4,44 +4,42 @@ from common.autodiscovery import AutoDiscoveryClient
 from common.logger import Logger
 from common.config import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
+
 class WebSocketClient(Logger):
     def __init__(self):
-        super().__init__('WebSocketClient')
+        super().__init__("WebSocketClient")
 
         self.__continue_loop = True
         self.__websocket = None
         self.__autoDiscovery = AutoDiscoveryClient()
 
     def connect(self):
-        
         # Auto Discovery - UPD LISTENING
-        self.info('Discovering servers...')
+        self.info("Discovering servers...")
 
         current_ip = self.__autoDiscovery.listen()
 
-        self.info('Server found at ', current_ip)
-        self.info('Connecting...')
+        self.info("Server found at ", current_ip)
+        self.info("Connecting...")
 
         uri = "ws://" + current_ip + ":" + str(WEBSOCKET_PORT)
         self.__websocket = connect(uri)
 
         self.info("Connected successfully")
-        self.send(WEBSOCKET_MESSAGES['connected'])
-    
-    async def ready(self, handler):
+        self.send(WEBSOCKET_MESSAGES["connected"])
 
-        self.send(WEBSOCKET_MESSAGES['ready'])
+    async def ready(self, handler):
+        self.send(WEBSOCKET_MESSAGES["ready"])
         self.__continue_loop = True
 
         while self.__continue_loop:
-
             message = self.__websocket.recv()
             self.info(f"Message received: {message}")
 
-            if message == WEBSOCKET_MESSAGES['exit']:
+            if message == WEBSOCKET_MESSAGES["exit"]:
                 self.__continue_loop = False
                 await self.__websocket.close()
-            
+
             handler(message)
 
     # Send
@@ -51,6 +49,6 @@ class WebSocketClient(Logger):
     def send(self, msg):
         if self.__websocket != None:
             self.__websocket.send(msg)
-            self.info('Message sent', msg)
+            self.info("Message sent", msg)
         else:
-            self.error('Cannot send message', msg)
+            self.error("Cannot send message", msg)

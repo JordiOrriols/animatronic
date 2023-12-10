@@ -5,32 +5,34 @@ from common.project import Project
 from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
 
-# Start Websocket
+# Start Websocket
 client = WebSocketClient()
 client.connect()
 
 project = Project()
-project.load_animation('animation')
+project.load_animation("animation")
+
 
 def shutdown_raspberry_pi():
     try:
-        subprocess.run(['sudo', 'shutdown', '-h', 'now'])
+        subprocess.run(["sudo", "shutdown", "-h", "now"])
     except Exception as e:
         print(f"Cannot shutdown the raspberry pi: {e}")
 
+
 def handler(msg):
-
-    if msg == WEBSOCKET_MESSAGES['play']:
+    if msg == WEBSOCKET_MESSAGES["play"]:
         project.play()
-        client.send(WEBSOCKET_MESSAGES['finished'])
+        client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES['auto']:
-        client.send(WEBSOCKET_MESSAGES['finished'])
+    elif msg == WEBSOCKET_MESSAGES["auto"]:
+        client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES['stop']:
-        client.send(WEBSOCKET_MESSAGES['finished'])
+    elif msg == WEBSOCKET_MESSAGES["stop"]:
+        client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES['exit']:
+    elif msg == WEBSOCKET_MESSAGES["exit"]:
         shutdown_raspberry_pi()
+
 
 asyncio.run(client.ready(handler))
