@@ -41,11 +41,12 @@ class GenerativeMovement(Logger):
         max_limit = self.__servo.getPhysicalLimitMax()
 
         rendom_multiplier = random.randint(0, 1)
+
         actual_range = max_limit - min_limit
         limited_range = int(
             (max_limit - min_limit) * (rendom_multiplier * random_factor)
         )
-        offset = int(actual_range - limited_range / 2)
+        offset = int((actual_range - limited_range) / 2)
         self.info(
             "Generating new position",
             {
