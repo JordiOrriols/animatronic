@@ -4,20 +4,25 @@
 
 ### CLIENT On Raspberry Pi
 
-`sudo apt-get install python-smbus`
-`sudo apt-get install i2c-tools`
+```
+sudo apt-get install python-smbus
+sudo apt-get install i2c-tools
 
-`sudo pip3 install adafruit-circuitpython-servokit`
-`sudo pip3 install python-dotenv`
-`sudo pip3 install websockets`
-`sudo echo "PROJECT_ID=skeleton" > .env`
+sudo pip3 install adafruit-circuitpython-servokit
+sudo pip3 install python-dotenv
+sudo pip3 install websockets
+
+sudo echo "PROJECT_ID=skeleton" > .env
+```
 
 ### SERVER On MacOs
 
-`pip3 install playsound`
-`pip3 install websockets`
-`pip3 install simple-term-menu`
-`brew install python-tk`
+```
+pip3 install playsound
+pip3 install websockets
+pip3 install simple-term-menu
+brew install python-tk
+```
 
 ### Connect to your Raspberry Pi
 
