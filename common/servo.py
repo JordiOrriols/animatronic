@@ -87,22 +87,20 @@ class AniServo(Logger):
                          position,  '. Moved to: 0')
             position = 0
 
-        minimum_physical_limit = self.__physical_limits_min
-        if position < minimum_physical_limit:
+        if position < self.__physical_limits_min:
             self.error('Minimum physical limit exceeded ', position,
-                         '. Moved to: ', minimum_physical_limit)
-            position = minimum_physical_limit
+                         '. Moved to: ', self.__physical_limits_min)
+            position = self.__physical_limits_min
 
         if position > self.__fabric_data['actuation_range']:
             self.error('Position maximum exceeded ', position,
                          '. Moved to: ', self.__fabric_data['actuation_range'])
             position = self.__fabric_data['actuation_range']
 
-        maximum_physical_limit = self.__physical_limits_max
-        if position > maximum_physical_limit:
+        if position > self.__physical_limits_max:
             self.error('Maximum physical limit exceeded ', position,
-                         '. Moved to: ', maximum_physical_limit)
-            position = maximum_physical_limit
+                         '. Moved to: ', self.__physical_limits_max)
+            position = self.__physical_limits_max
 
         return position
 
