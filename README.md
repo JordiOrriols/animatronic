@@ -14,7 +14,9 @@
 
 ### SERVER On MacOs
 
-`sudo pip3 install playsound`
+`pip3 install playsound`
+`pip3 install websockets`
+`pip3 install simple-term-menu`
 `brew install python-tk`
 
 ### Connect to your Raspberry Pi
