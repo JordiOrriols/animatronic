@@ -2,7 +2,7 @@
 
 from websockets.sync.client import connect
 
-from common.autodiscovery import AutoDiscovery
+from common.autodiscovery import AutoDiscoveryClient
 from common.logger import Logger
 from common.config import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
@@ -12,7 +12,7 @@ class WebSocketClient(Logger):
 
         self.__continue_loop = True
         self.__websocket = None
-        self.__autoDiscovery = AutoDiscovery()
+        self.__autoDiscovery = AutoDiscoveryClient()
 
     def connect(self):
         

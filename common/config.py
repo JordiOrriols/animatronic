@@ -20,7 +20,10 @@ WEBSOCKET_MESSAGES = {
     "connected": 'client-connected',
     "ready": 'client-ready',
     "waiting": 'server-waiting',
+
     "play": 'play-animation',
+    "auto": 'automatic-mode',
     "finished": 'animation-finished',
+    
     "exit": 'exit',
 }
