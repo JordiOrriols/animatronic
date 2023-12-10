@@ -4,7 +4,9 @@ This is a small code built in Python to control several DIY Animatronics. It is 
 I really think that using Raspberry Pi Zero instead of Arduino will provide a lot of interesting tools.
 
 And it's smaller and cheaper:
+
 Raspberry Pi Zero: https://www.adafruit.com/product/5291
+
 Servo Bonnet: https://www.adafruit.com/product/3416
 
 I am still working on this code and adding different features. But this is the basic list:
@@ -28,7 +30,9 @@ I am still working on this code and adding different features. But this is the b
 
 These are some examples of animatronics I'm building:
 Skeleton V2 - https://www.youtube.com/watch?v=p53LTbVnqZs
+
 Skeleton - https://www.youtube.com/watch?v=jwxCnF2dbwg
+
 Jack Sparrow - https://www.youtube.com/watch?v=WWEPXgQNn7I
 
 If you plan to test the code, please leave a comment on Issues if you have any doubts. I will be happy to know if someone is using it and happy to help!
