@@ -16,6 +16,8 @@ class AniServo(Logger):
         self.__connection = None
         self.__connectionDirection = None
 
+        self.__kit = None
+
     # Getters
     # Getters
     # Getters
@@ -81,26 +83,26 @@ class AniServo(Logger):
     def __validate_position(self, position: int):
 
         if position < 0:
-            self.error('Position minimum exedeed ',
+            self.error('Position minimum exceeded ',
                          position,  '. Moved to: 0')
             position = 0
 
-        minimum_phisical_limit = self.__physical_limits_min
-        if position < minimum_phisical_limit:
-            self.error('Minimum phisical limit exedeed ', position,
-                         '. Moved to: ', minimum_phisical_limit)
-            position = minimum_phisical_limit
+        minimum_physical_limit = self.__physical_limits_min
+        if position < minimum_physical_limit:
+            self.error('Minimum physical limit exceeded ', position,
+                         '. Moved to: ', minimum_physical_limit)
+            position = minimum_physical_limit
 
         if position > self.__fabric_data['actuation_range']:
-            self.error('Position maximum exedeed ', position,
-                         '. Moved to: ', self.fabric_data['actuation_range'])
+            self.error('Position maximum exceeded ', position,
+                         '. Moved to: ', self.__fabric_data['actuation_range'])
             position = self.__fabric_data['actuation_range']
 
-        maximum_phisical_limit = self.__physical_limits_max
-        if position > maximum_phisical_limit:
-            self.error('Maximum phisical limit exedeed ', position,
-                         '. Moved to: ', maximum_phisical_limit)
-            position = maximum_phisical_limit
+        maximum_physical_limit = self.__physical_limits_max
+        if position > maximum_physical_limit:
+            self.error('Maximum physical limit exceeded ', position,
+                         '. Moved to: ', maximum_physical_limit)
+            position = maximum_physical_limit
 
         return position
 
