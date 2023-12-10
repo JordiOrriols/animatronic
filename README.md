@@ -1,4 +1,38 @@
 # animatronic
+Hello everybody!
+This is a small code built in Python to control several DIY Animatronics. It is intended to work with Raspberry Pi.
+I really think that using Raspberry Pi Zero instead of Arduino will provide a lot of interesting tools.
+
+And it's smaller and cheaper:
+Raspberry Pi Zero: https://www.adafruit.com/product/5291
+Servo Bonnet: https://www.adafruit.com/product/3416
+
+I am still working on this code and adding different features. But this is the basic list:
+
+- Configure all your animatronics in one repository
+    - Using environment variables
+    - Adding configuration files to calibrate your servos, adding physical limits for each servo
+- Play JSON animations
+    - If you have the models in Blender, you can build the JSON animation files using the Plugin from Tim Hendriks.
+      Currently, I'm adding basic configuration and using the physical limits from the configuration file.
+      This allows running several animatronics and configuring each physical device separately,
+      detaching the animatronic physical limits from the animation itself.
+      https://www.youtube.com/watch?v=yeJxMaNQAzg
+- Generative Mode
+    - You can randomly generate movements on your animatronic, making a random smooth movement when it is on standby
+- Control everything with a server (Can be another Raspberry Pi or a Mac/PC)
+    - The server will be connected to all animatronics via WebSocket
+    - The animatronics will discover automatically the server and connect to it on the local network
+    - The servo will be responsible for playing the music and sounds so all animatronics can be in sync
+    - You have a CLI to control the animatronics
+
+These are some examples of animatronics I'm building:
+Skeleton V2 - https://www.youtube.com/watch?v=p53LTbVnqZs
+Skeleton - https://www.youtube.com/watch?v=jwxCnF2dbwg
+Jack Sparrow - https://www.youtube.com/watch?v=WWEPXgQNn7I
+
+If you plan to test the code, please leave a comment on Issues if you have any doubts. I will be happy to know if someone is using it and happy to help!
+
 
 ## To Install
 
