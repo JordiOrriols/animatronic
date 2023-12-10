@@ -26,9 +26,10 @@ def handler(msg):
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif msg == WEBSOCKET_MESSAGES["auto"]:
-        client.send(WEBSOCKET_MESSAGES["finished"])
+        project.auto()
 
     elif msg == WEBSOCKET_MESSAGES["stop"]:
+        project.stop()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif msg == WEBSOCKET_MESSAGES["exit"]:

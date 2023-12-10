@@ -28,6 +28,7 @@ class Project(Logger):
 
         self.__project = os.getenv("PROJECT_ID")
         self.__animation_data = None
+        self.__automatic_mode = False
 
         self.info("Initializing for project: ", self.__project)
         self.__servos_data = servos_data_object[self.__project]
@@ -74,12 +75,17 @@ class Project(Logger):
 
     def auto(self):
         if self.__validate_servos_data():
+            self.__automatic_mode = True
+
             animatronic_controllers = [
                 GenerativeMovement(servo) for servo in self.__servos_data
             ]
 
-            while True:
+            while self.__automatic_mode:
                 random_factor = 0.5
 
                 for controller in animatronic_controllers:
                     controller.update(random_factor)
+
+    def stop(self):
+        self.__automatic_mode = False  # Not sure if this will work
