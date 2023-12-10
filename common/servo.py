@@ -46,6 +46,9 @@ class AniServo(Logger):
     def getRestPosition(self):
         return self.__rest_position
 
+    def getCurrentPosition(self):
+        return self.__kit.servo[self.__pin].angle
+
     # Connect
     # Connect
     # Connect

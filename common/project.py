@@ -10,6 +10,7 @@ from projects.skeletonV2.config import skeletonV2_servos_data
 from projects.jackSparrow.config import jackSparrow_servos_data
 from common.animation import Animation
 from common.logger import Logger
+from common.generative import GenerativeMovement
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
@@ -70,3 +71,15 @@ class Project(Logger):
                         servo.move_to_angle(int(new_position))
 
             animation.end()
+
+    def auto(self):
+        if self.__validate_servos_data():
+            animatronic_controllers = [
+                GenerativeMovement(servo) for servo in self.__servos_data
+            ]
+
+            while True:
+                random_factor = 0.5
+
+                for controller in animatronic_controllers:
+                    controller.update(random_factor)
