@@ -41,7 +41,6 @@ async def showOptions(websocket):
 
     else:
         print("Option not supported:")
-    
 
 async def handler(websocket):
     async for message in websocket:
@@ -53,7 +52,7 @@ async def handler(websocket):
 
         if message == WEBSOCKET_MESSAGES['ready'] or message == WEBSOCKET_MESSAGES['finished']:
             await websocket.send(WEBSOCKET_MESSAGES['waiting'])
-            showOptions(websocket)
+            await showOptions(websocket)
 
 
 async def main():

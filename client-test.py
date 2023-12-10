@@ -1,4 +1,5 @@
 import time
+import asyncio
 
 from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
@@ -12,4 +13,10 @@ def handler(msg):
         time.sleep(5)
         client.send(WEBSOCKET_MESSAGES['finished'])
 
-client.ready(handler)
+    elif msg == WEBSOCKET_MESSAGES['auto']:
+        client.send(WEBSOCKET_MESSAGES['finished'])
+
+    elif msg == WEBSOCKET_MESSAGES['stop']:
+        client.send(WEBSOCKET_MESSAGES['finished'])
+
+asyncio.run(client.ready(handler))

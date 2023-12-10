@@ -52,10 +52,9 @@ class AutoDiscoveryServer(Logger):
 
             except s.error as e:
                 self.error(f"Cannot get local IP address: {e}")
-                current_ip = gethostbyname(gethostname()) # get our IP. Be careful if you have multiple network interfaces or IPs
-                self.__current_ip = current_ip
+                self.__current_ip = gethostbyname(gethostname()) # get our IP. Be careful if you have multiple network interfaces or IPs
             
-        self.info("Local IP address:", current_ip)
+        self.info("Local IP address:", self.__current_ip)
     
     def __broadcast(self):
         self.info('Start broadcast')
@@ -66,7 +65,6 @@ class AutoDiscoveryServer(Logger):
                 self.info("Sent service announcement", data)
                 sleep(5)
             else:
-                self.log('Skipping broadcast')
                 sleep(10)
 
     def start(self):
