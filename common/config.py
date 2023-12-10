@@ -23,6 +23,7 @@ WEBSOCKET_MESSAGES = {
 
     "play": 'play-animation',
     "auto": 'automatic-mode',
+    "stop": 'stop',
     "finished": 'animation-finished',
     
     "exit": 'exit',
