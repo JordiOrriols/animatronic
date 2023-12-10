@@ -19,6 +19,7 @@ class AnimatronicController:
 
         self.is_movement_in_progress = False
         self.start_time = None
+        self.current_position = None
         self.next_target_position = None
         self.next_duration = None
 
@@ -31,8 +32,8 @@ class AnimatronicController:
                 progress = 1.0
 
             current_position = (
-                self.servo.getPhysicalLimitMin()
-                + progress * (target_position - self.servo.getPhysicalLimitMin())
+                self.current_position
+                + progress * (target_position - self.current_position)
             )
             self.servo.move_to_angle(int(current_position))
 
@@ -50,6 +51,9 @@ class AnimatronicController:
 
             # Duración aleatoria para el movimiento
             self.next_duration = random.uniform(self.min_duration, self.max_duration)
+
+            # Guardar la posición actual para referencia futura
+            self.current_position = self.kit.servo[self.servo.getPin()].angle
 
             # Actualizar el indicador de movimiento en curso y el tiempo de inicio
             self.is_movement_in_progress = True
