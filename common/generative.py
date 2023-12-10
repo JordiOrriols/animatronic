@@ -7,7 +7,7 @@ from common.logger import Logger
 
 
 class GenerativeMovement(Logger):
-    def __init__(self, servo: AniServo, max_duration=10, min_duration=1):
+    def __init__(self, servo: AniServo, max_duration=7, min_duration=1):
         super().__init__("GenerativeMovement - Servo #" + servo.getName())
 
         self.__servo = servo
