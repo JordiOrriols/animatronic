@@ -9,27 +9,35 @@ from adafruit_servokit import ServoKit  # Asegúrate de tener instalada esta bib
 # ...
 
 class AnimatronicController:
-    def __init__(self, servo, max_duration=2.0, min_duration=0.5, steps=50):
+    def __init__(self, servo, max_duration=2.0, min_duration=0.5):
         self.kit = ServoKit(channels=16)  # Asegúrate de ajustar el número de canales según tu configuración
         self.servo = servo
         self.max_duration = max_duration
         self.min_duration = min_duration
-        self.steps = steps
 
         initialize_servos(self.kit, [self.servo])
 
         self.is_movement_in_progress = False
+        self.start_time = None
         self.next_target_position = None
         self.next_duration = None
 
     def generate_smooth_movement(self, target_position, duration):
-        current_position = self.kit.servo[self.servo.getPin()].angle
-        angle_change = (target_position - current_position) / self.steps
+        if self.is_movement_in_progress:
+            current_time = time.time() - self.start_time
+            progress = current_time / duration
 
-        for _ in range(self.steps):
-            current_position += angle_change
+            if progress >= 1.0:
+                progress = 1.0
+
+            current_position = (
+                self.servo.getPhysicalLimitMin()
+                + progress * (target_position - self.servo.getPhysicalLimitMin())
+            )
             self.servo.move_to_angle(int(current_position))
-            time.sleep(duration / self.steps)
+
+            if progress == 1.0:
+                self.is_movement_in_progress = False
 
     def perform_random_movement(self):
         if not self.is_movement_in_progress:
@@ -43,14 +51,12 @@ class AnimatronicController:
             # Duración aleatoria para el movimiento
             self.next_duration = random.uniform(self.min_duration, self.max_duration)
 
-            # Actualizar el indicador de movimiento en curso
+            # Actualizar el indicador de movimiento en curso y el tiempo de inicio
             self.is_movement_in_progress = True
+            self.start_time = time.time()
 
         # Mover suavemente el servo a la posición almacenada
         self.generate_smooth_movement(self.next_target_position, self.next_duration)
-
-        # Actualizar el indicador de movimiento en curso
-        self.is_movement_in_progress = False
 
 
 class RandomMovementsController:
