@@ -2,29 +2,32 @@ import time
 import random
 from adafruit_servokit import ServoKit  # Asegúrate de tener instalada esta biblioteca
 
+from common.servo import AniServo
+from common.logger import Logger
+
 # Aquí deberías tener definidas las variables mg996r_type, mg90s_type y ghs37a_type
 # ...
 
 # Aquí deberías tener definidas las clases AniServo, fabric_servo_data y initialize_servos
 # ...
 
-class AnimatronicController:
-    def __init__(self, servo, max_duration=2.0, min_duration=0.5):
-        self.kit = ServoKit(channels=16)  # Asegúrate de ajustar el número de canales según tu configuración
+class GenerativeMovement(Logger):
+
+    def __init__(self, servo: AniServo, max_duration=5.0, min_duration=1.0):
+        super().__init__('GenerativeMovement')
+
         self.servo = servo
         self.max_duration = max_duration
         self.min_duration = min_duration
 
-        initialize_servos(self.kit, [self.servo])
-
-        self.is_movement_in_progress = False
+        self.__in_progress = False
         self.start_time = None
         self.current_position = None
         self.next_target_position = None
         self.next_duration = None
 
     def generate_smooth_movement(self, target_position, duration):
-        if self.is_movement_in_progress:
+        if self.__in_progress:
             current_time = time.time() - self.start_time
             progress = current_time / duration
 
@@ -38,16 +41,20 @@ class AnimatronicController:
             self.servo.move_to_angle(int(current_position))
 
             if progress == 1.0:
-                self.is_movement_in_progress = False
+                self.__in_progress = False
 
-    def perform_random_movement(self):
-        if not self.is_movement_in_progress:
+    def perform_random_movement(self, random_factor=1.0):
+        if not self.__in_progress:
             # Si no hay un movimiento en curso, generar nuevos valores aleatorios
             min_limit = self.servo.getPhysicalLimitMin()
             max_limit = self.servo.getPhysicalLimitMax()
 
-            # Generar una posición aleatoria dentro de los límites físicos del servo
-            self.next_target_position = random.randint(min_limit, max_limit)
+            # Generar una posición aleatoria dentro de los límites físicos del servo,
+            # considerando el factor aleatorio para ajustar la frecuencia cerca de los límites
+            actual_range = (max_limit - min_limit)
+            limited_range = (max_limit - min_limit) * (random.randint(0, 1) * random_factor)
+            offset = actual_range - limited_range / 2
+            self.next_target_position = random.randint(min_limit + offset, max_limit - offset)
 
             # Duración aleatoria para el movimiento
             self.next_duration = random.uniform(self.min_duration, self.max_duration)
@@ -56,7 +63,7 @@ class AnimatronicController:
             self.current_position = self.kit.servo[self.servo.getPin()].angle
 
             # Actualizar el indicador de movimiento en curso y el tiempo de inicio
-            self.is_movement_in_progress = True
+            self.__in_progress = True
             self.start_time = time.time()
 
         # Mover suavemente el servo a la posición almacenada
@@ -65,14 +72,13 @@ class AnimatronicController:
 
 class RandomMovementsController:
     def __init__(self, servos_data):
-        self.kit = ServoKit(channels=16)  # Asegúrate de ajustar el número de canales según tu configuración
         self.animatronic_controllers = [
-            AnimatronicController(servo) for servo in servos_data
+            GenerativeMovement(servo) for servo in servos_data
         ]
 
-    def perform_all_movements(self):
+    def perform_all_movements(self, random_factor=1.0):
         for controller in self.animatronic_controllers:
-            controller.perform_random_movement()
+            controller.perform_random_movement(random_factor)
 
 if __name__ == "__main__":
     # Crear una instancia de RandomMovementsController
@@ -80,8 +86,11 @@ if __name__ == "__main__":
 
     try:
         while True:
-            # Realizar todos los movimientos
-            random_controller.perform_all_movements()
+            # Configurar el factor aleatorio según tus preferencias (entre 0 y 1)
+            random_factor = 0.5
+
+            # Realizar todos los movimientos con el factor aleatorio
+            random_controller.perform_all_movements(random_factor)
 
     except KeyboardInterrupt:
         print("\nMovimientos aleatorios suaves detenidos.")
