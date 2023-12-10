@@ -1,5 +1,3 @@
-
-
 from websockets.sync.client import connect
 
 from common.autodiscovery import AutoDiscoveryClient
@@ -30,7 +28,7 @@ class WebSocketClient(Logger):
         self.info("Connected successfully")
         self.send(WEBSOCKET_MESSAGES['connected'])
     
-    def ready(self, handler):
+    async def ready(self, handler):
 
         self.send(WEBSOCKET_MESSAGES['ready'])
         self.__continue_loop = True
@@ -38,10 +36,11 @@ class WebSocketClient(Logger):
         while self.__continue_loop:
 
             message = self.__websocket.recv()
-            self.info(f"Message recieved: {message}")
+            self.info(f"Message received: {message}")
 
             if message == WEBSOCKET_MESSAGES['exit']:
                 self.__continue_loop = False
+                await self.__websocket.close()
             
             handler(message)
 
