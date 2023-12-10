@@ -17,26 +17,26 @@ class GenerativeMovement(Logger):
         super().__init__('GenerativeMovement')
 
         self.servo = servo
-        self.max_duration = max_duration
-        self.min_duration = min_duration
+        self.__max_duration = max_duration
+        self.__min_duration = min_duration
 
         self.__in_progress = False
-        self.start_time = None
-        self.current_position = None
-        self.next_target_position = None
-        self.next_duration = None
+        self.__start_time = None
+        self.__current_position = None
+        self.__next_target_position = None
+        self.__next_duration = None
 
     def generate_smooth_movement(self, target_position, duration):
         if self.__in_progress:
-            current_time = time.time() - self.start_time
+            current_time = time.time() - self.__start_time
             progress = current_time / duration
 
             if progress >= 1.0:
                 progress = 1.0
 
             current_position = (
-                self.current_position
-                + progress * (target_position - self.current_position)
+                self.__current_position
+                + progress * (target_position - self.__current_position)
             )
             self.servo.move_to_angle(int(current_position))
 
@@ -54,20 +54,20 @@ class GenerativeMovement(Logger):
             actual_range = (max_limit - min_limit)
             limited_range = (max_limit - min_limit) * (random.randint(0, 1) * random_factor)
             offset = actual_range - limited_range / 2
-            self.next_target_position = random.randint(min_limit + offset, max_limit - offset)
+            self.__next_target_position = random.randint(min_limit + offset, max_limit - offset)
 
             # Duración aleatoria para el movimiento
-            self.next_duration = random.uniform(self.min_duration, self.max_duration)
+            self.__next_duration = random.uniform(self.__min_duration, self.__max_duration)
 
             # Guardar la posición actual para referencia futura
-            self.current_position = self.kit.servo[self.servo.getPin()].angle
+            self.__current_position = self.kit.servo[self.servo.getPin()].angle
 
             # Actualizar el indicador de movimiento en curso y el tiempo de inicio
             self.__in_progress = True
-            self.start_time = time.time()
+            self.__start_time = time.time()
 
         # Mover suavemente el servo a la posición almacenada
-        self.generate_smooth_movement(self.next_target_position, self.next_duration)
+        self.generate_smooth_movement(self.__next_target_position, self.__next_duration)
 
 
 class RandomMovementsController:
