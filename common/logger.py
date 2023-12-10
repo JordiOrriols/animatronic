@@ -10,12 +10,15 @@ class Logger:
     def debug(self):
         self.__debug = True
 
-    def log(self, level: str, *message):
+    def __console(self, level: str, *message):
+        print(level, self.logName + " - ", message)
+
+    def log(self, *message):
         if self.__debug:
-            print(level, self.logName + " - ", message)
+            self.__console("Log: ", message)
 
     def info(self, *message):
-        self.log("Info: ", message)
+        self.__console("Info: ", message)
 
     def error(self, *message):
-        self.log("ERROR: ", message)
+        self.__console("ERROR: ", message)
