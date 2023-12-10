@@ -41,7 +41,7 @@ class Project(Logger):
 
     def __validate_servos_data(self):
         if self.__servos_data == None:
-            self.info("Servo Data not initialized. Wrong Project ID", self.__project)
+            self.error("Servo Data not initialized. Wrong Project ID", self.__project)
             return False
         return True
 

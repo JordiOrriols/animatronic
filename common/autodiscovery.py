@@ -27,12 +27,12 @@ class AutoDiscoveryClient(Logger):
         self.info("Listening for service")
         while self.__current_ip == None:
             data, addr = self.__socket.recvfrom(1024)  # wait for a packet
-            self.info("Data", data, addr)
+            self.log("Data", data, addr)
 
             if data.startswith(str.encode(DISCOVERY_MAGIC)):
                 self.info("Found service", data)
                 self.__current_ip = data[len(DISCOVERY_MAGIC) :].decode("utf-8")
-                self.info("Current IP", self.__current_ip)
+                self.log("Current IP", self.__current_ip)
 
         self.__socket.close()
         return self.__current_ip
@@ -75,7 +75,7 @@ class AutoDiscoveryServer(Logger):
             if self.__auto_discovery == True:
                 data = DISCOVERY_MAGIC + str(self.__current_ip)
                 self.__socket.sendto(str.encode(data), ("<broadcast>", DISCOVERY_PORT))
-                self.info("Sent service announcement", data)
+                self.log("Sent service announcement", data)
                 sleep(5)
             else:
                 sleep(10)

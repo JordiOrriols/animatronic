@@ -43,7 +43,7 @@ class GenerativeMovement(Logger):
         actual_range = max_limit - min_limit
         limited_range = int((max_limit - min_limit) * (random_factor))
         offset = int((actual_range - limited_range) / 2)
-        self.info(
+        self.log(
             "Generating new position",
             {
                 "actual_range": actual_range,
