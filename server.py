@@ -29,8 +29,11 @@ async def showOptions(websocket):
         playsound('sound/laugh.mp3', False)
 
     elif menu_entry_index == 1:
-        print("Waiting Animation:")
-        await websocket.send(WEBSOCKET_MESSAGES['waiting'])
+        print("Automatic mode:")
+        await websocket.send(WEBSOCKET_MESSAGES['auto'])
+        playsound('sound/background.mp3', False)
+        input('Press any key to stop')
+        await websocket.send(WEBSOCKET_MESSAGES['stop'])
 
     elif menu_entry_index == 2:
         print("Exit:")
