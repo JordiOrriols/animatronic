@@ -105,7 +105,7 @@ This script is similar to the `python3 play_fps.py`, but with the difference tha
 Also this file will be syncronized via websockets, so we can start the animation from the server where we can syncronize with the music.
 
 
-## Mouth Scripts
+## Mouth Scripts (Not tested since a lot of time) Not stable
 
 This scripts are used to run:
     Will Cogley
