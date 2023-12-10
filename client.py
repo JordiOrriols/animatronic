@@ -15,7 +15,7 @@ project.load_animation("animation")
 
 def shutdown_raspberry_pi():
     try:
-        subprocess.run(["sudo", "shutdown", "-h", "now"])
+        subprocess.run(["sudo", "shutdown", "-h", "now"])  # does not work
     except Exception as e:
         print(f"Cannot shutdown the raspberry pi: {e}")
 
@@ -33,6 +33,7 @@ def handler(msg):
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif msg == WEBSOCKET_MESSAGES["exit"]:
+        project.rest()
         shutdown_raspberry_pi()
 
 

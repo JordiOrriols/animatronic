@@ -89,3 +89,8 @@ class Project(Logger):
 
     def stop(self):
         self.__automatic_mode = False  # Not sure if this will work
+
+    def rest(self):
+        if self.__validate_servos_data():
+            for servo in self.__servos_data:
+                servo.sleep()
