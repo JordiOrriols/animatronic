@@ -2,6 +2,7 @@
 
 import time
 import numpy as np
+import pandas as pd
 
 from common.servo import AniServo
 from common.logger import Logger
@@ -17,7 +18,7 @@ class Animation(Logger):
         self.__fps = int(self.__data["fps"])
         self.__frames = int(self.__data["frames"])
         self.__last_frame_position = self.__frames - 1
-        self.__positions = self.__data["positions"]
+        self.__positions = pd.DataFrame(self.__data["positions"])
 
         self.__refresh_count = 0
         self.__elapsed_time = 0
@@ -72,7 +73,7 @@ class Animation(Logger):
         return self.__last_frame_position
 
     def __get_frame_position(self, servo: AniServo, frame: int):
-        return np.int_(self.__positions[servo.get_name()][int(frame)])
+        return self.__positions.loc[frame, servo.get_name()]
 
     def __get_frame_time(self, frame: int):
         return self.__frame_duration * frame
