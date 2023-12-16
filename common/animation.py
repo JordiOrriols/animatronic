@@ -46,21 +46,14 @@ class Animation(Logger):
             f"Interpolation factor {np.floor(self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier} times better"
         )
 
-    # Private Getters
-    # Private Getters
-    # Private Getters
+    def __get_current_frame(self):
+        return np.minimum(
+            self.__last_frame_position,
+            np.floor(self.__elapsed_time / self.__frame_duration),
+        )
 
-    def __getCurrentFrame(self):
-        current_frame = math.floor(self.__elapsed_time / self.__frame_duration)
-
-        if current_frame < self.__last_frame_position:
-            return current_frame
-
-        return self.__last_frame_position
-
-    def __getNextFrame(self):
-        current_frame = self.__getCurrentFrame()
-
+    def __get_next_frame(self, current_frame):
+        # return np.minimum(current_frame + 1, self.__last_frame_position) Chat GPT optimization
         if current_frame < self.__last_frame_position:
             return current_frame + 1
 
