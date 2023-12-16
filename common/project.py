@@ -9,11 +9,10 @@ from projects.skeleton.config import skeleton_servos_data
 from projects.skeletonV2.config import skeletonV2_servos_data
 from projects.jackSparrow.config import jackSparrow_servos_data
 
-from common.servo import initialize_servos
+from common.servo import initialize_servos, AniServo
 from common.animation import Animation
 from common.logger import Logger
 from common.generative import GenerativeMovement
-from common.servo import AniServo
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
@@ -45,7 +44,7 @@ class Project(Logger):
                 initialize_servos(kit, self.__servos_data)
 
     def __validate_servos_data(self):
-        if self.__servos_data == None:
+        if self.__servos_data is None:
             self.error("Servo Data not initialized. Wrong Project ID", self.__project)
             return False
         return True
