@@ -15,6 +15,8 @@ from common.config import DISCOVERY_PORT, DISCOVERY_MAGIC
 
 
 class AutoDiscoveryClient(Logger):
+    """AutoDiscovery Client Class to auto discover servers via UDP broadcasting."""
+
     def __init__(self):
         super().__init__("AutoDiscovery Client")
 
@@ -24,6 +26,7 @@ class AutoDiscoveryClient(Logger):
         self.__socket.bind(("", DISCOVERY_PORT))
 
     def listen(self):
+        """Listen for UDP messages on the local network."""
         self.info("Listening for service")
         while self.__current_ip == None:
             data, addr = self.__socket.recvfrom(1024)  # wait for a packet
@@ -39,6 +42,8 @@ class AutoDiscoveryClient(Logger):
 
 
 class AutoDiscoveryServer(Logger):
+    """AutoDiscovery Server Class to broadcast server IP via UDP."""
+
     def __init__(self):
         super().__init__("AutoDiscovery Server")
 
@@ -81,17 +86,21 @@ class AutoDiscoveryServer(Logger):
                 sleep(10)
 
     def start(self):
+        """Start broadcasting server IP."""
         self.__get_local_ip()
         thread = threading.Thread(target=self.__broadcast)
         thread.start()
 
     def disable(self):
+        """Disable temporally broadcasting server IP."""
         self.info("Disabled")
         self.__auto_discovery = False
 
     def enable(self):
+        """Enable temporally broadcasting server IP."""
         self.info("Enabled")
         self.__auto_discovery = True
 
     def get_current_ip(self):
+        """Get current network IP."""
         return self.__current_ip

@@ -1,12 +1,13 @@
 import time
 import random
-from adafruit_servokit import ServoKit
 
 from common.servo import AniServo
 from common.logger import Logger
 
 
 class GenerativeMovement(Logger):
+    """GenerativeMovement Class will generate random movements in the servos limits."""
+
     def __init__(self, servo: AniServo, max_duration=6, min_duration=1):
         super().__init__("GenerativeMovement - Servo #" + servo.get_name())
 
@@ -50,6 +51,7 @@ class GenerativeMovement(Logger):
         return random.uniform(self.__min_duration, self.__max_duration)
 
     def update(self, random_factor=1.0):
+        """This method will calculate new positions if needed, and move all the servos to the next position."""
         if not self.__in_progress:
             self.__in_progress = True
             self.__start_time = time.time()

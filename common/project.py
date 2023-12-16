@@ -20,6 +20,8 @@ servos_data_object = {
 
 
 class Project(Logger):
+    """Class to handle all Project specific information. The information is defined via environment variables."""
+
     def __init__(self, init_servos=True):
         super().__init__("Project")
 
@@ -46,16 +48,19 @@ class Project(Logger):
         return True
 
     def get_servos_data(self):
+        """Get servos data."""
         if self.__validate_servos_data():
             return self.__servos_data
 
     def load_animation(self, animation_name):
+        """Load animation on memory."""
         with open(
             "projects/" + self.__project + "/" + animation_name + ".json"
         ) as json_file:
             self.__animation_data = json.load(json_file)
 
     def play(self):
+        """Play animation."""
         if self.__validate_servos_data():
             animation = Animation(
                 self.__animation_data
@@ -63,17 +68,18 @@ class Project(Logger):
 
             animation.start()
 
-            while animation.inProgress():
+            while animation.in_progress():
                 animation.refresh()
 
                 for servo in self.__servos_data:
-                    if servo.getName() in animation.getPositions().keys():
-                        new_position = animation.getCurrentPosition(servo)
+                    if servo.getName() in animation.get_positions().keys():
+                        new_position = animation.get_current_position(servo)
                         servo.move_to_angle(int(new_position))
 
             animation.end()
 
     def auto(self):
+        """Start automatic generative movements."""
         if self.__validate_servos_data():
             self.__automatic_mode = True
 
@@ -88,9 +94,11 @@ class Project(Logger):
                     controller.update(random_factor)
 
     def stop(self):
+        """Stop automatic generative movements."""
         self.__automatic_mode = False  # Not sure if this will work
 
     def rest(self):
+        """Put the animatronic in standby mode."""
         if self.__validate_servos_data():
             for servo in self.__servos_data:
                 servo.sleep()

@@ -6,6 +6,8 @@ from common.logger import Logger
 
 
 class Animation(Logger):
+    """Animation class will handle everything related to the JSON animation."""
+
     def __init__(self, data):
         super().__init__("Animation")
 
