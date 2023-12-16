@@ -9,7 +9,6 @@ class AniServo(Logger):
         self,
         name: str,
         pin: int,
-        type: str,
         min_val: int,
         max_val: int,
         rest_position: int,
@@ -28,31 +27,39 @@ class AniServo(Logger):
         self.__servo = None
 
     # Getters
-    def getName(self):
+    def get_name(self):
+        """Getting the servo name."""
         return self.__name
 
-    def getPin(self):
+    def get_pin(self):
+        """Getting the servo pin."""
         return self.__pin
 
-    def getPhysicalLimitMin(self):
+    def get_physical_limit_min(self):
+        """Getting the servo min physical limit."""
         return self.__physical_limits_min
 
-    def getPhysicalLimitMax(self):
+    def get_physical_limit_max(self):
+        """Getting the servo max physical limit."""
         return self.__physical_limits_max
 
-    def getRestPosition(self):
+    def get_rest_position(self):
+        """Getting the servo position when robot is on standby."""
         return self.__rest_position
 
-    def getCurrentPosition(self):
+    def get_current_position(self):
+        """Getting the servo current position."""
         return self.__servo.angle
 
     # Connect
     def connect(self, servo: "AniServo", direction: str):
+        """Connecting to an another servo that should be controlled at the same time, with the same angle, or inverted angle. Example 100 vs 80, and 70 vs 110"""
         self.__connection = servo
         self.__connectionDirection = direction
 
     # Start
     def start(self, kit: ServoKit):
+        """Starting the servo class with all the information, and adafruit ServoKit."""
         min = self.__fabric_data["pulse_width"]["min"]
         max = self.__fabric_data["pulse_width"]["max"]
         actuation_range = self.__fabric_data["actuation_range"]
@@ -68,6 +75,7 @@ class AniServo(Logger):
 
     # Sleep
     def sleep(self):
+        """Moving the servo to standby position."""
         self.move_to_angle(self.__rest_position)
 
     # Move
@@ -90,6 +98,7 @@ class AniServo(Logger):
         self.__servo.angle = servo_position
 
     def move_to_angle(self, position: int):
+        """Moving the servo to specific position."""
         self.__move(position)
 
         if self.__connection is not None:
@@ -100,6 +109,7 @@ class AniServo(Logger):
 
 
 def initialize_servos(kit, servos_data):
+    """Initialize all servos with ServoKit."""
     for servo in servos_data:
         servo.start(kit)
 
