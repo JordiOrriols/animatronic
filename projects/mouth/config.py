@@ -1,25 +1,25 @@
-# Configuration
+"""Mouth configuration module. Add here all servos for the animatronic."""
 
-from common.config import mg996r_type, mg92b_type
+from common.config import MG996R_TYPE, MG92B_TYPE
 from common.servo import AniServo
 
 servos_data = [
-    AniServo("ReplaceNameServo", 0, mg996r_type, 70, 90, 80).connect(
-        AniServo("ReplaceNameServo", 1, mg996r_type, 90, 110, 100), "inverted"
+    AniServo("ReplaceNameServo", 0, MG996R_TYPE, 70, 90, 80).connect(
+        AniServo("ReplaceNameServo", 1, MG996R_TYPE, 90, 110, 100), "inverted"
     ),
-    AniServo("ReplaceNameServo", 2, mg92b_type, 40, 155, 90),
-    AniServo("ReplaceNameServo", 3, mg92b_type, 30, 135, 90),
-    AniServo("ReplaceNameServo", 4, mg92b_type, 15, 125, 90),
-    AniServo("ReplaceNameServo", 5, mg92b_type, 30, 150, 90),
-    AniServo("ReplaceNameServo", 6, mg92b_type, 45, 110, 90),
-    AniServo("ReplaceNameServo", 7, mg92b_type, 85, 135, 90),
-    AniServo("ReplaceNameServo", 8, mg92b_type, 30, 95, 90),
-    AniServo("ReplaceNameServo", 10, mg92b_type, 0, 180, 90),
-    AniServo("ReplaceNameServo", 11, mg92b_type, 0, 180, 90),
-    AniServo("ReplaceNameServo", 12, mg92b_type, 0, 180, 90),
-    AniServo("ReplaceNameServo", 13, mg92b_type, 0, 180, 90),
-    AniServo("ReplaceNameServo", 14, mg92b_type, 0, 180, 90),
-    AniServo("ReplaceNameServo", 15, mg92b_type, 0, 180, 90),
+    AniServo("ReplaceNameServo", 2, MG92B_TYPE, 40, 155, 90),
+    AniServo("ReplaceNameServo", 3, MG92B_TYPE, 30, 135, 90),
+    AniServo("ReplaceNameServo", 4, MG92B_TYPE, 15, 125, 90),
+    AniServo("ReplaceNameServo", 5, MG92B_TYPE, 30, 150, 90),
+    AniServo("ReplaceNameServo", 6, MG92B_TYPE, 45, 110, 90),
+    AniServo("ReplaceNameServo", 7, MG92B_TYPE, 85, 135, 90),
+    AniServo("ReplaceNameServo", 8, MG92B_TYPE, 30, 95, 90),
+    AniServo("ReplaceNameServo", 10, MG92B_TYPE, 0, 180, 90),
+    AniServo("ReplaceNameServo", 11, MG92B_TYPE, 0, 180, 90),
+    AniServo("ReplaceNameServo", 12, MG92B_TYPE, 0, 180, 90),
+    AniServo("ReplaceNameServo", 13, MG92B_TYPE, 0, 180, 90),
+    AniServo("ReplaceNameServo", 14, MG92B_TYPE, 0, 180, 90),
+    AniServo("ReplaceNameServo", 15, MG92B_TYPE, 0, 180, 90),
 ]
 
 phonemes_data = {

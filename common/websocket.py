@@ -1,3 +1,5 @@
+"""Websocket module to handle Websocket connection as a client."""
+
 from websockets.sync.client import connect
 
 from common.autodiscovery import AutoDiscoveryClient
@@ -6,18 +8,21 @@ from common.config import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 
 class WebSocketClient(Logger):
+    """Class to handle Websocket connection as a client."""
+
     def __init__(self):
         super().__init__("WebSocketClient")
 
         self.__continue_loop = True
         self.__websocket = None
-        self.__autoDiscovery = AutoDiscoveryClient()
+        self.__auto_discovery = AutoDiscoveryClient()
 
     def connect(self):
+        """Wait until any server is found on AutoDiscovery via UDP Broadcast and connect."""
         # Auto Discovery - UPD LISTENING
         self.info("Discovering servers...")
 
-        current_ip = self.__autoDiscovery.listen()
+        current_ip = self.__auto_discovery.listen()
 
         self.info("Server found at ", current_ip)
         self.info("Connecting...")
@@ -29,6 +34,7 @@ class WebSocketClient(Logger):
         self.send(WEBSOCKET_MESSAGES["connected"])
 
     async def ready(self, handler):
+        """Tell server client is ready to receive and process messages."""
         self.send(WEBSOCKET_MESSAGES["ready"])
         self.__continue_loop = True
 
@@ -47,7 +53,8 @@ class WebSocketClient(Logger):
     # Send
 
     def send(self, msg):
-        if self.__websocket != None:
+        """Send message to the server."""
+        if self.__websocket is not None:
             self.__websocket.send(msg)
             self.info("Message sent", msg)
         else:
