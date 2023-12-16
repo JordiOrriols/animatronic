@@ -17,7 +17,7 @@ def show_servo_scale(servo: AniServo):
     frameControl = Frame(window)
     frameControl.pack(side="left", padx=10)
 
-    label = "#" + str(servo.getPin())
+    label = "#" + str(servo.get_pin())
     n = Label(frameControl, fg="black", width=3, text=label)
     n.pack(side="top", expand=True)
 
@@ -27,8 +27,8 @@ def show_servo_scale(servo: AniServo):
 
     s = Scale(
         frameControl,
-        from_=servo.getPhysicalLimitMin(),
-        to=servo.getPhysicalLimitMax(),
+        from_=servo.get_physical_limit_min(),
+        to=servo.get_physical_limit_max(),
         length=200,
         showvalue=0,
         tickinterval=2,
@@ -36,7 +36,7 @@ def show_servo_scale(servo: AniServo):
         command=print_selection,
     )
 
-    s.set(servo.getRestPosition())
+    s.set(servo.get_rest_position())
     s.pack(side="top", expand=True)
 
     l = Label(frameControl, bg="white", fg="black", width=3, text="...")

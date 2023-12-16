@@ -11,6 +11,7 @@ from projects.jackSparrow.config import jackSparrow_servos_data
 from common.animation import Animation
 from common.logger import Logger
 from common.generative import GenerativeMovement
+from common.servo import AniServo
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
@@ -33,7 +34,7 @@ class Project(Logger):
         self.__automatic_mode = False
 
         self.info("Initializing for project: ", self.__project)
-        self.__servos_data = servos_data_object[self.__project]
+        self.__servos_data: list[AniServo] = servos_data_object[self.__project]
 
         if self.__validate_servos_data():
             kit = ServoKit(channels=16)
@@ -72,7 +73,7 @@ class Project(Logger):
                 animation.refresh()
 
                 for servo in self.__servos_data:
-                    if servo.getName() in animation.get_positions().keys():
+                    if servo.get_name() in animation.get_positions().keys():
                         new_position = animation.get_current_position(servo)
                         servo.move_to_angle(int(new_position))
 

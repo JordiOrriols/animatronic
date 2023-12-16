@@ -17,6 +17,11 @@ class Animation(Logger):
         self.__last_frame_position = self.__frames - 1
         self.__positions = self.__data["positions"]
 
+        self.__refresh_count = 0
+        self.__elapsed_time = 0
+        self.__start_time = 0
+        self.__refresh_time = 0
+
         self.__frame_duration = 1 / self.__fps
         self.__total_duration = self.__frames / self.__fps
 
@@ -40,13 +45,16 @@ class Animation(Logger):
     def end(self):
         """Call when animation has ended to print performance metrics."""
         decimal_multiplier = 100
+        interpolation_factor = (
+            np.floor(self.__refresh_count / self.__frames * decimal_multiplier)
+            / decimal_multiplier
+        )
         self.info(f"Refresh count {self.__refresh_count}")
         self.info(
             f"Refresh rate {np.floor(self.__refresh_count / self.__elapsed_time)} Hz"
         )
-        self.info(
-            f"Interpolation factor {np.floor(self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier} times better"
-        )
+
+        self.info(f"Interpolation factor {interpolation_factor} times better")
 
     def __get_current_frame(self):
         return np.minimum(

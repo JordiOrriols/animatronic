@@ -58,15 +58,15 @@ class AutoDiscoveryServer(Logger):
 
     def __get_local_ip(self):
         # Create a socket to get the local IP address
-        with socket(AF_INET, SOCK_DGRAM) as s:
+        with socket(AF_INET, SOCK_DGRAM) as skt:
             try:
                 # Create UDP socket
-                s.connect(
+                skt.connect(
                     ("8.8.8.8", 80)
                 )  # Connect to a known external server (Google's public DNS)
-                self.__current_ip = s.getsockname()[0]
+                self.__current_ip = skt.getsockname()[0]
 
-            except s.error as e:
+            except skt.error as e:
                 self.error(f"Cannot get local IP address: {e}")
                 self.__current_ip = gethostbyname(
                     gethostname()

@@ -60,13 +60,12 @@ class AniServo(Logger):
     # Start
     def start(self, kit: ServoKit):
         """Starting the servo class with all the information, and adafruit ServoKit."""
-        min = self.__fabric_data["pulse_width"]["min"]
-        max = self.__fabric_data["pulse_width"]["max"]
-        actuation_range = self.__fabric_data["actuation_range"]
-
         self.__servo = kit.servo[self.__pin]
-        self.__servo.set_pulse_width_range(min, max)
-        self.__servo.actuation_range = actuation_range
+        self.__servo.set_pulse_width_range(
+            self.__fabric_data["pulse_width"]["min"],
+            self.__fabric_data["pulse_width"]["max"],
+        )
+        self.__servo.actuation_range = self.__fabric_data["actuation_range"]
 
         self.sleep()
 
