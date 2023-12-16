@@ -71,7 +71,7 @@ class AniServo(Logger):
         self.sleep()
 
         if self.__connection is not None:
-            self.__connection.start()
+            self.__connection.start(kit)
 
     # Sleep
     def sleep(self):
