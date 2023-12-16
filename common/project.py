@@ -2,14 +2,14 @@
 
 import os
 import json
-
 from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 
-from common.servo import initialize_servos
 from projects.skeleton.config import skeleton_servos_data
 from projects.skeletonV2.config import skeletonV2_servos_data
 from projects.jackSparrow.config import jackSparrow_servos_data
+
+from common.servo import initialize_servos
 from common.animation import Animation
 from common.logger import Logger
 from common.generative import GenerativeMovement
@@ -23,7 +23,7 @@ servos_data_object = {
 
 
 class Project(Logger):
-    """Class to handle all Project specific information. The information is defined via environment variables."""
+    """Class to handle all Project specific information."""
 
     def __init__(self, init_servos=True):
         super().__init__("Project")
@@ -58,7 +58,8 @@ class Project(Logger):
     def load_animation(self, animation_name):
         """Load animation on memory."""
         with open(
-            "projects/" + self.__project + "/" + animation_name + ".json"
+            "projects/" + str(self.__project) + "/" + animation_name + ".json",
+            encoding="utf-8",
         ) as json_file:
             self.__animation_data = json.load(json_file)
 

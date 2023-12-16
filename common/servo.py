@@ -2,11 +2,14 @@
 
 from adafruit_servokit import ServoKit
 import numpy as np
+
 from common.config import fabric_servo_data
 from common.logger import Logger
 
 
 class AniServo(Logger):
+    """Aniservo class to handle servo information, limits and movements."""
+
     def __init__(
         self,
         name: str,
@@ -24,8 +27,8 @@ class AniServo(Logger):
         self.__rest_position = rest_position
         self.__fabric_data = fabric_servo_data[type]
 
-        self.__connection = None
-        self.__connectionDirection = None
+        self.__connection: AniServo | None = None
+        self.__connection_direction = None
         self.__servo = None
 
     # Getters
@@ -55,9 +58,9 @@ class AniServo(Logger):
 
     # Connect
     def connect(self, servo: "AniServo", direction: str):
-        """Connecting to an another servo that should be controlled at the same time, with the same angle, or inverted angle. Example 100 vs 80, and 70 vs 110"""
+        """Connecting to an another servo that should be controlled at the same time."""
         self.__connection = servo
-        self.__connectionDirection = direction
+        self.__connection_direction = direction
 
     # Start
     def start(self, kit: ServoKit):
@@ -101,10 +104,9 @@ class AniServo(Logger):
     def move_to_angle(self, position: int):
         """Moving the servo to specific position."""
         self.__move(position)
-
         if self.__connection is not None:
             connection_position = np.where(
-                self.__connectionDirection == "inverted", 180 - position, position
+                self.__connection_direction == "inverted", 180 - position, position
             )
             self.__connection.move_to_angle(connection_position.item())
 
