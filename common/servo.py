@@ -24,13 +24,9 @@ class AniServo(Logger):
 
         self.__connection = None
         self.__connectionDirection = None
-
         self.__kit = None
 
     # Getters
-    # Getters
-    # Getters
-
     def getName(self):
         return self.__name
 
@@ -50,17 +46,11 @@ class AniServo(Logger):
         return self.__kit.servo[self.__pin].angle
 
     # Connect
-    # Connect
-    # Connect
-
     def connect(self, servo: "AniServo", direction: str):
         self.__connection = servo
         self.__connectionDirection = direction
 
     # Start
-    # Start
-    # Start
-
     def start(self, kit):
         min = self.__fabric_data["pulse_width"]["min"]
         max = self.__fabric_data["pulse_width"]["max"]
@@ -83,20 +73,14 @@ class AniServo(Logger):
 
         self.sleep()
 
-        if self.__connection != None:
+        if self.__connection is not None:
             self.__connection.start()
 
     # Sleep
-    # Sleep
-    # Sleep
-
     def sleep(self):
         self.move_to_angle(self.__rest_position)
 
     # Move
-    # Move
-    # Move
-
     def __validate_position(self, position: int):
         if position < 0:
             self.error("Position minimum exceeded ", position, ". Moved to: 0")

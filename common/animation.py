@@ -75,10 +75,6 @@ class Animation(Logger):
     def __getFrameTime(self, frame: int):
         return self.__frame_duration * frame
 
-    # Interpolation
-    # Interpolation
-    # Interpolation
-
     def __interpolation(self, d, x):
         return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
 
