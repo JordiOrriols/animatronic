@@ -1,7 +1,7 @@
 """Animation module to play animation from JSON files."""
 
 import time
-import numpy as np
+import math
 
 from common.servo import AniServo
 from common.logger import Logger
@@ -18,10 +18,7 @@ class Animation(Logger):
         self.__frames = int(self.__data["frames"])
         self.__last_frame_position = self.__frames - 1
 
-        self.__positions = {
-            key: np.array([int(value) for value in values])
-            for key, values in self.__data["positions"].items()
-        }
+        self.__positions = self.__data["positions"]
 
         self.__refresh_count = 0
         self.__elapsed_time = 0
@@ -52,24 +49,23 @@ class Animation(Logger):
         """Call when animation has ended to print performance metrics."""
         decimal_multiplier = 100
         interpolation_factor = (
-            np.floor(self.__refresh_count / self.__frames * decimal_multiplier)
+            math.floor(self.__refresh_count / self.__frames * decimal_multiplier)
             / decimal_multiplier
         )
         self.info(f"Refresh count {self.__refresh_count}")
         self.info(
-            f"Refresh rate {np.floor(self.__refresh_count / self.__elapsed_time)} Hz"
+            f"Refresh rate {math.floor(self.__refresh_count / self.__elapsed_time)} Hz"
         )
 
         self.info(f"Interpolation factor {interpolation_factor} times better")
 
     def __get_current_frame(self):
-        return np.minimum(
+        return min(
             self.__last_frame_position,
-            np.floor(self.__elapsed_time / self.__frame_duration),
+            math.floor(self.__elapsed_time / self.__frame_duration),
         )
 
     def __get_next_frame(self, current_frame):
-        # return np.minimum(current_frame + 1, self.__last_frame_position) Chat GPT optimization
         if current_frame < self.__last_frame_position:
             return current_frame + 1
 
@@ -82,8 +78,7 @@ class Animation(Logger):
         return self.__frame_duration * frame
 
     def __interpolation(self, d, x):
-        x_values, y_values = np.array(d).T
-        return np.interp(x, x_values, y_values)
+        return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
 
     def get_positions(self):
         """Get all positions from the whole animation."""
