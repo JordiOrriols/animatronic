@@ -10,7 +10,6 @@ playsound = "*"
 python-dotenv = "*"
 simple-term-menu = "*"
 numpy = "*"
-pandas = "*"
 
 [dev-packages]
 pylint = "*"
