@@ -14,6 +14,7 @@ class AniServo(Logger):
         self,
         name: str,
         pin: int,
+        type: str,
         min_val: int,
         max_val: int,
         rest_position: int,
