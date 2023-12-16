@@ -76,7 +76,7 @@ class Animation(Logger):
         return self.__last_frame_position
 
     def __get_frame_position(self, servo: AniServo, frame: int):
-        return self.__positions[servo.get_name()][frame]
+        return self.__positions[servo.get_name()][int(frame)]
 
     def __get_frame_time(self, frame: int):
         return self.__frame_duration * frame
