@@ -9,7 +9,6 @@ websockets = "*"
 playsound = "*"
 python-dotenv = "*"
 simple-term-menu = "*"
-numpy = "*"
 
 [dev-packages]
 pylint = "*"
