@@ -1,5 +1,5 @@
 import time
-import math
+import numpy as np
 
 from common.servo import AniServo
 from common.logger import Logger
@@ -30,23 +30,18 @@ class Animation(Logger):
         self.__refresh_time = time.time()
 
     def refresh(self):
-        self.__refresh_count = self.__refresh_count + 1
+        self.__refresh_count += 1
         self.__refresh_time = time.time()
         self.__elapsed_time = self.__refresh_time - self.__start_time
 
     def end(self):
         decimal_multiplier = 100
-        self.info("Refresh count ", self.__refresh_count)
+        self.info(f"Refresh count {self.__refresh_count}")
         self.info(
-            "Refresh rate ",
-            math.floor(self.__refresh_count / self.__elapsed_time),
-            " Hz",
+            f"Refresh rate {np.floor(self.__refresh_count / self.__elapsed_time)} Hz"
         )
         self.info(
-            "Interpolation factor ",
-            math.floor(self.__refresh_count / self.__frames * decimal_multiplier)
-            / decimal_multiplier,
-            " times better",
+            f"Interpolation factor {np.floor(self.__refresh_count / self.__frames * decimal_multiplier) / decimal_multiplier} times better"
         )
 
     # Private Getters
@@ -69,46 +64,39 @@ class Animation(Logger):
 
         return self.__last_frame_position
 
-    def __getFramePosition(self, servo: AniServo, frame: int):
-        return int(self.__positions[servo.getName()][frame])
+    def __get_frame_position(self, servo: AniServo, frame: int):
+        return np.int_(self.__positions[servo.getName()][frame])
 
-    def __getFrameTime(self, frame: int):
+    def __get_frame_time(self, frame: int):
         return self.__frame_duration * frame
 
     def __interpolation(self, d, x):
-        return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
+        x_values, y_values = np.array(d).T
+        return np.interp(x, x_values, y_values)
 
-    # Getters
-    # Getters
-    # Getters
-
-    def getPositions(self):
+    def get_positions(self):
         return self.__positions
 
-    def getCurrentPosition(self, servo: AniServo):
-        current_frame = self.__getCurrentFrame()
-        next_frame = self.__getNextFrame()
+    def get_current_position(self, servo: AniServo):
+        current_frame = self.__get_current_frame()
+        next_frame = self.__get_next_frame(current_frame)
 
         data = [
             [
-                self.__getFrameTime(current_frame),
-                self.__getFramePosition(servo, current_frame),
+                self.__get_frame_time(current_frame),
+                self.__get_frame_position(servo, current_frame),
             ],
             [
-                self.__getFrameTime(next_frame),
-                self.__getFramePosition(servo, next_frame),
+                self.__get_frame_time(next_frame),
+                self.__get_frame_position(servo, next_frame),
             ],
         ]
 
         try:
             return self.__interpolation(data, self.__elapsed_time)
-        except:
-            self.error("Interpolation failed")
-            return self.__getFramePosition(servo, current_frame)
+        except Exception as e:
+            self.error(f"Interpolation failed: {e}")
+            return self.__get_frame_position(servo, current_frame)
 
-    # Checkers
-    # Checkers
-    # Checkers
-
-    def inProgress(self):
+    def in_progress(self):
         return self.__elapsed_time < self.__total_duration
