@@ -38,7 +38,7 @@ class GenerativeMovement(Logger):
             current_position = self.__current_position + progress * (
                 self.__next_target_position - self.__current_position
             )
-            self.__servo.move_to_angle(current_position)
+            self.__servo.move_to_angle(int(current_position))
 
             if progress == 1.0:
                 self.__in_progress = False

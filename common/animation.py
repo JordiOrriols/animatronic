@@ -108,5 +108,5 @@ class Animation(Logger):
             return self.__get_frame_position(servo, current_frame)
 
     def in_progress(self):
-        """Know if the animation still in progress. Will return false when the animation does not have any other keyframe to play."""
+        """Know if the animation still in progress."""
         return self.__elapsed_time < self.__total_duration

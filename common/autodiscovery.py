@@ -30,7 +30,7 @@ class AutoDiscoveryClient(Logger):
     def listen(self):
         """Listen for UDP messages on the local network."""
         self.info("Listening for service")
-        while self.__current_ip == None:
+        while self.__current_ip is None:
             data, addr = self.__socket.recvfrom(1024)  # wait for a packet
             self.log("Data", data, addr)
 
@@ -68,18 +68,17 @@ class AutoDiscoveryServer(Logger):
                 )  # Connect to a known external server (Google's public DNS)
                 self.__current_ip = skt.getsockname()[0]
 
-            except skt.error as e:
-                self.error(f"Cannot get local IP address: {e}")
-                self.__current_ip = gethostbyname(
-                    gethostname()
-                )  # get our IP. Be careful if you have multiple network interfaces or IPs
+            except:
+                self.error("Cannot get local IP address")
+                # get our IP. Be careful if you have multiple network interfaces or IPs
+                self.__current_ip = gethostbyname(gethostname())
 
         self.info("Local IP address:", self.__current_ip)
 
     def __broadcast(self):
         self.info("Start broadcast")
         while True:
-            if self.__auto_discovery == True:
+            if self.__auto_discovery is True:
                 data = DISCOVERY_MAGIC + str(self.__current_ip)
                 self.__socket.sendto(str.encode(data), ("<broadcast>", DISCOVERY_PORT))
                 self.log("Sent service announcement", data)
