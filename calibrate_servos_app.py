@@ -16,6 +16,8 @@ window.geometry("850x300")
 
 
 def show_servo_scale(servo: AniServo):
+    """Show linear selector to calibrate the servo."""
+
     frameControl = Frame(window)
     frameControl.pack(side="left", padx=10)
 

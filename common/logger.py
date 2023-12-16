@@ -16,6 +16,10 @@ class Logger:
         """Enable debug mode."""
         self.__debug = True
 
+    def debug_enabled(self):
+        """Check debug mode."""
+        self.__debug
+
     def __console(self, level: str, *message):
         print(level, self.log_name + " - ", message)
 

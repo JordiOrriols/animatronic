@@ -90,7 +90,7 @@ class AniServo(Logger):
             position, self.__physical_limits_min, self.__fabric_data["actuation_range"]
         )
 
-        if self.__debug:
+        if self.debug_enabled():
             if initial_position is not position:
                 self.log(
                     f"Invalid position detected {initial_position}. Moved to: {position}"

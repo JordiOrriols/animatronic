@@ -9,7 +9,9 @@ project = Project()
 
 # Run code
 
-with open("projects/" + os.getenv("PROJECT_ID") + "/animation.json") as json_file:
+with open(
+    f"projects/{os.getenv('PROJECT_ID')}/animation.json", encoding="utf-8"
+) as json_file:
     data = json.load(json_file)
 
     print("Animation loaded")
@@ -30,8 +32,8 @@ with open("projects/" + os.getenv("PROJECT_ID") + "/animation.json") as json_fil
             frameStart = time.time()
 
             for servo in project.get_servos_data():
-                if servo.getName() in positions.keys():
-                    new_position = positions[servo.getName()][current_frame]
+                if servo.get_name() in positions.keys():
+                    new_position = positions[servo.get_name()][current_frame]
                     servo.move_to_angle(int(new_position))
 
             frameEnd = time.time()
