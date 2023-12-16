@@ -1,4 +1,6 @@
-from mouth.mouth import adopt_phoneme
+"""Mouth module. Here you have specific code to play mouth."""
+
+from projects.mouth.mouth import adopt_phoneme
 from common.project import Project
 
 # Initialization

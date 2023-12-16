@@ -1,4 +1,4 @@
-# Configuration
+"""Mouth configuration module. Add here all servos for the animatronic."""
 
 from common.config import MG996R_TYPE, MG92B_TYPE
 from common.servo import AniServo

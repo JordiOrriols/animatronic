@@ -1,3 +1,5 @@
+"""Calibrating servos module via command line interface."""
+
 from common.project import Project
 from common.servo import AniServo
 

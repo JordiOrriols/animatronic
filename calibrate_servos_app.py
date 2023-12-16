@@ -1,3 +1,5 @@
+"""Calibrating servos module with graphical interface."""
+
 from tkinter import Tk, Frame, Scale, Label
 
 from common.servo import AniServo

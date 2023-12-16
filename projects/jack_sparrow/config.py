@@ -1,4 +1,4 @@
-# Configuration
+"""Jack Sparrow configuration module. Add here all servos for the animatronic."""
 
 from common.config import MG996R_TYPE
 from common.servo import AniServo
