@@ -18,23 +18,25 @@ class Animation(Logger):
         self.__frame_duration = 1 / self.__fps
         self.__total_duration = self.__frames / self.__fps
 
-        self.info("Animation at ", self.__fps, "fps")
-        self.info("Total ", self.__frames, " Frames")
-        self.info("Estimated duration: ", self.__total_duration, " seconds")
+        self.info(f"Animation at {self.__fps} fps")
+        self.info(f"Total {self.__frames} Frames")
+        self.info(f"Estimated duration: {self.__total_duration} seconds")
 
     def start(self):
+        """Call before animation starts to initialize animation data."""
         self.__refresh_count = 0
         self.__elapsed_time = 0
-
         self.__start_time = time.time()
-        self.__refresh_time = time.time()
+        self.__refresh_time = self.__start_time
 
     def refresh(self):
+        """Call on each iteration for the animation."""
         self.__refresh_count += 1
         self.__refresh_time = time.time()
         self.__elapsed_time = self.__refresh_time - self.__start_time
 
     def end(self):
+        """Call when animation has ended to print performance metrics."""
         decimal_multiplier = 100
         self.info(f"Refresh count {self.__refresh_count}")
         self.info(
@@ -65,7 +67,7 @@ class Animation(Logger):
         return self.__last_frame_position
 
     def __get_frame_position(self, servo: AniServo, frame: int):
-        return np.int_(self.__positions[servo.getName()][frame])
+        return np.int_(self.__positions[servo.get_name()][frame])
 
     def __get_frame_time(self, frame: int):
         return self.__frame_duration * frame
@@ -75,9 +77,11 @@ class Animation(Logger):
         return np.interp(x, x_values, y_values)
 
     def get_positions(self):
+        """Get all positions from the whole animation."""
         return self.__positions
 
     def get_current_position(self, servo: AniServo):
+        """Get the current position for a specific servo on the animation."""
         current_frame = self.__get_current_frame()
         next_frame = self.__get_next_frame(current_frame)
 
@@ -99,4 +103,5 @@ class Animation(Logger):
             return self.__get_frame_position(servo, current_frame)
 
     def in_progress(self):
+        """Know if the animation still in progress. Will return false when the animation does not have any other keyframe to play."""
         return self.__elapsed_time < self.__total_duration
