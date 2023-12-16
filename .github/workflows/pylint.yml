@@ -22,9 +22,6 @@ jobs:
       - name: Install numpy
         run: |
           pip install numpy
-      - name: Install dotenv
-        run: |
-          pip install dotenv
       - name: Install websockets
         run: |
           pip install websockets
