@@ -11,6 +11,7 @@ python-dotenv = "*"
 simple-term-menu = "*"
 
 [dev-packages]
+pylint = "*"
 
 [requires]
 python_version = "3.9"
