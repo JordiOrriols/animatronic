@@ -47,10 +47,7 @@ I will be happy to know if someone is using it and happy to help!
 ```
 sudo apt-get install python-smbus
 sudo apt-get install i2c-tools
-
-sudo pip3 install adafruit-circuitpython-servokit
-sudo pip3 install python-dotenv
-sudo pip3 install websockets
+pipenv install
 
 sudo echo "PROJECT_ID=skeleton" > .env
 ```
@@ -58,9 +55,7 @@ sudo echo "PROJECT_ID=skeleton" > .env
 ### SERVER On MacOs
 
 ```
-pip3 install playsound
-pip3 install websockets
-pip3 install simple-term-menu
+pipenv install
 brew install python-tk
 ```
 
