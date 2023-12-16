@@ -50,7 +50,7 @@ class GenerativeMovement(Logger):
         return random.randint(self.__min_limit + offset, self.__max_limit - offset)
 
     def __get_new_duration(self):
-        return random.uniform(self.__min_duration, self.__max_duration)
+        return random.randint(self.__min_duration, self.__max_duration)
 
     def update(self, random_factor=1.0):
         """This method will calculate new positions if needed, and move all the servos to the next position."""

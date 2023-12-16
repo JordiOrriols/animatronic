@@ -1,7 +1,6 @@
 """Servo module to handle servo information, limits and movements."""
 
 from adafruit_servokit import ServoKit
-import numpy as np
 
 from common.config import fabric_servo_data
 from common.logger import Logger
@@ -21,12 +20,13 @@ class AniServo(Logger):
     ):
         super().__init__("AniServo " + str(name) + " on pin #" + str(pin))
 
+        self.__fabric_data = fabric_servo_data[servo_type]
+
         self.__name = name
         self.__pin = pin
-        self.__physical_limits_min = min_val
-        self.__physical_limits_max = max_val
         self.__rest_position = rest_position
-        self.__fabric_data = fabric_servo_data[servo_type]
+        self.__physical_limits_min = max(min_val, 0)
+        self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
 
         self.__connection: AniServo | None = None
         self.__connection_direction = None
@@ -85,10 +85,8 @@ class AniServo(Logger):
 
     # Move
     def __validate_position(self, initial_position: int):
-        position = np.clip(initial_position, 0, self.__physical_limits_max)
-        position = np.clip(
-            position, self.__physical_limits_min, self.__fabric_data["actuation_range"]
-        )
+        position = min(initial_position, self.__physical_limits_max)
+        position = max(position, self.__physical_limits_min)
 
         if self.debug_enabled():
             if initial_position is not position:
@@ -106,10 +104,12 @@ class AniServo(Logger):
         """Moving the servo to specific position."""
         self.__move(position)
         if self.__connection is not None:
-            connection_position = np.where(
-                self.__connection_direction == "inverted", 180 - position, position
-            )
-            self.__connection.move_to_angle(connection_position.item())
+            if self.__connection_direction == "inverted":
+                connection_position = 180 - position
+            else:
+                connection_position = position
+
+            self.__connection.move_to_angle(connection_position)
 
 
 def initialize_servos(kit, servos_data):
