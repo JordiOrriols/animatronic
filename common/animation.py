@@ -1,3 +1,5 @@
+"""Animation module to play animation from JSON files."""
+
 import time
 import numpy as np
 

@@ -1,3 +1,5 @@
+"""GenerativeMovement module to generate random movements for animatronics."""
+
 import time
 import random
 

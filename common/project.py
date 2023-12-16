@@ -1,3 +1,5 @@
+"""Project module to handle all different data for projects."""
+
 import os
 import json
 

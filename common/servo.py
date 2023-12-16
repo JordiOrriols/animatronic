@@ -1,3 +1,5 @@
+"""Servo module to handle servo information, limits and movements."""
+
 from adafruit_servokit import ServoKit
 import numpy as np
 from common.config import fabric_servo_data

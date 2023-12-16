@@ -1,3 +1,6 @@
+"""Logger module to handle printing messages."""
+
+
 class Logger:
     """Logger class to handle printing messages."""
 

@@ -1,3 +1,5 @@
+"""AutoDiscovery module to expose and find servers on the local network."""
+
 import threading
 from time import sleep
 from socket import (
