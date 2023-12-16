@@ -15,7 +15,9 @@ auto_discovery.start()
 # Websocket
 
 
-async def showOptions(websocket):
+async def show_options(websocket):
+    """Show cli options to choose what to do with your animatronic."""
+
     options = ["[p] Play animation", "[a] Automatic mode", "[e] Exit"]
     terminal_menu = TerminalMenu(options, title="Select next action")
     menu_entry_index = terminal_menu.show()
@@ -45,6 +47,7 @@ async def showOptions(websocket):
 
 
 async def handler(websocket):
+    """Handle websocket client messages."""
     async for message in websocket:
         print("Websocket Message: ", message)
 
@@ -56,14 +59,15 @@ async def handler(websocket):
             or message == WEBSOCKET_MESSAGES["finished"]
         ):
             await websocket.send(WEBSOCKET_MESSAGES["waiting"])
-            await showOptions(websocket)
+            await show_options(websocket)
 
 
 async def main():
+    """Main function to keep your server running."""
     current_ip = auto_discovery.get_current_ip()
 
     print("Websocket Server Started")
-    print(" - Websocket url", "ws://" + current_ip + ":" + str(WEBSOCKET_PORT))
+    print(f" - Websocket url ws://{str(current_ip)}:{str(WEBSOCKET_PORT)}")
 
     async with serve(handler, current_ip, WEBSOCKET_PORT):
         await asyncio.Future()  # run forever
