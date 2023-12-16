@@ -25,9 +25,6 @@ jobs:
       - name: Install websockets
         run: |
           pip install websockets
-      - name: Install playsound
-        run: |
-          pip install playsound
       - name: Install simple_term_menu
         run: |
           pip install simple_term_menu
