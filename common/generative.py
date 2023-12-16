@@ -8,25 +8,29 @@ from common.logger import Logger
 
 class GenerativeMovement(Logger):
     def __init__(self, servo: AniServo, max_duration=6, min_duration=1):
-        super().__init__("GenerativeMovement - Servo #" + servo.getName())
+        super().__init__("GenerativeMovement - Servo #" + servo.get_name())
 
         self.__servo = servo
         self.__max_duration = max_duration
         self.__min_duration = min_duration
 
         self.__in_progress = False
-        self.__current_position = self.__servo.getCurrentPosition()
-        self.__next_target_position = self.__servo.getCurrentPosition()
+        self.__current_position = self.__servo.get_current_position()
+        self.__next_target_position = self.__servo.get_current_position()
         self.__start_time = None
         self.__next_duration = None
+
+        # Precompute servo limits
+        self.__min_limit = self.__servo.get_physical_limit_min()
+        self.__max_limit = self.__servo.get_physical_limit_max()
+
+        # Calculate range parameters
+        self.__actual_range = self.__max_limit - self.__min_limit
 
     def __generate_smooth_movement(self):
         if self.__next_target_position and self.__next_duration:
             current_time = time.time() - self.__start_time
-            progress = current_time / self.__next_duration
-
-            if progress >= 1.0:
-                progress = 1.0
+            progress = min(current_time / self.__next_duration, 1.0)
 
             current_position = self.__current_position + progress * (
                 self.__next_target_position - self.__current_position
@@ -37,25 +41,10 @@ class GenerativeMovement(Logger):
                 self.__in_progress = False
 
     def __get_new_position(self, random_factor):
-        min_limit = self.__servo.getPhysicalLimitMin()
-        max_limit = self.__servo.getPhysicalLimitMax()
+        limited_range = int(self.__actual_range * random_factor)
+        offset = int((self.__actual_range - limited_range) / 2)
 
-        actual_range = max_limit - min_limit
-        limited_range = int((max_limit - min_limit) * (random_factor))
-        offset = int((actual_range - limited_range) / 2)
-        self.log(
-            "Generating new position",
-            {
-                "actual_range": actual_range,
-                "limited_range": limited_range,
-                "random_factor": random_factor,
-                "min_limit": min_limit,
-                "max_limit": max_limit,
-                "offset": offset,
-            },
-        )
-
-        return random.randint(min_limit + offset, max_limit - offset)
+        return random.randint(self.__min_limit + offset, self.__max_limit - offset)
 
     def __get_new_duration(self):
         return random.uniform(self.__min_duration, self.__max_duration)
@@ -77,5 +66,4 @@ class GenerativeMovement(Logger):
                 },
             )
 
-        # Mover suavemente el servo a la posición almacenada
         self.__generate_smooth_movement()
