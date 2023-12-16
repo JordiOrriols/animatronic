@@ -14,7 +14,7 @@ class AniServo(Logger):
         self,
         name: str,
         pin: int,
-        type: str,
+        servo_type: str,
         min_val: int,
         max_val: int,
         rest_position: int,
@@ -26,7 +26,7 @@ class AniServo(Logger):
         self.__physical_limits_min = min_val
         self.__physical_limits_max = max_val
         self.__rest_position = rest_position
-        self.__fabric_data = fabric_servo_data[type]
+        self.__fabric_data = fabric_servo_data[servo_type]
 
         self.__connection: AniServo | None = None
         self.__connection_direction = None
