@@ -3,7 +3,7 @@
 from common.config import MG996R_TYPE, MG90S_TYPE, GHS37A_TYPE
 from common.servo import AniServo
 
-skeletonV2_servos_data = [
+skeleton_v2_servos_data = [
     # BODY
     AniServo("body-flexion", 0, MG996R_TYPE, 0, 180, 70),  # Arreglar
     AniServo("body-rotation", 1, MG90S_TYPE, 0, 180, 145),  # Arreglar
