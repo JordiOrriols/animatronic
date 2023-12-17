@@ -41,7 +41,7 @@ I will be happy to know if someone is using it and happy to help!
 
 Configure your raspberry pi image to enable:
 
-- Hostname raspberry.local
+- Hostname raspberrypi-project (change if you have multiple)
 - Username and password (on my case jordiorriols)
 - Wifi user and password.
 - Locale settings
@@ -55,7 +55,7 @@ Then start you Raspberry Pi and go to Configuration to:
 And reboot you Pi. Next connect via ssh (Change your user if you added other)
 
 ```
-ssh jordiorriols@raspberrypi.local
+ssh jordiorriols@raspberrypi-project.local
 ```
 
 Then start cloning the repo:
@@ -64,6 +64,7 @@ Then start cloning the repo:
 mkdir github
 cd github
 git clone https://github.com/JordiOrriols/animatronic.git
+cd animatronic
 ```
 
 Then start installing all dependencies:
