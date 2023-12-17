@@ -4,10 +4,7 @@ Hello everybody!
 This is a small code built in Python to control several DIY Animatronics. It is intended to work with Raspberry Pi.
 I really think that using Raspberry Pi Zero instead of Arduino will provide a lot of interesting tools.
 
-And it's smaller and cheaper:
-
-Raspberry Pi Zero: https://www.adafruit.com/product/5291
-
+Raspberry Pi Zero 2 W: https://www.adafruit.com/product/5291
 Servo Bonnet: https://www.adafruit.com/product/3416
 
 I am still working on this code and adding different features. But this is the basic list:
@@ -32,9 +29,7 @@ I am still working on this code and adding different features. But this is the b
 These are some examples of animatronics I'm building:
 
 Skeleton V2 - https://www.youtube.com/watch?v=p53LTbVnqZs
-
 Skeleton - https://www.youtube.com/watch?v=jwxCnF2dbwg
-
 Jack Sparrow - https://www.youtube.com/watch?v=WWEPXgQNn7I
 
 If you plan to test the code, please leave a comment on Issues if you have any doubts.
@@ -44,28 +39,78 @@ I will be happy to know if someone is using it and happy to help!
 
 ### CLIENT On Raspberry Pi
 
+Configure your raspberry pi image to enable:
+
+- Hostname raspberry.local
+- Username and password (on my case jordiorriols)
+- Wifi user and password.
+- Locale settings
+- SSH via public key
+
+Then start you Raspberry Pi and go to Configuration to:
+
+- Enable I2C protocol
+- Startup on CLI (not desktop)
+
+And reboot you Pi. Next connect via ssh (Change your user if you added other)
+
 ```
-sudo apt-get install python-smbus
-sudo apt-get install i2c-tools
-pipenv install
-
-sudo echo "PROJECT_ID=skeleton" > .env
+ssh jordiorriols@raspberrypi.local
 ```
 
-### SERVER On MacOs
+Then start cloning the repo:
 
 ```
-pipenv install
-brew install python-tk
+mkdir github
+cd github
+git clone https://github.com/JordiOrriols/animatronic.git
 ```
 
-### Connect to your Raspberry Pi
+Then start installing all dependencies:
 
-This script is used to connect to the raspberry pi zero and start the project.
-You need to have the repository cloned to `git/animatronic` folder.
+```
+pip install adafruit-circuitpython-servokit
+pip install websockets
+pip install python-dotenv
+```
 
-`ssh pi@raspberrypi.local`
-`. git/animatronic/startup.sh`
+This seems to be already installed on Raspberry Pi. But double check if there are updates:
+
+```
+sudo apt install python3-smbus
+```
+
+Set the env file with the project you are going to use
+
+```
+echo "PROJECT_ID=skeleton" > .env
+```
+
+### SERVER On MacOs or PI with sound capabilities
+
+Then start cloning the repo:
+
+```
+mkdir github
+cd github
+git clone https://github.com/JordiOrriols/animatronic.git
+```
+
+Then start installing all dependencies:
+
+```
+pip install websockets
+pip install playsound
+pip install simple-term-menu
+```
+
+### For development
+
+Then start installing all dependencies:
+
+```
+pip install pylint
+```
 
 ### Project Configuration
 
@@ -86,23 +131,11 @@ You must change the `projects/skeleton/config.py` with your servos information.
 This script allow you to select a servo via CLI.
 You need to select the servo Pin, and then select a start position. Recommended 90 deg. After that you can use + and - keys to move the servo in 5 deg steps.
 
-`python3 calibrate_servos_app.py`
-
-This script will be deprecated.
-This script opens a graphical interface with range controls. All servos will be set with their rest position defined on the configuration.
-After that, you can drag and drop the controls to move the servos and see the limits.
-
 ### Play Animation from JSON
-
-`python3 play_deprecated.py`
-
-This script will play a JSON animation. Will work as a film, so will send the current position to the servo, and then wait until the new position time arrives. This will work like a film in frames per second.
 
 `python3 client.py`
 
-This script is similar to the `python3 play_fps.py`, but with the difference that instead of waiting for the next position, will send the position to the servo, and when the code has finished, will interpolate the position to be rendered from the animation JSON file. This will increase the FPS when possible and the animation should be smother.
-
-Also this file will be syncronized via websockets, so we can start the animation from the server where we can syncronize with the music.
+This script will connect to the server to wait for instructions. When running play, will reproduce the JSON animation, and will increase the FPS when possible with interpolations, so the animation should be smother.
 
 ## Mouth Scripts (Not tested since a lot of time) Not stable
 
