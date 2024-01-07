@@ -78,6 +78,9 @@ class Animation(Logger):
         return self.__frame_duration * frame
 
     def __interpolation(self, d, x):
+        if d[0][1] == d[1][1]:
+            return d[1][1]
+
         return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
 
     def get_positions(self):
