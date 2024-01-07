@@ -11,33 +11,35 @@ project = Project(False)
 while 1:
     print("\n\n\n", "Next adjustment")
 
-    servo: AniServo | None = None
+    SERVO = None
     selected_servo = input("Write Servo Pin: ")
+    SERVOS_DATA = project.get_servos_data()
 
-    for current_servo in project.get_servos_data():
-        if current_servo.get_pin() == int(selected_servo):
-            servo = current_servo
+    if SERVOS_DATA is not None:
+        for current_servo in SERVOS_DATA:
+            if current_servo.get_pin() == int(selected_servo):
+                servo = current_servo
 
-    if servo is None:
+    if SERVO is None:
         continue
 
-    print(servo.get_name(), "\n")
-    servo.start(project.kit)
+    print(SERVO.get_name(), "\n")
+    SERVO.start(project.kit)
 
     position = int(input("Select start position in degrees: "))
-    servo.move_to_angle(position)
+    SERVO.move_to_angle(position)
 
     print('Type "+" or "-" to adjust the position. Press any other key to exit.', "\n")
 
-    while servo is not None:
+    while SERVO is not None:
         operation = input("Adjusting: ")
         if operation == "+":
             position = position + 5
         elif operation == "-":
             position = position - 5
         else:
-            servo = None
+            SERVO = None
 
-        if servo is not None:
+        if SERVO is not None:
             print("Angle", position)
-            servo.move_to_angle(position)
+            SERVO.move_to_angle(position)
