@@ -18,7 +18,7 @@ skeleton_v2_servos_data = [
     AniServo("shoulder-right-rotation", 8, MG90S_TYPE, 50, 165, 50),
     # ARM
     AniServo("arm-left-rotation", 9, GHS37A_TYPE, 80, 160, 100),  # Refine Better
-    AniServo("arm-right-rotation", 10, GHS37A_TYPE, 0, 70, 90),  # Move Limit Physically
+    AniServo("arm-right-rotation", 10, GHS37A_TYPE, 0, 70, 10),  # Move Limit Physically
     AniServo("arm-left-flexion", 11, GHS37A_TYPE, 40, 140, 70),
     AniServo("arm-right-flexion", 12, GHS37A_TYPE, 25, 130, 130),
     # HAND
