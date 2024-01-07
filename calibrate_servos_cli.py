@@ -4,7 +4,7 @@ from common.project import Project
 from common.servo import AniServo
 
 # Initialization
-project = Project(False)
+project = Project(True)
 
 # Run code
 
@@ -18,7 +18,7 @@ while 1:
     if SERVOS_DATA is not None:
         for current_servo in SERVOS_DATA:
             if current_servo.get_pin() == int(selected_servo):
-                servo = current_servo
+                SERVO = current_servo
 
     if SERVO is None:
         continue
