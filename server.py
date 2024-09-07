@@ -15,6 +15,7 @@ from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 auto_discovery = AutoDiscoveryServer()
 auto_discovery.start()
 
+
 async def show_options(websocket):
     """Show cli options to choose what to do with your animatronic."""
 
@@ -48,31 +49,7 @@ async def show_options(websocket):
 
     elif menu_entry_index == 2:
         print("Calibrate:")
-
-        servo_pin = int(input("Write Servo Pin: "))
-        position = int(input("Select start position in degrees: "))
-
-        print(
-            'Type "+" or "-" to adjust the position. Press any other key to exit.', "\n"
-        )
-
-        while position is not None:
-            operation = input("Adjusting: ")
-            if operation == "+":
-                position = position + 5
-            elif operation == "-":
-                position = position - 5
-            else:
-                position = None
-
-            if position is not None:
-                await send_message(
-                    websocket,
-                    WEBSOCKET_MESSAGES["calibrate"],
-                    {"servo_pin": servo_pin, "position": position},
-                )
-
-        await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
+        await calibrate(websocket)
 
     elif menu_entry_index == 3:
         print("Evaluate:")
@@ -108,6 +85,32 @@ async def handler(websocket):
         ):
             await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
             await show_options(websocket)
+
+
+async def calibrate(websocket):
+    """Calibrate servo."""
+    servo_pin = int(input("Write Servo Pin: "))
+    position = int(input("Select start position in degrees: "))
+
+    print('Type "+" or "-" to adjust the position. Press any other key to exit.', "\n")
+
+    while position is not None:
+        operation = input("Adjusting: ")
+        if operation == "+":
+            position = position + 5
+        elif operation == "-":
+            position = position - 5
+        else:
+            position = None
+
+        if position is not None:
+            await send_message(
+                websocket,
+                WEBSOCKET_MESSAGES["calibrate"],
+                {"servo_pin": servo_pin, "position": position},
+            )
+
+    await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
 
 
 async def send_message(websocket, action: str, *data):
