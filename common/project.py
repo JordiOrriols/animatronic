@@ -70,7 +70,7 @@ class Project(Logger):
             for servo in self.__servos_data:
 
                 self.info("Servo: ", servo.get_name())
-                data = animation.get_positions()[servo.get_name()]
+                data = [int(num) for num in animation.get_positions()[servo.get_name()]]
 
                 min_value = min(data)
                 max_value = max(data)
