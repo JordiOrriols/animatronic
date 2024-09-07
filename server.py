@@ -1,3 +1,5 @@
+"""Server code."""
+
 import asyncio
 from time import sleep
 from playsound import playsound
@@ -91,9 +93,8 @@ async def handler(websocket):
         if message.action == WEBSOCKET_MESSAGES["connected"]:
             auto_discovery.disable()
 
-        if (
-            message.action == WEBSOCKET_MESSAGES["ready"]
-            or message.action == WEBSOCKET_MESSAGES["finished"]
+        if message.action in (
+            [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
         ):
             await websocket.send(WEBSOCKET_MESSAGES["waiting"])
             await show_options(websocket)

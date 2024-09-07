@@ -77,11 +77,11 @@ class Animation(Logger):
     def __get_frame_time(self, frame: int):
         return self.__frame_duration * frame
 
-    def __interpolation(self, d, x):
-        if d[0][1] == d[1][1]:
-            return d[1][1]
+    def __interpolation(self, data, elapsed_time):
+        if data[0][1] == data[1][1]:
+            return data[1][1]
 
-        return d[0][1] + (x - d[0][0]) * ((d[1][1] - d[0][1]) / (d[1][0] - d[0][0]))
+        return data[0][1] + (elapsed_time - data[0][0]) * ((data[1][1] - data[0][1]) / (data[1][0] - data[0][0]))
 
     def get_positions(self):
         """Get all positions from the whole animation."""
@@ -105,8 +105,8 @@ class Animation(Logger):
 
         try:
             return self.__interpolation(data, self.__elapsed_time)
-        except Exception as e:
-            self.error(f"Interpolation failed: {e}")
+        except Exception as error:
+            self.error(f"Interpolation failed: {error}")
             return self.__get_frame_position(servo, current_frame)
 
     def in_progress(self):
