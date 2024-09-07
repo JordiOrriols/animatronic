@@ -37,7 +37,7 @@ def handler(message):
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif message["action"] == WEBSOCKET_MESSAGES["calibrate"]:
-        project.calibrate(message["data"]["servo_pin"], message["data"]["position"])
+        project.calibrate(int(message["data"][0]["servo_pin"]), int(message["data"][0]["position"]))
 
     elif message["action"] == WEBSOCKET_MESSAGES["standby"]:
         project.standby()

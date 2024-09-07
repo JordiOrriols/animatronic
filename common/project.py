@@ -98,11 +98,11 @@ class Project(Logger):
         """Stop automatic generative movements."""
         self.__automatic_mode = False  # Not sure if this will work
 
-    def calibrate(self, servo_pin, position):
+    def calibrate(self, servo_pin: int, position: int):
         """Calibrate manually a servo."""
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
-                servo.move_to_angle(int(position))
+                servo.move_to_angle(position)
 
     def standby(self):
         """Put the animatronic in standby mode."""

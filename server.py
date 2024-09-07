@@ -66,7 +66,9 @@ async def show_options(websocket):
             if position is not None:
                 print("Angle", position)
                 await sendMessage(
-                    websocket, WEBSOCKET_MESSAGES["calibrate"], {servo_pin, position}
+                    websocket,
+                    WEBSOCKET_MESSAGES["calibrate"],
+                    {"servo_pin": servo_pin, "position": position},
                 )
 
         await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
