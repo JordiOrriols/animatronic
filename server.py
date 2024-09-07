@@ -1,7 +1,7 @@
 """Server code."""
 
-import asyncio
 import json
+import asyncio
 from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
@@ -14,9 +14,6 @@ from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 # Auto Discovery - UDP BROADCAST
 auto_discovery = AutoDiscoveryServer()
 auto_discovery.start()
-
-# Websocket
-
 
 async def show_options(websocket):
     """Show cli options to choose what to do with your animatronic."""
@@ -88,9 +85,11 @@ async def show_options(websocket):
 
 async def handler(websocket):
     """Handle websocket client messages."""
-    async for message in websocket:
+    async for msg in websocket:
 
-        print("Websocket Message: ", message)
+        print(f"Message received: {msg}")
+        message = json.loads(msg)
+        print(f"Message decoded: {message}")
 
         if message["action"] == WEBSOCKET_MESSAGES["connected"]:
             auto_discovery.disable()
