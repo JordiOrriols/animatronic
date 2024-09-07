@@ -41,9 +41,8 @@ class WebSocketClient(Logger):
 
         while self.__continue_loop:
             raw = self.__websocket.recv()
-            self.info(f"Message received: {raw}")
             message = json.loads(raw)
-            self.info(f"Message decoded: {message}")
+            self.info(f"Message received: {message}")
 
             if message["action"] == WEBSOCKET_MESSAGES["exit"]:
                 self.__continue_loop = False

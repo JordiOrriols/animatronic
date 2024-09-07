@@ -88,10 +88,8 @@ async def show_options(websocket):
 async def handler(websocket):
     """Handle websocket client messages."""
     async for msg in websocket:
-
-        print(f"Message received: {msg}")
         message = json.loads(msg)
-        print(f"Message decoded: {message}")
+        print(f"Message received: {message}")
 
         if message["action"] == WEBSOCKET_MESSAGES["connected"]:
             auto_discovery.disable()
