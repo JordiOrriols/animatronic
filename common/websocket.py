@@ -1,5 +1,6 @@
 """Websocket module to handle Websocket connection as a client."""
 
+import json
 from websockets.sync.client import connect
 
 from common.autodiscovery import AutoDiscoveryClient
@@ -52,9 +53,10 @@ class WebSocketClient(Logger):
     # Send
     # Send
 
-    def send(self, msg):
+    def send(self, action: str, *data):
         """Send message to the server."""
         if self.__websocket is not None:
+            msg = json.dumps({action, data})
             self.__websocket.send(msg)
             self.info("Message sent", msg)
         else:

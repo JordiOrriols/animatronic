@@ -23,27 +23,26 @@ def shutdown_raspberry_pi():
 
 def handler(msg):
     """Handle all messages from websocket."""
-    if msg == WEBSOCKET_MESSAGES["play"]:
+
+    if msg.action == WEBSOCKET_MESSAGES["play"]:
         project.play()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES["auto-start"]:
+    elif msg.action == WEBSOCKET_MESSAGES["auto-start"]:
         project.auto_start()
 
-    elif msg == WEBSOCKET_MESSAGES["auto-stop"]:
+    elif msg.action == WEBSOCKET_MESSAGES["auto-stop"]:
         project.auto_stop()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES["calibrate"]:
-        servo_pin = 0
-        position = 90
-        project.calibrate(servo_pin, position)
+    elif msg.action == WEBSOCKET_MESSAGES["calibrate"]:
+        project.calibrate(msg.data.servo_pin, msg.data.position)
 
-    elif msg == WEBSOCKET_MESSAGES["standby"]:
+    elif msg.action == WEBSOCKET_MESSAGES["standby"]:
         project.standby()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES["exit"]:
+    elif msg.action == WEBSOCKET_MESSAGES["exit"]:
         project.standby()
         shutdown_raspberry_pi()
 
