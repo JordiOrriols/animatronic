@@ -91,12 +91,11 @@ async def handler(websocket):
     async for message in websocket:
 
         print("Websocket Message: ", message)
-        msg = json.loads(message)
 
-        if msg.action == WEBSOCKET_MESSAGES["connected"]:
+        if message["action"] == WEBSOCKET_MESSAGES["connected"]:
             auto_discovery.disable()
 
-        if msg.action in (
+        if message["action"] in (
             [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
         ):
             await websocket.send(WEBSOCKET_MESSAGES["waiting"])

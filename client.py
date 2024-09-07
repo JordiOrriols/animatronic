@@ -23,28 +23,28 @@ def shutdown_raspberry_pi():
         print(f"Cannot shutdown the raspberry pi: {error}")
 
 
-def handler(msg):
+def handler(message):
     """Handle all messages from websocket."""
 
-    if msg.action == WEBSOCKET_MESSAGES["play"]:
+    if message["action"] == WEBSOCKET_MESSAGES["play"]:
         project.play()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg.action == WEBSOCKET_MESSAGES["auto-start"]:
+    elif message["action"] == WEBSOCKET_MESSAGES["auto-start"]:
         project.auto_start()
 
-    elif msg.action == WEBSOCKET_MESSAGES["auto-stop"]:
+    elif message["action"] == WEBSOCKET_MESSAGES["auto-stop"]:
         project.auto_stop()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg.action == WEBSOCKET_MESSAGES["calibrate"]:
-        project.calibrate(msg.data.servo_pin, msg.data.position)
+    elif message["action"] == WEBSOCKET_MESSAGES["calibrate"]:
+        project.calibrate(message["data"]["servo_pin"], message["data"]["position"])
 
-    elif msg.action == WEBSOCKET_MESSAGES["standby"]:
+    elif message["action"] == WEBSOCKET_MESSAGES["standby"]:
         project.standby()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg.action == WEBSOCKET_MESSAGES["exit"]:
+    elif message["action"] == WEBSOCKET_MESSAGES["exit"]:
         project.standby()
         shutdown_raspberry_pi()
 
