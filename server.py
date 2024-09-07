@@ -1,6 +1,7 @@
 """Server code."""
 
 import asyncio
+import json
 from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
@@ -88,12 +89,14 @@ async def show_options(websocket):
 async def handler(websocket):
     """Handle websocket client messages."""
     async for message in websocket:
-        print("Websocket Message: ", message)
 
-        if message.action == WEBSOCKET_MESSAGES["connected"]:
+        print("Websocket Message: ", message)
+        msg = json.loads(message)
+
+        if msg.action == WEBSOCKET_MESSAGES["connected"]:
             auto_discovery.disable()
 
-        if message.action in (
+        if msg.action in (
             [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
         ):
             await websocket.send(WEBSOCKET_MESSAGES["waiting"])
