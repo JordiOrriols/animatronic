@@ -81,7 +81,7 @@ class Project(Logger):
 
             animation.end()
 
-    def auto(self):
+    def auto_start(self):
         """Start automatic generative movements."""
         if self.__validate_servos_data():
             self.__automatic_mode = True
@@ -96,11 +96,17 @@ class Project(Logger):
                 for controller in animatronic_controllers:
                     controller.update(random_factor)
 
-    def stop(self):
+    def auto_stop(self):
         """Stop automatic generative movements."""
         self.__automatic_mode = False  # Not sure if this will work
 
-    def rest(self):
+    def calibrate(self, servo_pin, position):
+        """Calibrate manually a servo."""
+        for servo in self.__servos_data:
+            if servo.get_pin() == servo_pin:
+                servo.move_to_angle(int(position))
+
+    def standby(self):
         """Put the animatronic in standby mode."""
         if self.__validate_servos_data():
             for servo in self.__servos_data:

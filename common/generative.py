@@ -53,7 +53,7 @@ class GenerativeMovement(Logger):
         return random.randint(self.__min_duration, self.__max_duration)
 
     def update(self, random_factor=1.0):
-        """This method will calculate new positions if needed, and move all the servos to the next position."""
+        """This method will calculate new positions if needed, and move all the servos."""
         if not self.__in_progress:
             self.__in_progress = True
             self.__start_time = time.time()

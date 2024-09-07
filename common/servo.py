@@ -88,11 +88,10 @@ class AniServo(Logger):
         position = min(initial_position, self.__physical_limits_max)
         position = max(position, self.__physical_limits_min)
 
-        if self.debug_enabled():
-            if initial_position is not position:
-                self.log(
-                    f"Invalid position detected {initial_position}. Moved to: {position}"
-                )
+        if initial_position is not position:
+            self.log(
+                f"Invalid position detected {initial_position}. Moved to: {position}"
+            )
 
         return position
 

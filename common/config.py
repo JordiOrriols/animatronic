@@ -1,4 +1,5 @@
 """Configuration module to expose constants for different servos."""
+
 # Configuration
 
 MG996R_TYPE = "MG996R"  # Standard Servo
@@ -22,8 +23,10 @@ WEBSOCKET_MESSAGES = {
     "ready": "client-ready",
     "waiting": "server-waiting",
     "play": "play-animation",
-    "auto": "automatic-mode",
-    "stop": "stop",
     "finished": "animation-finished",
+    "auto-start": "automatic-mode-start",
+    "auto-stop": "automatic-mode-stop",
+    "calibrate": "calibrate",
+    "standby": "standby",
     "exit": "exit",
 }
