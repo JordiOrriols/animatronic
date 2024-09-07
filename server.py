@@ -23,6 +23,7 @@ async def show_options(websocket):
         "[a] Automatic mode",
         "[c] Calibrate",
         "[s] Standby",
+        "[r] Reboot",
         "[e] Exit",
     ]
     terminal_menu = TerminalMenu(options, title="Select next action")
@@ -78,6 +79,10 @@ async def show_options(websocket):
         await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
 
     elif menu_entry_index == 4:
+        print("Reboot:")
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["reboot"])
+
+    elif menu_entry_index == 5:
         print("Exit:")
         await sendMessage(websocket, WEBSOCKET_MESSAGES["exit"])
 

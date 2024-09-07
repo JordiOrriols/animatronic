@@ -14,6 +14,15 @@ client.connect()
 project = Project()
 project.load_animation("animation")
 
+
+def reboot_raspberry_pi():
+    """Call to reboot the raspberry pi."""
+    try:
+        subprocess.run(["sudo", "reboot"])
+    except Exception as error:
+        print(f"Cannot reboot the raspberry pi: {error}")
+
+
 def shutdown_raspberry_pi():
     """Call to shutdown the raspberry pi."""
     try:
@@ -37,11 +46,17 @@ def handler(message):
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif message["action"] == WEBSOCKET_MESSAGES["calibrate"]:
-        project.calibrate(int(message["data"][0]["servo_pin"]), int(message["data"][0]["position"]))
+        project.calibrate(
+            int(message["data"][0]["servo_pin"]), int(message["data"][0]["position"])
+        )
 
     elif message["action"] == WEBSOCKET_MESSAGES["standby"]:
         project.standby()
         client.send(WEBSOCKET_MESSAGES["finished"])
+
+    elif message["action"] == WEBSOCKET_MESSAGES["reboot"]:
+        project.standby()
+        reboot_raspberry_pi()
 
     elif message["action"] == WEBSOCKET_MESSAGES["exit"]:
         project.standby()

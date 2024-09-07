@@ -28,5 +28,6 @@ WEBSOCKET_MESSAGES = {
     "auto-stop": "automatic-mode-stop",
     "calibrate": "calibrate",
     "standby": "standby",
+    "reboot": "reboot",
     "exit": "exit",
 }
