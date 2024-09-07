@@ -17,7 +17,7 @@ project.load_animation("animation")
 def shutdown_raspberry_pi():
     """Call to shutdown the raspberry pi."""
     try:
-        subprocess.run(["sudo", "shutdown", "-h", "now"])  # does not work
+        subprocess.run(["sudo", "shutdown", "-h", "now"])
     except Exception as error:
         print(f"Cannot shutdown the raspberry pi: {error}")
 
