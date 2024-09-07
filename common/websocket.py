@@ -46,7 +46,7 @@ class WebSocketClient(Logger):
 
             if message["action"] == WEBSOCKET_MESSAGES["exit"]:
                 self.__continue_loop = False
-                await self.__websocket.close()
+                self.__websocket.close()
 
             handler(message)
 
