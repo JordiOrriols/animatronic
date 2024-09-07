@@ -87,12 +87,6 @@ class AniServo(Logger):
     def __validate_position(self, initial_position: int):
         position = min(initial_position, self.__physical_limits_max)
         position = max(position, self.__physical_limits_min)
-
-        if initial_position is not position:
-            self.log(
-                f"Invalid position detected {initial_position}. Moved to: {position}"
-            )
-
         return position
 
     def __move(self, position: int):

@@ -22,6 +22,7 @@ async def show_options(websocket):
         "[p] Play animation",
         "[a] Automatic mode",
         "[c] Calibrate",
+        "[e] Evaluate",
         "[s] Standby",
         "[r] Reboot",
         "[e] Exit",
@@ -65,7 +66,6 @@ async def show_options(websocket):
                 position = None
 
             if position is not None:
-                print("Angle", position)
                 await sendMessage(
                     websocket,
                     WEBSOCKET_MESSAGES["calibrate"],
@@ -75,14 +75,18 @@ async def show_options(websocket):
         await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
 
     elif menu_entry_index == 3:
+        print("Evaluate:")
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["evaluate"])
+
+    elif menu_entry_index == 4:
         print("Standby:")
         await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
 
-    elif menu_entry_index == 4:
+    elif menu_entry_index == 5:
         print("Reboot:")
         await sendMessage(websocket, WEBSOCKET_MESSAGES["reboot"])
 
-    elif menu_entry_index == 5:
+    elif menu_entry_index == 6:
         print("Exit:")
         await sendMessage(websocket, WEBSOCKET_MESSAGES["exit"])
 

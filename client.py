@@ -50,6 +50,9 @@ def handler(message):
             int(message["data"][0]["servo_pin"]), int(message["data"][0]["position"])
         )
 
+    elif message["action"] == WEBSOCKET_MESSAGES["evaluate"]:
+        project.evaluate()
+
     elif message["action"] == WEBSOCKET_MESSAGES["standby"]:
         project.standby()
         client.send(WEBSOCKET_MESSAGES["finished"])

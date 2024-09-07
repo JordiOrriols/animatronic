@@ -60,6 +60,41 @@ class Project(Logger):
         ) as json_file:
             self.__animation_data = json.load(json_file)
 
+    def evaluate(self):
+        """Validate animation."""
+        if self.__validate_servos_data():
+
+            animation = Animation(
+                self.__animation_data
+            )  # maybe we can move to load animation
+
+            for servo in self.__servos_data:
+
+                self.info("Servo: ", servo.get_name())
+                data = animation.get_positions()[servo.get_name()]
+                min_value = min(data)
+                max_value = max(data)
+
+                if min_value < servo.get_physical_limit_min():
+                    self.error(
+                        f"Minimum: Physical limit ({servo.get_physical_limit_min()}) exceed with ({min_value})"
+                    )
+
+                else:
+                    self.info(
+                        f"Minimum: Ok! Physical limit ({servo.get_physical_limit_min()}) with ({min_value})"
+                    )
+
+                if max_value > servo.get_physical_limit_max():
+                    self.error(
+                        f"Maximum: Physical limit ({servo.get_physical_limit_min()}) exceed with ({min_value})"
+                    )
+
+                else:
+                    self.info(
+                        f"Maximum: Ok! Physical limit ({servo.get_physical_limit_min()}) with ({min_value})"
+                    )
+
     def play(self):
         """Play animation."""
         if self.__validate_servos_data():
