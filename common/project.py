@@ -72,27 +72,31 @@ class Project(Logger):
 
                 self.info("Servo: ", servo.get_name())
                 data = animation.get_positions()[servo.get_name()]
+
                 min_value = min(data)
                 max_value = max(data)
 
-                if min_value < servo.get_physical_limit_min():
+                min_limit = servo.get_physical_limit_min()
+                max_limit = servo.get_physical_limit_max()
+
+                if min_value < min_limit:
                     self.error(
-                        f"Minimum: Physical limit ({servo.get_physical_limit_min()}) exceed with ({min_value})"
+                        f"Minimum: limit ({min_limit}) exceed with ({min_value})"
                     )
 
                 else:
                     self.info(
-                        f"Minimum: Ok! Physical limit ({servo.get_physical_limit_min()}) with ({min_value})"
+                        f"Minimum: limit ({min_limit}) in range with ({min_value})"
                     )
 
-                if max_value > servo.get_physical_limit_max():
+                if max_value > max_limit:
                     self.error(
-                        f"Maximum: Physical limit ({servo.get_physical_limit_min()}) exceed with ({min_value})"
+                        f"Maximum: limit ({max_limit}) exceed with ({max_value})"
                     )
 
                 else:
                     self.info(
-                        f"Maximum: Ok! Physical limit ({servo.get_physical_limit_min()}) with ({min_value})"
+                        f"Maximum: limit ({max_limit}) in range with ({max_value})"
                     )
 
     def play(self):
