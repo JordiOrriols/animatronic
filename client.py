@@ -17,18 +17,12 @@ project.load_animation("animation")
 
 def reboot_raspberry_pi():
     """Call to reboot the raspberry pi."""
-    try:
-        subprocess.run(["sudo", "reboot"])
-    except Exception as error:
-        print(f"Cannot reboot the raspberry pi: {error}")
+    subprocess.run(["sudo", "reboot"], check=False)
 
 
 def shutdown_raspberry_pi():
     """Call to shutdown the raspberry pi."""
-    try:
-        subprocess.run(["sudo", "shutdown", "-h", "now"])
-    except Exception as error:
-        print(f"Cannot shutdown the raspberry pi: {error}")
+    subprocess.run(["sudo", "shutdown", "-h", "now"], check=False)
 
 
 def handler(message):

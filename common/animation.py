@@ -103,12 +103,9 @@ class Animation(Logger):
             ],
         ]
 
-        try:
-            return self.__interpolation(data, self.__elapsed_time)
-        except Exception as error:
-            self.error(f"Interpolation failed: {error}")
-            return self.__get_frame_position(servo, current_frame)
+        return self.__interpolation(data, self.__elapsed_time)
 
     def in_progress(self):
         """Know if the animation still in progress."""
         return self.__elapsed_time < self.__total_duration
+    

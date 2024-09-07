@@ -49,8 +49,7 @@ class Project(Logger):
 
     def get_servos_data(self):
         """Get servos data."""
-        if self.__validate_servos_data():
-            return self.__servos_data
+        return self.__servos_data
 
     def load_animation(self, animation_name):
         """Load animation on memory."""

@@ -23,7 +23,7 @@ class GenerativeMovement(Logger):
         self.__start_time = None
         self.__next_duration = None
 
-        # Precompute servo limits
+        # Precomputed servo limits
         self.__min_limit = self.__servo.get_physical_limit_min()
         self.__max_limit = self.__servo.get_physical_limit_max()
 
