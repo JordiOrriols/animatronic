@@ -14,7 +14,6 @@ client.connect()
 project = Project()
 project.load_animation("animation")
 
-
 def shutdown_raspberry_pi():
     """Call to shutdown the raspberry pi."""
     try:

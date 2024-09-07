@@ -32,17 +32,17 @@ async def show_options(websocket):
 
     if menu_entry_index == 0:
         print("Playing Animation:")
-        await websocket.send(WEBSOCKET_MESSAGES["play"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["play"])
         sleep(1)
         playsound("sound/background.mp3", False)
         playsound("sound/laugh.mp3", False)
 
     elif menu_entry_index == 1:
         print("Automatic mode:")
-        await websocket.send(WEBSOCKET_MESSAGES["auto_start"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["auto_start"])
         playsound("sound/background.mp3", False)
         input("Press any key to stop")
-        await websocket.send(WEBSOCKET_MESSAGES["auto_stop"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["auto_stop"])
 
     elif menu_entry_index == 2:
         print("Calibrate:")
@@ -65,19 +65,19 @@ async def show_options(websocket):
 
             if position is not None:
                 print("Angle", position)
-                await websocket.send(
-                    WEBSOCKET_MESSAGES["calibrate"], {servo_pin, position}
+                await sendMessage(
+                    websocket, WEBSOCKET_MESSAGES["calibrate"], {servo_pin, position}
                 )
 
-        await websocket.send(WEBSOCKET_MESSAGES["standby"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
 
     elif menu_entry_index == 3:
         print("Standby:")
-        await websocket.send(WEBSOCKET_MESSAGES["standby"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["standby"])
 
     elif menu_entry_index == 4:
         print("Exit:")
-        await websocket.send(WEBSOCKET_MESSAGES["exit"])
+        await sendMessage(websocket, WEBSOCKET_MESSAGES["exit"])
 
     else:
         print("Option not supported:")
@@ -97,8 +97,15 @@ async def handler(websocket):
         if message["action"] in (
             [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
         ):
-            await websocket.send(WEBSOCKET_MESSAGES["waiting"])
+            await sendMessage(websocket, WEBSOCKET_MESSAGES["waiting"])
             await show_options(websocket)
+
+
+async def sendMessage(websocket, action: str, *data):
+    """Send message to the client."""
+    msg = json.dumps({"action": action, "data": data})
+    await websocket.send(msg)
+    print("Message sent", msg)
 
 
 async def main():
