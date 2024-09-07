@@ -56,7 +56,7 @@ class WebSocketClient(Logger):
     def send(self, action: str, *data):
         """Send message to the server."""
         if self.__websocket is not None:
-            msg = json.dumps({action: action, data: data | {}})
+            msg = json.dumps({"action": action, "data": data | {}})
             self.__websocket.send(msg)
             self.info("Message sent", msg)
         else:
