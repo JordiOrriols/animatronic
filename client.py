@@ -27,15 +27,24 @@ def handler(msg):
         project.play()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif msg == WEBSOCKET_MESSAGES["auto"]:
-        project.auto()
+    elif msg == WEBSOCKET_MESSAGES["auto-start"]:
+        project.auto_start()
 
-    elif msg == WEBSOCKET_MESSAGES["stop"]:
-        project.stop()
+    elif msg == WEBSOCKET_MESSAGES["auto-stop"]:
+        project.auto_stop()
+        client.send(WEBSOCKET_MESSAGES["finished"])
+
+    elif msg == WEBSOCKET_MESSAGES["calibrate"]:
+        servo_pin = 0
+        position = 90
+        project.calibrate(servo_pin, position)
+
+    elif msg == WEBSOCKET_MESSAGES["standby"]:
+        project.standby()
         client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif msg == WEBSOCKET_MESSAGES["exit"]:
-        project.rest()
+        project.standby()
         shutdown_raspberry_pi()
 
 
