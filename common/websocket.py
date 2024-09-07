@@ -47,7 +47,7 @@ class WebSocketClient(Logger):
                 self.__continue_loop = False
                 await self.__websocket.close()
 
-            handler(message)
+            handler(json.loads(message))
 
     # Send
     # Send
