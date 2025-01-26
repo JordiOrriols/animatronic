@@ -58,6 +58,7 @@ class Project(Logger):
             encoding="utf-8",
         ) as json_file:
             self.__animation_data = json.load(json_file)
+            
     def evaluate(self):
         """Validate animation and generate error report."""
         if self.__validate_servos_data():
@@ -65,9 +66,12 @@ class Project(Logger):
                 self.__animation_data
             )  # maybe we can move to load animation
 
-            total_errors = 0
-            min_limit_errors = 0
-            max_limit_errors = 0
+            report = {
+                'total_errors': 0,
+                'min_limit_errors': 0,
+                'max_limit_errors': 0,
+                'servos': {}
+            }
 
             for servo in self.__servos_data:
                 self.info("Servo: ", servo.get_name())
@@ -79,12 +83,20 @@ class Project(Logger):
                 min_limit = servo.get_physical_limit_min()
                 max_limit = servo.get_physical_limit_max()
 
+                servo_report = {
+                    'errors': 0,
+                    'min_deviation': 0,
+                    'max_deviation': 0
+                }
+
                 if min_value < min_limit:
                     self.error(
                         f"Minimum: limit ({min_limit}) exceed with ({min_value})"
                     )
-                    min_limit_errors += 1
-                    total_errors += 1
+                    servo_report['errors'] += 1
+                    servo_report['min_deviation'] = min_limit - min_value
+                    report['min_limit_errors'] += 1
+                    report['total_errors'] += 1
                 else:
                     self.info(
                         f"Minimum: limit ({min_limit}) in range with ({min_value})"
@@ -94,17 +106,29 @@ class Project(Logger):
                     self.error(
                         f"Maximum: limit ({max_limit}) exceed with ({max_value})"
                     )
-                    max_limit_errors += 1
-                    total_errors += 1
+                    servo_report['errors'] += 1
+                    servo_report['max_deviation'] = max_value - max_limit
+                    report['max_limit_errors'] += 1
+                    report['total_errors'] += 1
                 else:
                     self.info(
                         f"Maximum: limit ({max_limit}) in range with ({max_value})"
                     )
 
+                if servo_report['errors'] > 0:
+                    report['servos'][servo.get_name()] = servo_report
+
             self.info("=== Error Report ===")
-            self.info(f"Total errors found: {total_errors}")
-            self.info(f"Minimum limit errors: {min_limit_errors}")
-            self.info(f"Maximum limit errors: {max_limit_errors}")
+            self.info(f"Total errors found: {report['total_errors']}")
+            self.info(f"Minimum limit errors: {report['min_limit_errors']}")
+            self.info(f"Maximum limit errors: {report['max_limit_errors']}")
+            self.info("=== Servo Details ===")
+            for servo_name, servo_data in report['servos'].items():
+                self.info(f"Servo {servo_name}:")
+                self.info(f"  Errors: {servo_data['errors']}")
+                self.info(f"  Min deviation: {servo_data['min_deviation']}")
+                self.info(f"  Max deviation: {servo_data['max_deviation']}")
+
     def play(self):
         """Play animation."""
         if self.__validate_servos_data():
