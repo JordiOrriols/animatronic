@@ -128,18 +128,6 @@ To play this scripts it's important to know that python code from common and ske
 
 You must change the `projects/skeleton/config.py` with your servos information.
 
-### Calibrate Servos
-
-`python3 calibrate_servos_cli.py`
-
-This script allow you to select a servo via CLI.
-You need to select the servo Pin, and then select a start position. Recommended 90 deg. After that you can use + and - keys to move the servo in 5 deg steps.
-
-### Play Animation from JSON
-
-`python3 client.py`
-
-This script will connect to the server to wait for instructions. When running play, will reproduce the JSON animation, and will increase the FPS when possible with interpolations, so the animation should be smother.
 
 ## Mouth Scripts (Not tested since a lot of time) Not stable
 
