@@ -58,17 +58,18 @@ class Project(Logger):
             encoding="utf-8",
         ) as json_file:
             self.__animation_data = json.load(json_file)
-
     def evaluate(self):
-        """Validate animation."""
+        """Validate animation and generate error report."""
         if self.__validate_servos_data():
-
             animation = Animation(
                 self.__animation_data
             )  # maybe we can move to load animation
 
-            for servo in self.__servos_data:
+            total_errors = 0
+            min_limit_errors = 0
+            max_limit_errors = 0
 
+            for servo in self.__servos_data:
                 self.info("Servo: ", servo.get_name())
                 data = [int(num) for num in animation.get_positions()[servo.get_name()]]
 
@@ -82,7 +83,8 @@ class Project(Logger):
                     self.error(
                         f"Minimum: limit ({min_limit}) exceed with ({min_value})"
                     )
-
+                    min_limit_errors += 1
+                    total_errors += 1
                 else:
                     self.info(
                         f"Minimum: limit ({min_limit}) in range with ({min_value})"
@@ -92,12 +94,17 @@ class Project(Logger):
                     self.error(
                         f"Maximum: limit ({max_limit}) exceed with ({max_value})"
                     )
-
+                    max_limit_errors += 1
+                    total_errors += 1
                 else:
                     self.info(
                         f"Maximum: limit ({max_limit}) in range with ({max_value})"
                     )
 
+            self.info("=== Error Report ===")
+            self.info(f"Total errors found: {total_errors}")
+            self.info(f"Minimum limit errors: {min_limit_errors}")
+            self.info(f"Maximum limit errors: {max_limit_errors}")
     def play(self):
         """Play animation."""
         if self.__validate_servos_data():
