@@ -17,12 +17,12 @@ class Logger:
         self.__debug = True
 
     def __console(self, level: str, *message):
-        print(level, self.log_name + " - ", message)
+        print(level, self.log_name + " - ", *message)
 
     def log(self, *message):
-        """Log any message. Will be only logged if debug mode."""
+        """Log any message. Will be only logged if debug mode is enabled."""
         if self.__debug:
-            self.__console("Log: ", message)
+            self.__console("Log:", *message)
 
     def info(self, *message):
         """Log any message."""
