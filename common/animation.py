@@ -56,9 +56,8 @@ class Animation(Logger):
             / decimal_multiplier
         )
         self.info(f"Refresh count {self.__refresh_count}")
-        self.info(
-            f"Refresh rate {math.floor(self.__refresh_count / self.__elapsed_time)} Hz"
-        )
+        elapsed_time = self.__elapsed_time if self.__elapsed_time > 0 else 1
+        self.info(f"Refresh rate {math.floor(self.__refresh_count / elapsed_time)} Hz")
 
         self.info(f"Interpolation factor {interpolation_factor} times better")
 
