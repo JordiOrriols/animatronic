@@ -5,18 +5,18 @@ from common.servo import AniServo
 
 seagull_servos_data = [
     # HEAD
-    AniServo("head-rotation", 0, MG90S_TYPE, 40, 140, 90),
-    AniServo("head-up-down", 1, MG90S_TYPE, 20, 155, 90),
+    AniServo("head-yaw", 0, MG90S_TYPE, 40, 140, 90),
+    AniServo("head-pitch", 1, MG90S_TYPE, 20, 155, 90),
     # WINGS
     AniServo("wings", 2, MG90S_TYPE, 15, 180, 145),
     # MANDIBLE
-    AniServo("mandible", 3, GHS37A_TYPE, 40, 70, 45),
+    AniServo("beak", 3, GHS37A_TYPE, 40, 70, 45),
 ]
 
 # Per-servo generative configuration (all values in ms or degrees where noted)
 # This file uses only per-servo settings as requested.
 generative_settings = {
-    "head-rotation": {
+    "head-yaw": {
         "min_duration_ms": 300,
         "max_duration_ms": 1200,
         "min_wait_ms": 800,
@@ -28,7 +28,7 @@ generative_settings = {
         "ease_out": 0.2,
         "return_to_rest": False,
     },
-    "head-up-down": {
+    "head-pitch": {
         "min_duration_ms": 300,
         "max_duration_ms": 900,
         "min_wait_ms": 600,
