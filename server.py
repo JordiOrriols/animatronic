@@ -28,16 +28,18 @@ def _print_banner():
     print("")
 
 # Auto Discovery - UDP BROADCAST
+RUNTIME_STATE = {"auto_discovery": None}
 auto_discovery = None
 
 
 def get_auto_discovery():
     """Initialise the auto-discovery service lazily for import-safe testing."""
-    global auto_discovery
-    if auto_discovery is None:
-        auto_discovery = AutoDiscoveryServer()
-        auto_discovery.start()
-    return auto_discovery
+    if RUNTIME_STATE["auto_discovery"] is None:
+        RUNTIME_STATE["auto_discovery"] = AutoDiscoveryServer()
+        RUNTIME_STATE["auto_discovery"].start()
+
+    globals()["auto_discovery"] = RUNTIME_STATE["auto_discovery"]
+    return RUNTIME_STATE["auto_discovery"]
 
 
 async def show_options(websocket):
@@ -104,7 +106,11 @@ async def handler(websocket):
         logger.info(f"Message received: {message}")
 
         if message["action"] == WEBSOCKET_MESSAGES["connected"]:
-            discovery = auto_discovery if auto_discovery is not None else get_auto_discovery()
+            discovery = (
+                RUNTIME_STATE["auto_discovery"]
+                if RUNTIME_STATE["auto_discovery"] is not None
+                else get_auto_discovery()
+            )
             if discovery is not None:
                 discovery.disable()
 
