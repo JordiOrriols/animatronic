@@ -60,18 +60,20 @@ class AutoDiscoveryServer(Logger):
 
     def __get_local_ip(self):
         # Create a socket to get the local IP address
-        with socket(AF_INET, SOCK_DGRAM) as skt:
-            try:
-                # Create UDP socket
-                skt.connect(
-                    ("8.8.8.8", 80)
-                )  # Connect to a known external server (Google's public DNS)
-                self.__current_ip = skt.getsockname()[0]
+        skt = socket(AF_INET, SOCK_DGRAM)
+        try:
+            # Create UDP socket
+            skt.connect(
+                ("8.8.8.8", 80)
+            )  # Connect to a known external server (Google's public DNS)
+            self.__current_ip = skt.getsockname()[0]
 
-            except:
-                self.error("Cannot get local IP address")
-                # get our IP. Be careful if you have multiple network interfaces or IPs
-                self.__current_ip = gethostbyname(gethostname())
+        except Exception:
+            self.error("Cannot get local IP address")
+            # get our IP. Be careful if you have multiple network interfaces or IPs
+            self.__current_ip = gethostbyname(gethostname())
+        finally:
+            skt.close()
 
         self.info("Local IP address:", self.__current_ip)
 

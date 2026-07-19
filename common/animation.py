@@ -24,6 +24,7 @@ class Animation(Logger):
         self.__elapsed_time = 0
         self.__start_time = 0
         self.__refresh_time = 0
+        self.__is_running = False
 
         self.__frame_duration = 1 / self.__fps
         self.__total_duration = self.__frames / self.__fps
@@ -38,6 +39,7 @@ class Animation(Logger):
         self.__elapsed_time = 0
         self.__start_time = time.time()
         self.__refresh_time = self.__start_time
+        self.__is_running = True
 
     def refresh(self):
         """Call on each iteration for the animation."""
@@ -47,6 +49,7 @@ class Animation(Logger):
 
     def end(self):
         """Call when animation has ended to print performance metrics."""
+        self.__is_running = False
         decimal_multiplier = 100
         interpolation_factor = (
             math.floor(self.__refresh_count / self.__frames * decimal_multiplier)
@@ -107,5 +110,5 @@ class Animation(Logger):
 
     def in_progress(self):
         """Know if the animation still in progress."""
-        return self.__elapsed_time < self.__total_duration
+        return self.__is_running and self.__elapsed_time < self.__total_duration
     
