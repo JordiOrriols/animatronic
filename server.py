@@ -12,15 +12,17 @@ from common.logger import Logger
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 
-logger = Logger("Server")
+logger = Logger("Main")
 
 
 def _print_banner():
     print("")
-    logger.info("┌──────────────────────────────────────┐")
-    logger.info("│ Animatronics Controller V0.0.5       │")
-    logger.info("│ by Jordi Orriols                     │")
-    logger.info("└──────────────────────────────────────┘")
+    print("")
+    print("┌──────────────────────────────────────┐")
+    print("│ Animatronics Controller V0.0.5       │")
+    print("│ by Jordi Orriols                     │")
+    print("└──────────────────────────────────────┘")
+    print("")
     print("")
     logger.info("Starting discovery, checking websockets")
     print("")

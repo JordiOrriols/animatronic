@@ -23,7 +23,7 @@ class Logger:
         return f"{color}{text}{self.RESET}"
 
     def __console(self, level: str, color: str, *message):
-        print(self._color(level, color), self._color(self.log_name + " - ", color), *message)
+        print(self._color(self.log_name + " - ", color), self._color(level, color), *message)
 
     def log(self, *message):
         """Log any message. Will be only logged if debug mode is enabled."""
