@@ -39,9 +39,13 @@ class Project(Logger):
 
         # Try to load per-project generative settings if present in project config
         try:
-            project_cfg_module = importlib.import_module(f"projects.{self.__project}.config")
-            self._generative_settings = getattr(project_cfg_module, "generative_settings", {})
-        except Exception:
+            project_cfg_module = importlib.import_module(
+                f"projects.{self.__project}.config"
+            )
+            self._generative_settings = getattr(
+                project_cfg_module, "generative_settings", {}
+            )
+        except (ImportError, AttributeError):
             self._generative_settings = {}
 
         if self.__validate_servos_data():
@@ -67,7 +71,6 @@ class Project(Logger):
             encoding="utf-8",
         ) as json_file:
             self.__animation_data = json.load(json_file)
-            
     def evaluate(self):
         """Validate animation and generate error report."""
         if self.__validate_servos_data():
