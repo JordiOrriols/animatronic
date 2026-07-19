@@ -2,6 +2,8 @@
 
 import os
 import json
+import importlib
+import time
 from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 
@@ -34,6 +36,13 @@ class Project(Logger):
 
         self.info("Initializing for project: ", self.__project)
         self.__servos_data: list[AniServo] = servos_data_object[self.__project]
+
+        # Try to load per-project generative settings if present in project config
+        try:
+            project_cfg_module = importlib.import_module(f"projects.{self.__project}.config")
+            self._generative_settings = getattr(project_cfg_module, "generative_settings", {})
+        except Exception:
+            self._generative_settings = {}
 
         if self.__validate_servos_data():
             kit = ServoKit(channels=16)
@@ -153,15 +162,19 @@ class Project(Logger):
         if self.__validate_servos_data():
             self.__automatic_mode = True
 
-            animatronic_controllers = [
-                GenerativeMovement(servo) for servo in self.__servos_data
-            ]
+            # Build per-servo controllers using per-servo generative settings
+            animatronic_controllers = []
+            for servo in self.__servos_data:
+                cfg = self._generative_settings.get(servo.get_name(), None)
+                animatronic_controllers.append(GenerativeMovement(servo, cfg))
 
+            # Main loop: call update on each controller and yield CPU briefly
             while self.__automatic_mode:
-                random_factor = 0.5
-
                 for controller in animatronic_controllers:
-                    controller.update(random_factor)
+                    controller.update()
+
+                # short sleep to avoid CPU spin; controllers are time-driven
+                time.sleep(0.02)
 
     def auto_stop(self):
         """Stop automatic generative movements."""
