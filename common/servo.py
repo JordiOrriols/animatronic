@@ -25,7 +25,7 @@ class AniServo(Logger):
         self.__name = name
         self.__pin = pin
         self.__rest_position = rest_position
-        self.__physical_limits_min = max(min_val, 0)
+        self.__physical_limits_min = max(min(min_val, 0), 0)
         self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
 
         self.__connection: AniServo | None = None
@@ -55,6 +55,8 @@ class AniServo(Logger):
 
     def get_current_position(self):
         """Getting the servo current position."""
+        if self.__servo is None:
+            return self.__rest_position
         return self.__servo.angle
 
     # Connect
@@ -73,10 +75,10 @@ class AniServo(Logger):
         )
         self.__servo.actuation_range = self.__fabric_data["actuation_range"]
 
-        self.sleep()
-
         if self.__connection is not None:
             self.__connection.start(kit)
+
+        self.sleep()
 
     # Sleep
     def sleep(self):
@@ -91,6 +93,8 @@ class AniServo(Logger):
 
     def __move(self, position: int):
         servo_position = self.__validate_position(position)
+        if self.__servo is None:
+            return
         self.__servo.angle = servo_position
 
     def move_to_angle(self, position: int):
@@ -102,7 +106,8 @@ class AniServo(Logger):
             else:
                 connection_position = position
 
-            self.__connection.move_to_angle(connection_position)
+            if self.__connection.get_current_position() is not None:
+                self.__connection.move_to_angle(connection_position)
 
 
 def initialize_servos(kit, servos_data):
