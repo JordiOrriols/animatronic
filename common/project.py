@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 
 from projects.skeleton.config import skeleton_servos_data
-from projects.jack_sparrow.config import jack_sparrow_servos_data
+from projects.seagull.config import seagull_servos_data
 
 from common.servo import initialize_servos, AniServo
 from common.animation import Animation
@@ -15,7 +15,7 @@ from common.generative import GenerativeMovement
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
-    "jackSparrow": jack_sparrow_servos_data,
+    "seagull": seagull_servos_data,
 }
 
 
