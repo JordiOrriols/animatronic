@@ -38,6 +38,17 @@ Jack Sparrow - https://www.youtube.com/watch?v=WWEPXgQNn7I
 If you plan to test the code, please leave a comment on Issues if you have any doubts.
 I will be happy to know if someone is using it and happy to help!
 
+## Common module documentation
+
+A set of module-specific guides for the shared classes lives in [docs/common/README.md](docs/common/README.md). They cover:
+
+- [docs/common/animation.md](docs/common/animation.md)
+- [docs/common/autodiscovery.md](docs/common/autodiscovery.md)
+- [docs/common/generative.md](docs/common/generative.md)
+- [docs/common/project.md](docs/common/project.md)
+- [docs/common/servo.md](docs/common/servo.md)
+- [docs/common/websocket.md](docs/common/websocket.md)
+
 ## To Install
 
 ### CLIENT On Raspberry Pi
