@@ -70,12 +70,12 @@ class AutoDiscoveryServer(Logger):
             if type(skt).__module__ == "socket" and detected_ip not in {"0.0.0.0", "127.0.0.1"}:
                 self.__current_ip = detected_ip
 
-        except Exception:
+        except OSError:
             self.error("Cannot get local IP address")
             # get our IP. Be careful if you have multiple network interfaces or IPs
             try:
                 self.__current_ip = gethostbyname(gethostname())
-            except Exception:
+            except OSError:
                 self.__current_ip = None
         finally:
             skt.close()

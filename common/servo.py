@@ -1,5 +1,7 @@
 """Servo module to handle servo information, limits and movements."""
 
+from typing import Optional
+
 from adafruit_servokit import ServoKit
 
 from common.config import fabric_servo_data
@@ -28,8 +30,8 @@ class AniServo(Logger):
         self.__physical_limits_min = max(min(min_val, 0), 0)
         self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
 
-        self.__connection: AniServo | None = None
-        self.__connection_direction = None
+        self.__connection: Optional[AniServo] = None
+        self.__connection_direction: Optional[str] = None
         self.__servo = None
 
     # Getters

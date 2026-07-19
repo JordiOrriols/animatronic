@@ -83,7 +83,10 @@ class Animation(Logger):
         if data[0][1] == data[1][1]:
             return data[1][1]
 
-        return data[0][1] + (elapsed_time - data[0][0]) * ((data[1][1] - data[0][1]) / (data[1][0] - data[0][0]))
+        return data[0][1] + (
+            (elapsed_time - data[0][0])
+            * ((data[1][1] - data[0][1]) / (data[1][0] - data[0][0]))
+        )
 
     def get_positions(self):
         """Get all positions from the whole animation."""

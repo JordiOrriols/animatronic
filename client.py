@@ -8,23 +8,20 @@ from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
 
 # Runtime objects are initialised lazily so the module can be imported safely in tests.
-client = None
-project = None
+RUNTIME_STATE = {"client": None, "project": None}
 
 
 def init_runtime():
     """Create the websocket client and project objects on first use."""
-    global client, project
+    if RUNTIME_STATE["client"] is None:
+        RUNTIME_STATE["client"] = WebSocketClient()
+        RUNTIME_STATE["client"].connect()
 
-    if client is None:
-        client = WebSocketClient()
-        client.connect()
+    if RUNTIME_STATE["project"] is None:
+        RUNTIME_STATE["project"] = Project()
+        RUNTIME_STATE["project"].load_animation("animation")
 
-    if project is None:
-        project = Project()
-        project.load_animation("animation")
-
-    return client, project
+    return RUNTIME_STATE["client"], RUNTIME_STATE["project"]
 
 
 def reboot_raspberry_pi():
