@@ -48,8 +48,8 @@ class GenerativeMovement(Logger):
         self.__servo = servo
         cfg = {} if config is None else dict(config)
         # merge defaults
-        for k, v in self.DEFAULTS.items():
-            cfg.setdefault(k, v)
+        for key, value in self.DEFAULTS.items():
+            cfg.setdefault(key, value)
 
         self.cfg = cfg
 
@@ -76,6 +76,7 @@ class GenerativeMovement(Logger):
         # initial runtime state
         self._state = "waiting"  # waiting | moving | moving_rest
         self._start_time = time.time()
+        self._move_start = self._start_time
         self._wait_until = self._start_time + self._random_wait()
         self._start_pos = self.__servo.get_current_position()
         self._target_pos = self._start_pos
@@ -88,31 +89,39 @@ class GenerativeMovement(Logger):
         return random.uniform(self._min_duration, self._max_duration)
 
     def _get_angle_bounds(self):
-        lo = self._min_limit if self._cfg_min_angle is None else max(self._min_limit, int(self._cfg_min_angle))
-        hi = self._max_limit if self._cfg_max_angle is None else min(self._max_limit, int(self._cfg_max_angle))
-        if lo > hi:
-            lo, hi = hi, lo
-        return lo, hi
+        lower_bound = (
+            self._min_limit
+            if self._cfg_min_angle is None
+            else max(self._min_limit, int(self._cfg_min_angle))
+        )
+        upper_bound = (
+            self._max_limit
+            if self._cfg_max_angle is None
+            else min(self._max_limit, int(self._cfg_max_angle))
+        )
+        if lower_bound > upper_bound:
+            lower_bound, upper_bound = upper_bound, lower_bound
+        return lower_bound, upper_bound
 
     def _choose_target(self):
-        lo, hi = self._get_angle_bounds()
-        span = hi - lo
+        lower_bound, upper_bound = self._get_angle_bounds()
+        span = upper_bound - lower_bound
         # reduce span by random factor and center it
         limited_span = int(span * self._random_factor)
         if limited_span <= 0:
             return self.__servo.get_current_position()
 
         offset = int((span - limited_span) / 2)
-        return random.randint(lo + offset, hi - offset)
+        return random.randint(lower_bound + offset, upper_bound - offset)
 
-    def _apply_easing(self, t: float) -> float:
-        # t in [0,1]
-        p = max(0.0, min(1.0, t))
+    def _apply_easing(self, progress_value: float) -> float:
+        # progress_value in [0,1]
+        eased_progress = max(0.0, min(1.0, progress_value))
         if self._ease_in > 0.0:
-            p = p ** (1.0 + self._ease_in * 3.0)
+            eased_progress = eased_progress ** (1.0 + self._ease_in * 3.0)
         if self._ease_out > 0.0:
-            p = 1.0 - (1.0 - p) ** (1.0 + self._ease_out * 3.0)
-        return p
+            eased_progress = 1.0 - (1.0 - eased_progress) ** (1.0 + self._ease_out * 3.0)
+        return eased_progress
 
     def update(self):
         """Advance the controller state and move the servo as needed.
@@ -131,7 +140,14 @@ class GenerativeMovement(Logger):
                 self._move_start = now
                 # decide next state: moving to target
                 self._state = "moving"
-                self.log("Start moving", {"from": self._start_pos, "to": self._target_pos, "duration": self._duration})
+                self.log(
+                    "Start moving",
+                    {
+                        "from": self._start_pos,
+                        "to": self._target_pos,
+                        "duration": self._duration,
+                    },
+                )
         elif self._state == "moving":
             elapsed = now - self._move_start
             progress = min(elapsed / max(self._duration, 1e-6), 1.0)
