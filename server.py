@@ -12,8 +12,16 @@ from common.autodiscovery import AutoDiscoveryServer
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 
 # Auto Discovery - UDP BROADCAST
-auto_discovery = AutoDiscoveryServer()
-auto_discovery.start()
+auto_discovery = None
+
+
+def get_auto_discovery():
+    """Initialise the auto-discovery service lazily for import-safe testing."""
+    global auto_discovery
+    if auto_discovery is None:
+        auto_discovery = AutoDiscoveryServer()
+        auto_discovery.start()
+    return auto_discovery
 
 
 async def show_options(websocket):
@@ -42,10 +50,10 @@ async def show_options(websocket):
 
     elif menu_entry_index == 1:
         print("Automatic mode:")
-        await send_message(websocket, WEBSOCKET_MESSAGES["auto_start"])
+        await send_message(websocket, WEBSOCKET_MESSAGES["auto-start"])
         playsound("sound/background.mp3", False)
         input("Press any key to stop")
-        await send_message(websocket, WEBSOCKET_MESSAGES["auto_stop"])
+        await send_message(websocket, WEBSOCKET_MESSAGES["auto-stop"])
 
     elif menu_entry_index == 2:
         print("Calibrate:")
@@ -78,7 +86,9 @@ async def handler(websocket):
         print(f"Message received: {message}")
 
         if message["action"] == WEBSOCKET_MESSAGES["connected"]:
-            auto_discovery.disable()
+            discovery = auto_discovery if auto_discovery is not None else get_auto_discovery()
+            if discovery is not None:
+                discovery.disable()
 
         if message["action"] in (
             [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
@@ -122,7 +132,7 @@ async def send_message(websocket, action: str, *data):
 
 async def main():
     """Main function to keep your server running."""
-    current_ip = auto_discovery.get_current_ip()
+    current_ip = get_auto_discovery().get_current_ip()
 
     print("Websocket Server Started")
     print(f" - Websocket url ws://{str(current_ip)}:{str(WEBSOCKET_PORT)}")
