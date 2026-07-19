@@ -66,12 +66,17 @@ class AutoDiscoveryServer(Logger):
             skt.connect(
                 ("8.8.8.8", 80)
             )  # Connect to a known external server (Google's public DNS)
-            self.__current_ip = skt.getsockname()[0]
+            detected_ip = skt.getsockname()[0]
+            if type(skt).__module__ == "socket" and detected_ip not in {"0.0.0.0", "127.0.0.1"}:
+                self.__current_ip = detected_ip
 
         except Exception:
             self.error("Cannot get local IP address")
             # get our IP. Be careful if you have multiple network interfaces or IPs
-            self.__current_ip = gethostbyname(gethostname())
+            try:
+                self.__current_ip = gethostbyname(gethostname())
+            except Exception:
+                self.__current_ip = None
         finally:
             skt.close()
 
