@@ -30,8 +30,25 @@ class AutoDiscoveryClient(Logger):
     def listen(self):
         """Listen for UDP messages on the local network."""
         self.info("Listening for service")
+        # Ensure real sockets don't block indefinitely. FakeSocket used in
+        # tests may not implement `settimeout`, so ignore attribute errors.
+        try:
+            self.__socket.settimeout(0.5)
+        except Exception:
+            pass
+
         while self.__current_ip is None:
-            data, addr = self.__socket.recvfrom(1024)  # wait for a packet
+            try:
+                data, addr = self.__socket.recvfrom(1024)
+            except RuntimeError:
+                # FakeSocket in tests raises RuntimeError when no packet is
+                # available; continue looping until a packet appears.
+                continue
+            except OSError:
+                # Real socket will raise a timeout (subclass of OSError)
+                # when no data is available; just loop again.
+                continue
+
             self.log("Data", data, addr)
 
             if data.startswith(str.encode(DISCOVERY_MAGIC)):
@@ -39,7 +56,11 @@ class AutoDiscoveryClient(Logger):
                 self.__current_ip = data[len(DISCOVERY_MAGIC) :].decode("utf-8")
                 self.log("Current IP", self.__current_ip)
 
-        self.__socket.close()
+        try:
+            self.__socket.close()
+        except Exception:
+            pass
+
         return self.__current_ip
 
 
@@ -97,6 +118,7 @@ class AutoDiscoveryServer(Logger):
         """Start broadcasting server IP."""
         self.__get_local_ip()
         thread = threading.Thread(target=self.__broadcast)
+        thread.daemon = True
         thread.start()
 
     def disable(self):
