@@ -142,27 +142,14 @@ class GenerativeMovement(Logger):
             if progress >= 1.0:
                 # finished movement to target
                 if self._return_to_rest:
-                    # schedule movement back to rest
                     rest = self.__servo.get_rest_position()
-                    self._start_pos = self._target_pos
-                    self._target_pos = rest
-                    # make duration for return the same as forward (or clamp)
-                    self._move_start = now
-                    self._state = "moving_rest"
-                    self.log("Returning to rest", {"to": rest})
+                    self.__servo.move_to_angle(int(rest))
+                    self._wait_until = now + (
+                        self._rest_hold if self._rest_hold > 0.0 else self._random_wait()
+                    )
+                    self._state = "waiting"
+                    self.log("Returned to rest", {"to": rest})
                 else:
                     # schedule next waiting interval
                     self._wait_until = now + self._random_wait()
                     self._state = "waiting"
-        elif self._state == "moving_rest":
-            elapsed = now - self._move_start
-            progress = min(elapsed / max(self._duration, 1e-6), 1.0)
-            eased = self._apply_easing(progress)
-            current_pos = int(self._start_pos + (self._target_pos - self._start_pos) * eased)
-            self.__servo.move_to_angle(current_pos)
-
-            if progress >= 1.0:
-                # arrived to rest
-                hold = self._rest_hold
-                self._wait_until = now + (hold if hold > 0.0 else self._random_wait())
-                self._state = "waiting"
