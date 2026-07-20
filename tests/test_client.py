@@ -26,6 +26,15 @@ class FakeProject:
     def standby(self):
         self.calls.append(("standby",))
 
+    def xbox_start(self):
+        self.calls.append(("xbox-start",))
+
+    def xbox_update(self, raw_axes):
+        self.calls.append(("xbox-update", raw_axes))
+
+    def xbox_stop(self):
+        self.calls.append(("xbox-stop",))
+
 
 class FakeClient:
     def __init__(self):
@@ -57,6 +66,14 @@ def test_client_handler_routes_messages(monkeypatch):
     )
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["evaluate"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["standby"]})
+    client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["xbox-start"]})
+    client_app.handler(
+        {
+            "action": client_app.WEBSOCKET_MESSAGES["xbox-position"],
+            "data": [{"left_stick_x": 0.5}],
+        }
+    )
+    client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["xbox-stop"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["reboot"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["exit"]})
 
@@ -66,3 +83,6 @@ def test_client_handler_routes_messages(monkeypatch):
     assert fake_project.calls[3] == ("calibrate", 1, 2)
     assert fake_project.calls[4] == ("evaluate",)
     assert fake_project.calls[5] == ("standby",)
+    assert fake_project.calls[6] == ("xbox-start",)
+    assert fake_project.calls[7] == ("xbox-update", {"left_stick_x": 0.5})
+    assert fake_project.calls[8] == ("xbox-stop",)

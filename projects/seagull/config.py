@@ -54,3 +54,14 @@ generative_settings = {
         "rest_hold_ms": 150,
     },
 }
+
+# Per-servo Xbox controller mapping (used by XboxServoMapper on the client).
+# "input" refers to a named axis from common/xbox_controller.py AXIS_INDEX:
+# left_stick_x, left_stick_y, right_stick_x, right_stick_y, left_trigger, right_trigger
+xbox_settings = {
+    "head-yaw": {"input": "left_stick_x", "min_angle": 50, "max_angle": 130},
+    "head-pitch": {"input": "left_stick_y", "invert": True, "min_angle": 30, "max_angle": 140},
+    "wings": {"input": "right_stick_y", "invert": True, "min_angle": 20, "max_angle": 160},
+    "beak": {"input": "right_trigger", "min_angle": 40, "max_angle": 70},
+}
+

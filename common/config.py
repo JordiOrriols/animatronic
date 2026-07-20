@@ -31,4 +31,7 @@ WEBSOCKET_MESSAGES = {
     "standby": "standby",
     "reboot": "reboot",
     "exit": "exit",
+    "xbox-start": "xbox-controller-start",
+    "xbox-position": "xbox-controller-position",
+    "xbox-stop": "xbox-controller-stop",
 }

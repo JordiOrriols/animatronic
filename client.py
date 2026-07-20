@@ -61,6 +61,16 @@ def handler(message):
         runtime_project.standby()
         runtime_client.send(WEBSOCKET_MESSAGES["finished"])
 
+    elif message["action"] == WEBSOCKET_MESSAGES["xbox-start"]:
+        runtime_project.xbox_start()
+
+    elif message["action"] == WEBSOCKET_MESSAGES["xbox-position"]:
+        runtime_project.xbox_update(message["data"][0])
+
+    elif message["action"] == WEBSOCKET_MESSAGES["xbox-stop"]:
+        runtime_project.xbox_stop()
+        runtime_client.send(WEBSOCKET_MESSAGES["finished"])
+
     elif message["action"] == WEBSOCKET_MESSAGES["reboot"]:
         runtime_project.standby()
         reboot_raspberry_pi()

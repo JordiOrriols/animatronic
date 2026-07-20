@@ -27,3 +27,20 @@ skeleton_servos_data = [
     # MANDIBLE
     AniServo("mandible", 15, GHS37A_TYPE, 40, 70, 45),
 ]
+
+# Per-servo Xbox controller mapping (used by XboxServoMapper on the client).
+# "input" refers to a named axis from common/xbox_controller.py AXIS_INDEX:
+# left_stick_x, left_stick_y, right_stick_x, right_stick_y, left_trigger, right_trigger
+#
+# An Xbox controller only exposes 6 usable analog inputs, so this maps a fixed subset
+# of 6 servos out of the 16 available. There is no "bank switching" - adjust which
+# servo goes on which axis below if you want to control different servos.
+xbox_settings = {
+    "head-rotation": {"input": "left_stick_x", "min_angle": 40, "max_angle": 140},
+    "body-flexion": {"input": "left_stick_y", "invert": True, "min_angle": 50, "max_angle": 115},
+    "body-rotation": {"input": "right_stick_x"},
+    "head-flexion-left": {"input": "right_stick_y", "invert": True},
+    "mandible": {"input": "left_trigger", "min_angle": 40, "max_angle": 70},
+    "arm-right-flexion": {"input": "right_trigger", "min_angle": 25, "max_angle": 130},
+}
+

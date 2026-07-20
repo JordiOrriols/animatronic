@@ -47,11 +47,8 @@ class WebSocketClient(Logger):
             if message["action"] == WEBSOCKET_MESSAGES["exit"]:
                 self.__continue_loop = False
                 self.__websocket.close()
-            else:
-                self.__continue_loop = False
 
             handler(message)
-            break
 
     # Send
     # Send

@@ -7,12 +7,18 @@ class FakeWebSocketConnection:
     def __init__(self):
         self.sent = []
         self.closed = False
+        self._messages = iter(
+            [
+                '{"action": "client-ready", "data": []}',
+                '{"action": "exit", "data": []}',
+            ]
+        )
 
     def send(self, message):
         self.sent.append(message)
 
     def recv(self):
-        return '{"action": "client-ready", "data": []}'
+        return next(self._messages)
 
     def close(self):
         self.closed = True
@@ -36,4 +42,8 @@ def test_websocket_client_connects_and_reads_messages(monkeypatch):
         received.append(message)
 
     asyncio.run(client.ready(handler))
-    assert received == [{"action": "client-ready", "data": []}]
+    assert received == [
+        {"action": "client-ready", "data": []},
+        {"action": "exit", "data": []},
+    ]
+

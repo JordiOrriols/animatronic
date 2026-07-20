@@ -14,6 +14,7 @@ from common.servo import initialize_servos, AniServo
 from common.animation import Animation
 from common.logger import Logger
 from common.generative import GenerativeMovement
+from common.xbox_controller import XboxServoMapper
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
@@ -33,11 +34,12 @@ class Project(Logger):
         self.__project = os.getenv("PROJECT_ID")
         self.__animation_data = None
         self.__automatic_mode = False
+        self.__xbox_mapper = None
 
         self.info("Initializing for project: ", self.__project)
         self.__servos_data: list[AniServo] = servos_data_object[self.__project]
 
-        # Try to load per-project generative settings if present in project config
+        # Try to load per-project generative/xbox settings if present in project config
         try:
             project_cfg_module = importlib.import_module(
                 f"projects.{self.__project}.config"
@@ -45,8 +47,10 @@ class Project(Logger):
             self._generative_settings = getattr(
                 project_cfg_module, "generative_settings", {}
             )
+            self._xbox_settings = getattr(project_cfg_module, "xbox_settings", {})
         except (ImportError, AttributeError):
             self._generative_settings = {}
+            self._xbox_settings = {}
 
         if self.__validate_servos_data():
             kit = ServoKit(channels=16)
@@ -194,3 +198,17 @@ class Project(Logger):
         if self.__validate_servos_data():
             for servo in self.__servos_data:
                 servo.sleep()
+
+    def xbox_start(self):
+        """Start Xbox controller mode. Prepares a mapper seeded at current positions."""
+        if self.__validate_servos_data():
+            self.__xbox_mapper = XboxServoMapper(self.__servos_data, self._xbox_settings)
+
+    def xbox_update(self, raw_axes: dict):
+        """Apply a new set of raw controller axis values received from the server."""
+        if self.__xbox_mapper is not None:
+            self.__xbox_mapper.update(raw_axes)
+
+    def xbox_stop(self):
+        """Stop Xbox controller mode. Servos hold their last commanded position."""
+        self.__xbox_mapper = None
