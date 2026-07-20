@@ -139,7 +139,6 @@ To play this scripts it's important to know that python code from common and ske
 
 You must change the `projects/skeleton/config.py` with your servos information.
 
-
 ## Mouth Scripts (Not tested since a lot of time) Not stable
 
 This scripts are used to run:
