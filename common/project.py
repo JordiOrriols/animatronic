@@ -14,7 +14,7 @@ from common.servo import initialize_servos, AniServo
 from common.animation import Animation
 from common.logger import Logger
 from common.generative import GenerativeMovement
-from common.xbox_controller import XboxServoMapper
+from common.xbox_servo_mapper import XboxServoMapper
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,

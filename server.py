@@ -11,7 +11,7 @@ from websockets.server import serve
 from common.autodiscovery import AutoDiscoveryServer
 from common.logger import Logger
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
-from common.xbox_controller import XboxInputReader
+from common.xbox_input import XboxInputReader
 
 
 logger = Logger("Main")
