@@ -6,7 +6,7 @@ import threading
 from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
-from websockets.server import serve
+from websockets import serve
 
 from common.autodiscovery import AutoDiscoveryServer
 from common.logger import Logger

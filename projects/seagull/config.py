@@ -64,4 +64,3 @@ xbox_settings = {
     "wings": {"input": "right_stick_y", "invert": True, "min_angle": 20, "max_angle": 160},
     "beak": {"input": "right_trigger", "min_angle": 40, "max_angle": 70},
 }
-

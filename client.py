@@ -7,26 +7,32 @@ from common.project import Project
 from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
 
-# Runtime objects are initialised lazily so the module can be imported safely in tests.
-# Tests (or other code) may inject fakes by setting the module-level `client`/`project`
-# attributes directly (e.g. via monkeypatch.setattr) before `init_runtime()` runs.
-client = None
-project = None
+class _Runtime:
+    """Holds the lazily-initialised websocket client and project singletons.
+
+    Tests (or other code) may inject fakes by setting `RUNTIME.client` / `RUNTIME.project`
+    directly (e.g. via monkeypatch.setattr) before `init_runtime()` runs.
+    """
+
+    def __init__(self):
+        self.client = None
+        self.project = None
+
+
+RUNTIME = _Runtime()
 
 
 def init_runtime():
     """Create the websocket client and project objects on first use."""
-    global client, project
+    if RUNTIME.client is None:
+        RUNTIME.client = WebSocketClient()
+        RUNTIME.client.connect()
 
-    if client is None:
-        client = WebSocketClient()
-        client.connect()
+    if RUNTIME.project is None:
+        RUNTIME.project = Project()
+        RUNTIME.project.load_animation("animation")
 
-    if project is None:
-        project = Project()
-        project.load_animation("animation")
-
-    return client, project
+    return RUNTIME.client, RUNTIME.project
 
 
 def reboot_raspberry_pi():

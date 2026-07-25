@@ -7,6 +7,10 @@ named, normalized values (deadzone applied to sticks, triggers normalized to
 servo angles via `XboxServoMapper` (see common/xbox_servo_mapper.py).
 """
 
+# pylint: disable=import-outside-toplevel
+# pygame is imported lazily inside each method below so this module (and anything that
+# imports it, like server.py) can be imported without pygame installed when no physical
+# Xbox controller is being used.
 from common.logger import Logger
 
 # Named axis indices for a standard Xbox controller as reported by pygame/SDL2 on macOS.
