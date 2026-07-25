@@ -23,6 +23,8 @@ jobs:
           pip install websockets
           pip install simple_term_menu
           pip install adafruit-circuitpython-servokit
+          pip install playsound==1.2.2
+          pip install pygame
 
       - name: Run tests with coverage
         env:

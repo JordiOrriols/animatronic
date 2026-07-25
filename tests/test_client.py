@@ -54,8 +54,8 @@ def test_client_handler_routes_messages(monkeypatch):
     fake_client = FakeClient()
     fake_project = FakeProject()
 
-    monkeypatch.setattr(client_app, "client", fake_client)
-    monkeypatch.setattr(client_app, "project", fake_project)
+    monkeypatch.setattr(client_app.RUNTIME, "client", fake_client)
+    monkeypatch.setattr(client_app.RUNTIME, "project", fake_project)
     monkeypatch.setattr(client_app.subprocess, "run", lambda *args, **kwargs: None)
 
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["play"]})
