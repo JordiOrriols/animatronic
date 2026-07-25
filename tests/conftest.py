@@ -36,6 +36,7 @@ class FakeWebSocketConnection:
 
 
 client_module.connect = lambda uri: FakeWebSocketConnection(uri)
+websockets_module.serve = lambda *args, **kwargs: None
 sys.modules.setdefault("websockets", websockets_module)
 sys.modules.setdefault("websockets.sync", sync_module)
 sys.modules.setdefault("websockets.sync.client", client_module)
