@@ -115,7 +115,7 @@ Then start installing all dependencies:
 
 ```
 pip install websockets
-pip install playsound
+pip install playsound==1.2.2
 pip install simple-term-menu
 pip install pygame
 ```

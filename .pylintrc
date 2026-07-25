@@ -1,5 +1,6 @@
 [MASTER]
 ignore-paths=^tests/
+extension-pkg-allow-list=pygame
 
 [MESSAGES CONTROL]
 disable=
