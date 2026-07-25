@@ -4,13 +4,17 @@
 
 MG996R_TYPE = "MG996R"  # Standard Servo
 MG92B_TYPE = "MG92B"  # Blue Metal Micro Servo
-MG90S_TYPE = "MG90S"  # Purple Metal Micro Servo
+MG90S_TYPE = "MG90S"  # Purple Metal Micro Servo, 180 degree version
+MG90S_90_TYPE = "MG90S-90"  # Purple Metal Micro Servo, 90 degree version
+TS90MD_TYPE = "TS90MD"  # Purple Metal Micro Servo, 180 degree version
 GHS37A_TYPE = "GHS37A"  # Nano Servo
 
 fabric_servo_data = {
     MG996R_TYPE: {"pulse_width": {"min": 600, "max": 2400}, "actuation_range": 180},
     MG92B_TYPE: {"pulse_width": {"min": 600, "max": 2400}, "actuation_range": 180},
     MG90S_TYPE: {"pulse_width": {"min": 600, "max": 2400}, "actuation_range": 180},
+    MG90S_90_TYPE: {"pulse_width": {"min": 1000, "max": 2000}, "actuation_range": 90},
+    TS90MD_TYPE: {"pulse_width": {"min": 600, "max": 2400}, "actuation_range": 180},
     GHS37A_TYPE: {"pulse_width": {"min": 600, "max": 2400}, "actuation_range": 180},
 }
 
