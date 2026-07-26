@@ -229,7 +229,8 @@ async def _calibrate_servo(websocket, servo: dict):
 
 async def calibrate(websocket, servos=None):
     """Calibrate one servo or all servos: Neutral -> Min -> Max per servo, then
-    persist+push everything once at the end of the session."""
+    persist everything to the unit's local calibration file once at the end of
+    the session."""
     servos = servos or []
     if not servos:
         logger.error("No servos reported by client; cannot calibrate.")

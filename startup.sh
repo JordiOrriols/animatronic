@@ -6,10 +6,6 @@ sleep 10
 
 cd "$(dirname "$0")"
 
-# Always boot from the main branch (self-heals if a previous calibration
-# session was ever interrupted before switching back)
-git checkout main
-
 # Check for updates
 git fetch
 git pull

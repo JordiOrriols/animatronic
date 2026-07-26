@@ -12,7 +12,7 @@ from projects.seagull.config import seagull_servos_data
 
 from common.servo import initialize_servos, AniServo
 from common.animation import Animation
-from common.calibration import has_calibration, save_calibration, git_commit_and_push
+from common.calibration import has_calibration, save_calibration
 from common.logger import Logger
 from common.generative import GenerativeMovement
 from common.xbox_servo_mapper import XboxServoMapper
@@ -231,18 +231,18 @@ class Project(Logger):
 
     def calibrate_save(self, servo_pin: int, neutral: int, min_val: int, max_val: int):
         """Confirm new calibration values for a servo, apply them immediately, and
-        stage them to be persisted+pushed on the next calibrate_commit()."""
+        stage them to be persisted on the next calibrate_commit()."""
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
                 servo.set_calibration(min_val, max_val, neutral)
                 self.__pending_calibration[servo.get_name()] = servo.to_calibration_dict()
 
     def calibrate_commit(self):
-        """Persist all staged calibration values to disk and push them to git on a
-        dedicated branch (never on main; non-fatal on failure)."""
+        """Persist all staged calibration values to this unit's local calibration
+        file on disk (see common/calibration.py; these files are gitignored and
+        never committed/pushed automatically)."""
         if self.__pending_calibration:
             save_calibration(self.__project, self.__pending_calibration)
-            git_commit_and_push(self.__project)
             self.__pending_calibration = {}
 
     def standby(self):

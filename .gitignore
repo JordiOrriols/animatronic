@@ -110,6 +110,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Per-unit servo calibration data - each physical unit keeps its own local
+# calibration file (see common/calibration.py); only the shipped "default.json"
+# baseline per project is committed.
+projects/*/servo_calibration/*.json
+!projects/*/servo_calibration/default.json
+
 # Spyder project settings
 .spyderproject
 .spyproject

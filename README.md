@@ -185,7 +185,6 @@ Once the server (Mac/PC or a Pi with sound) and one or more clients (each animat
    The client auto-discovers the server via UDP broadcast, connects over WebSocket, and sends a handshake with its `capabilities` (which optional features this project/unit supports), `servos` (name/pin/current calibration for each servo), and its own `version`. The server logs `Client connected - running version <version>` once it receives it.
 
 3. **Pick an action from the server's CLI menu**, shown every time a client connects or finishes an action:
-
    - `[p] Play animation` - plays the project's `animation.json`.
    - `[a] Automatic mode` - starts idle/generative movement until you press a key.
    - `[x] Xbox controller` - streams a physical Xbox controller (attached to the server) to the client in near real-time.
@@ -203,7 +202,7 @@ Each physical unit (even two units running the exact same project) tracks its ow
 - Set `CALIBRATION_ID=default` to use the file seeded with the project's original hardcoded values.
 - Leave it unset on a brand new unit; a UUIDv4 is generated and saved to `.env` automatically the first time you calibrate it.
 
-To calibrate, choose `[c] Calibrate` from the server menu, pick a single servo or "ALL servos", then for each servo follow the guided **Neutral → Min → Max** prompts (type `+`/`-` to nudge the live position in 5° steps, any other key to confirm). Once every selected servo is done, the new values are saved to that unit's `servo_calibration/<CALIBRATION_ID>.json` file and pushed to git on a dedicated `calibration/<project>-<timestamp>` branch (never directly on `main`), so calibration changes across different units never conflict with each other.
+To calibrate, choose `[c] Calibrate` from the server menu, pick a single servo or "ALL servos", then for each servo follow the guided **Neutral → Min → Max** prompts (type `+`/`-` to nudge the live position in 5° steps, any other key to confirm). Once every selected servo is done, the new values are saved to that unit's `servo_calibration/<CALIBRATION_ID>.json` file on disk. These per-unit files are listed in `.gitignore` (only the shipped `default.json` baseline per project is committed), so calibration changes across different units never conflict with each other in git.
 
 ### Versioning
 
