@@ -99,6 +99,38 @@ def test_show_options_default_capabilities_show_full_menu(monkeypatch):
     assert sent[0][0] == server_app.WEBSOCKET_MESSAGES["play"]
 
 
+def test_show_options_hides_movement_options_until_calibrated(monkeypatch):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    seen_options = {}
+
+    class RecordingMenu(FakeTerminalMenu):
+        def __init__(self, options, title=None):
+            super().__init__(options, title)
+            seen_options["options"] = options
+
+        def show(self):
+            return 1  # "[s] Standby" - avoids invoking calibrate()'s blocking input()
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+    monkeypatch.setattr(server_app, "TerminalMenu", RecordingMenu)
+
+    capabilities = {"calibrated": False}
+    asyncio.run(server_app.show_options(FakeWebSocket(), capabilities))
+
+    # Play/Auto/Xbox/Evaluate all require calibration; Calibrate/Standby/Reboot/Exit don't.
+    assert seen_options["options"] == [
+        "[c] Calibrate",
+        "[s] Standby",
+        "[r] Reboot",
+        "[e] Exit",
+    ]
+    assert sent[0][0] == server_app.WEBSOCKET_MESSAGES["standby"]
+
+
 def test_handler_forwards_capabilities_and_servos_from_ready_message(monkeypatch):
     received = {}
 

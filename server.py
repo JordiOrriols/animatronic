@@ -45,19 +45,19 @@ def get_auto_discovery():
     return RUNTIME_STATE["auto_discovery"]
 
 
-async def show_options(websocket, capabilities=None, servos=None):
-    """Show cli options to choose what to do with your animatronic.
+def _build_menu_items(capabilities: dict) -> tuple:
+    """Build the (key, label) menu items to offer, gated by capabilities.
 
-    Options are filtered by the connected client's reported `capabilities` (sent on
-    the client-ready message), so a project without e.g. an animation.json won't
-    offer "Play animation"/"Evaluate". Missing capability keys default to True so
-    older clients that don't report capabilities still see the full menu.
+    Options that move the servos (play/auto/xbox/evaluate) are hidden until the
+    connected unit reports it has been calibrated, so nobody accidentally runs
+    an animatronic on uncalibrated (0-180 default) limits. Missing capability
+    keys default to True so older clients that don't report capabilities still
+    see the full menu.
     """
-    capabilities = capabilities or {}
-    servos = servos or []
-    has_animation = capabilities.get("animation", True)
-    has_generative = capabilities.get("generative", True)
-    has_xbox = capabilities.get("xbox", True)
+    is_calibrated = capabilities.get("calibrated", True)
+    has_animation = capabilities.get("animation", True) and is_calibrated
+    has_generative = capabilities.get("generative", True) and is_calibrated
+    has_xbox = capabilities.get("xbox", True) and is_calibrated
 
     menu_items = []
     if has_animation:
@@ -72,6 +72,21 @@ async def show_options(websocket, capabilities=None, servos=None):
     menu_items.append(("standby", "[s] Standby"))
     menu_items.append(("reboot", "[r] Reboot"))
     menu_items.append(("exit", "[e] Exit"))
+    return menu_items, is_calibrated
+
+
+async def show_options(websocket, capabilities=None, servos=None):
+    """Show cli options to choose what to do with your animatronic.
+
+    Options are filtered by the connected client's reported `capabilities` (sent on
+    the client-ready message), so a project without e.g. an animation.json won't
+    offer "Play animation"/"Evaluate" - see `_build_menu_items` for the rules.
+    """
+    capabilities = capabilities or {}
+    servos = servos or []
+    menu_items, is_calibrated = _build_menu_items(capabilities)
+    if not is_calibrated:
+        logger.warning("This unit hasn't been calibrated yet - run Calibrate first.")
 
     options = [label for _, label in menu_items]
     terminal_menu = TerminalMenu(options, title="Select next action")

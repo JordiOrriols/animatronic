@@ -2,14 +2,13 @@
 
 Multiple physical units of the same project (e.g. two skeletons 3D-printed at
 different times) can end up with different servo limits due to print tolerances
-and servo wear. To support that, calibration data is stored per physical unit:
-each project's servo_calibration.json holds one profile per unit, keyed by a
-unique hash. Which profile a given unit uses is recorded in its own local .env
-file (CALIBRATION_HASH), so a single servo_calibration.json (checked into git)
-can serve every physical unit of a project without them overwriting each other.
+and servo wear. To support that, each physical unit gets its own calibration file
+(projects/<project_id>/servo_calibration/<calibration_id>.json) instead of every
+unit sharing and editing one file - this keeps units from ever needing to merge
+their calibration changes against each other in git. Which file a given unit
+uses is recorded in its own local .env file (CALIBRATION_ID).
 """
 
-import hashlib
 import json
 import os
 import subprocess
@@ -23,42 +22,49 @@ from common.logger import Logger
 logger = Logger("Calibration")
 
 # Loaded here (rather than relying solely on Project.__init__) because project
-# config modules read CALIBRATION_HASH while building their servo list at import
+# config modules read CALIBRATION_ID while building their servo list at import
 # time, which happens before Project.__init__ ever runs.
 load_dotenv()
 
-CALIBRATION_HASH_ENV_KEY = "CALIBRATION_HASH"
+CALIBRATION_ID_ENV_KEY = "CALIBRATION_ID"
 
 
-def _calibration_path(project_id: str) -> str:
-    return f"projects/{project_id}/servo_calibration.json"
+def _calibration_dir(project_id: str) -> str:
+    return f"projects/{project_id}/servo_calibration"
 
 
-def _generate_calibration_hash() -> str:
-    """Generate a short hash identifying one physical unit's calibration profile."""
-    seed = f"{uuid.uuid4()}-{datetime.now().isoformat()}"
-    return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:12]
+def _calibration_file_path(project_id: str, calibration_id: str) -> str:
+    return os.path.join(_calibration_dir(project_id), f"{calibration_id}.json")
 
 
-def get_or_create_calibration_hash() -> str:
-    """Return this physical unit's calibration hash from .env, generating and
-    persisting a new one the first time this unit is ever calibrated."""
-    calibration_hash = os.getenv(CALIBRATION_HASH_ENV_KEY)
-    if calibration_hash:
-        return calibration_hash
+def _generate_calibration_id() -> str:
+    """Generate a UUIDv4 identifying one physical unit's calibration file."""
+    return str(uuid.uuid4())
 
-    calibration_hash = _generate_calibration_hash()
+
+def get_or_create_calibration_id() -> str:
+    """Return this physical unit's calibration id from .env, generating and
+    persisting a new UUIDv4 the first time this unit is ever calibrated."""
+    calibration_id = os.getenv(CALIBRATION_ID_ENV_KEY)
+    if calibration_id:
+        return calibration_id
+
+    calibration_id = _generate_calibration_id()
     dotenv_path = find_dotenv() or ".env"
-    set_key(dotenv_path, CALIBRATION_HASH_ENV_KEY, calibration_hash)
-    os.environ[CALIBRATION_HASH_ENV_KEY] = calibration_hash
-    logger.info(f"Generated new calibration hash for this unit: {calibration_hash}")
-    return calibration_hash
+    set_key(dotenv_path, CALIBRATION_ID_ENV_KEY, calibration_id)
+    os.environ[CALIBRATION_ID_ENV_KEY] = calibration_id
+    logger.info(f"Generated new calibration id for this unit: {calibration_id}")
+    return calibration_id
 
 
-def _load_profiles(project_id: str) -> dict:
-    """Load every physical unit's calibration profile for a project, keyed by
-    hash. Returns {} if the file is missing or contains invalid JSON."""
-    path = _calibration_path(project_id)
+def load_calibration(project_id: str) -> dict:
+    """Load this physical unit's saved calibration data, from the file selected
+    by the CALIBRATION_ID in .env. Returns {} if there's no id yet, or this
+    unit's calibration file is missing/invalid."""
+    calibration_id = os.getenv(CALIBRATION_ID_ENV_KEY)
+    if not calibration_id:
+        return {}
+    path = _calibration_file_path(project_id, calibration_id)
     try:
         with open(path, encoding="utf-8") as json_file:
             return json.load(json_file)
@@ -66,30 +72,31 @@ def _load_profiles(project_id: str) -> dict:
         return {}
 
 
-def load_calibration(project_id: str) -> dict:
-    """Load this physical unit's saved calibration data, selected by the
-    CALIBRATION_HASH in .env. Returns {} if there's no hash yet, the file is
-    missing/invalid, or this hash has no saved profile yet."""
-    calibration_hash = os.getenv(CALIBRATION_HASH_ENV_KEY)
-    if not calibration_hash:
-        return {}
-    return _load_profiles(project_id).get(calibration_hash, {})
+def has_calibration(project_id: str) -> bool:
+    """Whether this physical unit already has saved calibration data for this
+    project. Used to gate movement features (play/generative/xbox/evaluate)
+    until the unit has actually been calibrated."""
+    return bool(load_calibration(project_id))
 
 
 def save_calibration(project_id: str, data: dict) -> None:
-    """Merge `data` into this physical unit's calibration profile (generating and
-    persisting a CALIBRATION_HASH on first save) and write it back, pretty-printed
-    with sorted keys for stable diffs."""
-    path = _calibration_path(project_id)
-    profiles = _load_profiles(project_id)
+    """Merge `data` into this physical unit's own calibration file (generating
+    and persisting a CALIBRATION_ID on first save) and write it back,
+    pretty-printed with sorted keys for stable diffs."""
+    calibration_id = get_or_create_calibration_id()
+    path = _calibration_file_path(project_id, calibration_id)
+    os.makedirs(_calibration_dir(project_id), exist_ok=True)
 
-    calibration_hash = get_or_create_calibration_hash()
-    profile = profiles.get(calibration_hash, {})
-    profile.update(data)
-    profiles[calibration_hash] = profile
+    calibration = {}
+    try:
+        with open(path, encoding="utf-8") as json_file:
+            calibration = json.load(json_file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        calibration = {}
 
+    calibration.update(data)
     with open(path, "w", encoding="utf-8") as json_file:
-        json.dump(profiles, json_file, indent=2, sort_keys=True)
+        json.dump(calibration, json_file, indent=2, sort_keys=True)
         json_file.write("\n")
 
 
@@ -98,12 +105,17 @@ def _run_git(*args: str) -> subprocess.CompletedProcess:
 
 
 def git_commit_and_push(project_id: str) -> bool:
-    """Commit the project's calibration file on a fresh, timestamped branch and
-    push it - calibration changes are never committed directly on `main`. Always
-    attempts to switch back to `main` afterward, even on failure. Any git error
-    is logged as a warning and never raised (calibration must not crash the
-    client). Returns True if a commit was actually pushed."""
-    path = _calibration_path(project_id)
+    """Commit this physical unit's own calibration file on a fresh, timestamped
+    branch and push it - calibration changes are never committed directly on
+    `main`. Always attempts to switch back to `main` afterward, even on
+    failure. Any git error is logged as a warning and never raised (calibration
+    must not crash the client). Returns True if a commit was actually pushed."""
+    calibration_id = os.getenv(CALIBRATION_ID_ENV_KEY)
+    if not calibration_id:
+        logger.warning(f"No calibration id set; nothing to commit for {project_id}")
+        return False
+
+    path = _calibration_file_path(project_id, calibration_id)
     branch = f"calibration/{project_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     committed = False
     try:

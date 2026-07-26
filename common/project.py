@@ -12,7 +12,7 @@ from projects.seagull.config import seagull_servos_data
 
 from common.servo import initialize_servos, AniServo
 from common.animation import Animation
-from common.calibration import save_calibration, git_commit_and_push
+from common.calibration import has_calibration, save_calibration, git_commit_and_push
 from common.logger import Logger
 from common.generative import GenerativeMovement
 from common.xbox_servo_mapper import XboxServoMapper
@@ -101,6 +101,7 @@ class Project(Logger):
             "animation": self.__animation_data is not None,
             "generative": bool(self._generative_settings),
             "xbox": bool(self._xbox_settings),
+            "calibrated": has_calibration(self.__project),
         }
 
     def evaluate(self):

@@ -261,6 +261,18 @@ def test_get_capabilities_reflects_project_config(monkeypatch):
     assert capabilities["xbox"] is True
 
 
+def test_get_capabilities_calibrated_false_without_saved_calibration(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+    monkeypatch.setattr(project_module, "has_calibration", lambda project_id: False)
+
+    project = Project(init_servos=False)
+
+    assert project.get_capabilities()["calibrated"] is False
+
+
 def test_play_and_evaluate_are_no_ops_without_animation(monkeypatch):
     monkeypatch.setenv("PROJECT_ID", "skeleton")
     monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
