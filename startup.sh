@@ -4,7 +4,8 @@
 # This waits for Network connection
 sleep 10
 
-cd "$(dirname "$0")"
+# cd "$(dirname "$0")"
+cd github/animatronic/
 
 # Check for updates
 git fetch
