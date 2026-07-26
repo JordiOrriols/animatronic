@@ -45,61 +45,80 @@ def get_auto_discovery():
     return RUNTIME_STATE["auto_discovery"]
 
 
-async def show_options(websocket):
-    """Show cli options to choose what to do with your animatronic."""
+async def show_options(websocket, capabilities=None):
+    """Show cli options to choose what to do with your animatronic.
 
-    options = [
-        "[p] Play animation",
-        "[a] Automatic mode",
-        "[x] Xbox controller",
-        "[c] Calibrate",
-        "[e] Evaluate",
-        "[s] Standby",
-        "[r] Reboot",
-        "[e] Exit",
-    ]
+    Options are filtered by the connected client's reported `capabilities` (sent on
+    the client-ready message), so a project without e.g. an animation.json won't
+    offer "Play animation"/"Evaluate". Missing capability keys default to True so
+    older clients that don't report capabilities still see the full menu.
+    """
+    capabilities = capabilities or {}
+    has_animation = capabilities.get("animation", True)
+    has_generative = capabilities.get("generative", True)
+    has_xbox = capabilities.get("xbox", True)
+
+    menu_items = []
+    if has_animation:
+        menu_items.append(("play", "[p] Play animation"))
+    if has_generative:
+        menu_items.append(("auto", "[a] Automatic mode"))
+    if has_xbox:
+        menu_items.append(("xbox", "[x] Xbox controller"))
+    menu_items.append(("calibrate", "[c] Calibrate"))
+    if has_animation:
+        menu_items.append(("evaluate", "[e] Evaluate"))
+    menu_items.append(("standby", "[s] Standby"))
+    menu_items.append(("reboot", "[r] Reboot"))
+    menu_items.append(("exit", "[e] Exit"))
+
+    options = [label for _, label in menu_items]
     terminal_menu = TerminalMenu(options, title="Select next action")
     menu_entry_index = terminal_menu.show()
+    if not isinstance(menu_entry_index, int):
+        logger.error("No option selected:")
+        return
+    selected_key, selected_label = menu_items[menu_entry_index]
 
     print("")
-    logger.info(f"You have selected {options[menu_entry_index]}!")
+    logger.info(f"You have selected {selected_label}!")
     print("")
 
-    if menu_entry_index == 0:
+    if selected_key == "play":
         logger.success("Playing Animation:")
         await send_message(websocket, WEBSOCKET_MESSAGES["play"])
         sleep(1)
         playsound("sound/background.mp3", False)
         playsound("sound/laugh.mp3", False)
 
-    elif menu_entry_index == 1:
+    elif selected_key == "auto":
         logger.success("Automatic mode:")
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-start"])
         playsound("sound/background.mp3", False)
         input("Press any key to stop")
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-stop"])
 
-    elif menu_entry_index == 2:
+    elif selected_key == "xbox":
         logger.success("Xbox Controller:")
         await xbox_control(websocket)
 
-    elif menu_entry_index == 3:
+    elif selected_key == "calibrate":
         logger.info("Calibrate:")
         await calibrate(websocket)
 
-    elif menu_entry_index == 4:
+    elif selected_key == "evaluate":
         logger.info("Evaluate:")
         await send_message(websocket, WEBSOCKET_MESSAGES["evaluate"])
 
-    elif menu_entry_index == 5:
+    elif selected_key == "standby":
         logger.warning("Standby:")
         await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
 
-    elif menu_entry_index == 6:
+    elif selected_key == "reboot":
         logger.warning("Reboot:")
         await send_message(websocket, WEBSOCKET_MESSAGES["reboot"])
 
-    elif menu_entry_index == 7:
+    elif selected_key == "exit":
         logger.error("Exit:")
         await send_message(websocket, WEBSOCKET_MESSAGES["exit"])
 
@@ -109,6 +128,7 @@ async def show_options(websocket):
 
 async def handler(websocket):
     """Handle websocket client messages."""
+    capabilities = {}
     try:
         async for msg in websocket:
             message = json.loads(msg)
@@ -123,11 +143,16 @@ async def handler(websocket):
                 if discovery is not None:
                     discovery.disable()
 
+            if message["action"] == WEBSOCKET_MESSAGES["ready"]:
+                data = message.get("data") or []
+                if data and isinstance(data[0], dict):
+                    capabilities = data[0]
+
             if message["action"] in (
                 [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
             ):
                 await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
-                await show_options(websocket)
+                await show_options(websocket, capabilities)
     except ConnectionClosed:
         logger.warning("Client disconnected")
 

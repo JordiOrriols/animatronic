@@ -93,8 +93,8 @@ def handler(message):
 
 def main():
     """Run the client event loop."""
-    runtime_client, _ = init_runtime()
-    asyncio.run(runtime_client.ready(handler))
+    runtime_client, runtime_project = init_runtime()
+    asyncio.run(runtime_client.ready(handler, runtime_project.get_capabilities()))
 
 
 if __name__ == "__main__":

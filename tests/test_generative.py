@@ -213,3 +213,52 @@ def test_project_handles_missing_config(monkeypatch):
 
     with pytest.raises(KeyError):
         Project(init_servos=False)
+
+
+def test_load_animation_missing_file_disables_animation_capability(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    def fake_open(path, encoding=None):
+        raise FileNotFoundError(path)
+
+    monkeypatch.setattr("builtins.open", fake_open)
+
+    project = Project(init_servos=False)
+    project.load_animation("animation")  # should not raise
+
+    assert project._Project__animation_data is None
+    assert project.get_capabilities()["animation"] is False
+
+
+def test_get_capabilities_reflects_project_config(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    project = Project(init_servos=False)
+    project._Project__animation_data = {"dummy": True}
+
+    # skeleton's config.py defines xbox_settings but no generative_settings.
+    capabilities = project.get_capabilities()
+    assert capabilities["animation"] is True
+    assert capabilities["generative"] is False
+    assert capabilities["xbox"] is True
+
+
+def test_play_and_evaluate_are_no_ops_without_animation(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    project = Project(init_servos=False)
+    project._Project__animation_data = None
+
+    # Should not raise even though there's no animation data to build an Animation from.
+    project.play()
+    project.evaluate()
+

@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from common.websocket import WebSocketClient
 
@@ -46,4 +47,20 @@ def test_websocket_client_connects_and_reads_messages(monkeypatch):
         {"action": "client-ready", "data": []},
         {"action": "exit", "data": []},
     ]
+
+
+def test_ready_sends_capabilities_on_client_ready(monkeypatch):
+    monkeypatch.setattr("common.websocket.AutoDiscoveryClient", FakeAutoDiscoveryClient)
+    connection = FakeWebSocketConnection()
+    monkeypatch.setattr("common.websocket.connect", lambda uri: connection)
+
+    client = WebSocketClient()
+    client.connect()
+
+    capabilities = {"animation": False, "generative": True, "xbox": True}
+    asyncio.run(client.ready(lambda message: None, capabilities))
+
+    ready_sent = json.loads(connection.sent[-1])
+    assert ready_sent["action"] == "client-ready"
+    assert ready_sent["data"] == [capabilities]
 

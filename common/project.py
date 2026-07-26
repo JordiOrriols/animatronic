@@ -69,14 +69,34 @@ class Project(Logger):
         return self.__servos_data
 
     def load_animation(self, animation_name):
-        """Load animation on memory."""
-        with open(
-            "projects/" + str(self.__project) + "/" + animation_name + ".json",
-            encoding="utf-8",
-        ) as json_file:
-            self.__animation_data = json.load(json_file)
+        """Load animation on memory. Not every project ships an animation.json
+        (e.g. seagull), so a missing file just disables animation-related
+        features instead of crashing the client."""
+        path = "projects/" + str(self.__project) + "/" + animation_name + ".json"
+        try:
+            with open(path, encoding="utf-8") as json_file:
+                self.__animation_data = json.load(json_file)
+        except FileNotFoundError:
+            self.warning(
+                f"No {animation_name}.json found for project '{self.__project}'; "
+                "animation features disabled."
+            )
+            self.__animation_data = None
+
+    def get_capabilities(self):
+        """Report which optional features this project's configuration supports,
+        so the server can only show options the client can actually run."""
+        return {
+            "animation": self.__animation_data is not None,
+            "generative": bool(self._generative_settings),
+            "xbox": bool(self._xbox_settings),
+        }
+
     def evaluate(self):
         """Validate animation and generate error report."""
+        if self.__animation_data is None:
+            self.error("No animation loaded for project", self.__project)
+            return
         if self.__validate_servos_data():
             animation = Animation(
                 self.__animation_data
@@ -147,6 +167,9 @@ class Project(Logger):
 
     def play(self):
         """Play animation."""
+        if self.__animation_data is None:
+            self.error("No animation loaded for project", self.__project)
+            return
         if self.__validate_servos_data():
             animation = Animation(
                 self.__animation_data
