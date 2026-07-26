@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "=== Installing Python dependencies ==="
+
 pip install adafruit-circuitpython-servokit
 pip install websockets
 pip install python-dotenv
@@ -46,3 +48,6 @@ sudo systemctl restart $SERVICE_NAME
 
 echo "=== ¡Listo! Estado actual del servicio: ==="
 sudo systemctl status $SERVICE_NAME --no-pager
+
+echo "=== Reiniciando ==="
+sudo reboot
