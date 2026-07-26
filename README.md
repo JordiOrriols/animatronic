@@ -120,7 +120,6 @@ Set the env file with the project you are going to use
 
 ```
 echo "PROJECT_ID=skeleton" > .env
-echo "CALIBRATION_ID=default" >> .env
 ```
 
 `CALIBRATION_ID` identifies which `servo_calibration/<id>.json` file this physical
