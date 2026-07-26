@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo "=== Setting Git Config ==="
+
+git config --global user.email "animatronic@jordiorriols.cat"
+git config --global user.name "jordiorriols"
+
 echo "=== Installing Python dependencies ==="
 
 pip install adafruit-circuitpython-servokit
