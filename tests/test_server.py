@@ -5,6 +5,16 @@ import threading
 import server as server_app
 
 
+def test_print_banner_uses_version_file(monkeypatch, capsys):
+    monkeypatch.setattr(server_app, "get_version", lambda: "9.9.9")
+
+    server_app._print_banner()
+
+    output = capsys.readouterr().out
+    assert "Animatronics Controller V9.9.9" in output
+    assert "by Jordi Orriols" in output
+
+
 class FakeWebSocket:
     async def send(self, message):
         return None
@@ -166,6 +176,33 @@ def test_handler_forwards_capabilities_and_servos_from_ready_message(monkeypatch
         "xbox": True,
     }
     assert received["servos"] == [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}]
+
+
+def test_handler_logs_client_version_from_ready_message(monkeypatch):
+    logged = []
+
+    async def fake_show_options(websocket, capabilities=None, servos=None):
+        return None
+
+    async def fake_send_message(websocket, action, *data):
+        return None
+
+    class FakeWebSocket:
+        async def __aiter__(self):
+            yield json.dumps(
+                {
+                    "action": "client-ready",
+                    "data": [{"capabilities": {}, "servos": [], "version": "1.2.3"}],
+                }
+            )
+
+    monkeypatch.setattr(server_app, "show_options", fake_show_options)
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+    monkeypatch.setattr(server_app.logger, "success", lambda msg: logged.append(msg))
+
+    asyncio.run(server_app.handler(FakeWebSocket()))
+
+    assert any("1.2.3" in msg for msg in logged)
 
 
 

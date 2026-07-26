@@ -4,6 +4,7 @@ import asyncio
 import subprocess
 from common.project import Project
 
+from common.version import get_version
 from common.websocket import WebSocketClient
 from common.config import WEBSOCKET_MESSAGES
 
@@ -106,6 +107,7 @@ def main():
     handshake = {
         "capabilities": runtime_project.get_capabilities(),
         "servos": runtime_project.get_servo_summary(),
+        "version": get_version(),
     }
     asyncio.run(runtime_client.ready(handler, handshake))
 

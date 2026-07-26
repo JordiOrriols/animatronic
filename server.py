@@ -11,6 +11,7 @@ from websockets.exceptions import ConnectionClosed
 
 from common.autodiscovery import AutoDiscoveryServer
 from common.logger import Logger
+from common.version import get_version
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 from common.xbox_input import XboxInputReader
 
@@ -19,12 +20,15 @@ logger = Logger("Main")
 
 
 def _print_banner():
+    title = f"Animatronics Controller V{get_version()}"
+    subtitle = "by Jordi Orriols"
+    width = max(len(title), len(subtitle)) + 2
     print("")
     print("")
-    print("┌──────────────────────────────────────┐")
-    print("│ Animatronics Controller V0.0.5       │")
-    print("│ by Jordi Orriols                     │")
-    print("└──────────────────────────────────────┘")
+    print("┌" + "─" * width + "┐")
+    print("│ " + title.ljust(width - 1) + "│")
+    print("│ " + subtitle.ljust(width - 1) + "│")
+    print("└" + "─" * width + "┘")
     print("")
     print("")
     logger.info("Starting discovery, checking websockets")
@@ -165,6 +169,9 @@ async def handler(websocket):
                 if data and isinstance(data[0], dict):
                     capabilities = data[0].get("capabilities", {})
                     servos = data[0].get("servos", [])
+                    client_version = data[0].get("version")
+                    if client_version:
+                        logger.success(f"Client connected - running version {client_version}")
 
             if message["action"] in (
                 [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
