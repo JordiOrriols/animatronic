@@ -53,20 +53,42 @@ A set of module-specific guides for the shared classes lives in [docs/common/REA
 
 ### CLIENT On Raspberry Pi
 
-Configure your raspberry pi image to enable:
+#### Flashing the SD card
 
-- Hostname raspberrypi-project (change if you have multiple)
-- Username and password (on my case jordiorriols)
-- Wifi user and password.
-- Locale settings
-- SSH via public key
+1. Download and install [Raspberry Pi Imager](https://www.raspberrypi.com/software/) on your computer.
+2. Insert the SD card and open Raspberry Pi Imager.
+3. Choose OS: pick **Raspberry Pi OS Lite (64-bit)** (no desktop needed, since we boot to CLI).
+4. Choose Storage: select your SD card.
+5. Before writing, click the gear/settings icon (or press `Ctrl+Shift+X`) to open **Advanced Options** and configure:
+   - **Hostname**: `raspberrypi-project` (change if you plan to run multiple animatronics, e.g. `raspberrypi-skeleton`)
+   - **Enable SSH**: choose "Allow public-key authentication only" and paste your public key (e.g. contents of `~/.ssh/id_rsa.pub` or `~/.ssh/id_ed25519.pub`). If you don't have one yet, generate it with `ssh-keygen -t ed25519`.
+   - **Set username and password**: e.g. username `jordiorriols` and a password of your choice (still useful as a fallback/for `sudo`).
+   - **Configure wireless LAN**: enter your Wifi SSID, password, and the Wifi country code.
+   - **Set locale settings**: choose your timezone and keyboard layout.
+6. Save the settings and click **Write** to flash the SD card.
 
-Then start you Raspberry Pi and go to Configuration to:
+#### First boot and configuration
 
-- Enable I2C protocol
-- Startup on CLI (not desktop)
+Insert the SD card into the Raspberry Pi and power it on. Wait a minute for the first boot to complete, then connect via ssh (change the user if you set a different one):
 
-And reboot you Pi. Next connect via ssh (Change your user if you added other)
+```
+ssh jordiorriols@raspberrypi-project.local
+```
+
+Once connected, run the configuration tool:
+
+```
+sudo raspi-config
+```
+
+In the menu:
+
+- Go to **Interface Options** → **I2C** → select **Yes** to enable the I2C protocol (required for the Servo Bonnet).
+- Go to **System Options** → **Boot / Auto Login** → select **Console** (or **Console Autologin**) instead of any Desktop option, since this project runs headless from the CLI.
+
+Select **Finish** and reboot when prompted (or run `sudo reboot`).
+
+After the reboot, connect again via ssh (Change your user if you added other)
 
 ```
 ssh jordiorriols@raspberrypi-project.local
