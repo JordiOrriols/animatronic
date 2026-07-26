@@ -7,27 +7,27 @@ pip install websockets
 pip install python-dotenv
 sudo apt install python3-smbus
 
-# Ruta exacta de tu script de arranque
+# Exact path to your startup script
 SCRIPT_PATH="$HOME/github/animatronic/startup.sh"
 SERVICE_NAME="animatronic-startup.service"
 
-echo "=== Configurando servicio para $SCRIPT_PATH ==="
+echo "=== Configuring service for $SCRIPT_PATH ==="
 
-# 1. Verificar si el script existe
+# 1. Check if the script exists
 if [ ! -f "$SCRIPT_PATH" ]; then
-    echo "⚠️ Error: No se encuentra el archivo en $SCRIPT_PATH"
-    echo "Por favor, comprueba que la ruta y el nombre del archivo sean correctos."
+    echo "⚠️ Error: File not found at $SCRIPT_PATH"
+    echo "Please check that the path and file name are correct."
     exit 1
 fi
 
-# 2. Asegurar permisos de ejecución
+# 2. Ensure execution permissions
 chmod +x "$SCRIPT_PATH"
-echo "✓ Permisos de ejecución aplicados a $SCRIPT_PATH"
+echo "✓ Execution permissions applied to $SCRIPT_PATH"
 
-# 3. Crear el servicio systemd
+# 3. Create the systemd service
 sudo bash -c "cat << SERVICE_EOF > /etc/systemd/system/$SERVICE_NAME
 [Unit]
-Description=Servicio de inicio Animatronic
+Description=Animatronic startup service
 After=network.target
 
 [Service]
@@ -41,13 +41,13 @@ Restart=on-failure
 WantedBy=multi-user.target
 SERVICE_EOF"
 
-# 4. Registrar y activar el servicio
+# 4. Register and enable the service
 sudo systemctl daemon-reload
 sudo systemctl enable $SERVICE_NAME
 sudo systemctl restart $SERVICE_NAME
 
-echo "=== ¡Listo! Estado actual del servicio: ==="
+echo "=== Done! Current service status: ==="
 sudo systemctl status $SERVICE_NAME --no-pager
 
-echo "=== Reiniciando ==="
+echo "=== Rebooting ==="
 sudo reboot
