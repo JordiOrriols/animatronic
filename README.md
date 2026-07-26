@@ -81,18 +81,11 @@ git clone https://github.com/JordiOrriols/animatronic.git
 cd animatronic
 ```
 
-Then start installing all dependencies:
+Execute setup script
 
 ```
-pip install adafruit-circuitpython-servokit
-pip install websockets
-pip install python-dotenv
-```
-
-This seems to be already installed on Raspberry Pi. But double check if there are updates:
-
-```
-sudo apt install python3-smbus
+chmod +x setup.sh
+./setup.sh
 ```
 
 Set the env file with the project you are going to use
