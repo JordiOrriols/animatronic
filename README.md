@@ -114,7 +114,14 @@ Set the env file with the project you are going to use
 
 ```
 echo "PROJECT_ID=skeleton" > .env
+echo "CALIBRATION_HASH=default" >> .env
 ```
+
+`CALIBRATION_HASH` identifies which servo_calibration.json profile this physical
+unit uses (different physical builds of the same project can have different servo
+limits). `default` is the profile seeded with the project's original values; leave
+it unset on a brand new unit and it will be generated and saved automatically the
+first time you calibrate it from the server's "Calibrate" menu.
 
 ### SERVER On MacOs or PI with sound capabilities
 
