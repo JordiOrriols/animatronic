@@ -18,7 +18,7 @@ It ties together the selected project configuration (`PROJECT_ID`), the servo de
 - `auto_start()` / `auto_stop()`: start/stop generative (idle) movement mode for all servos, using each servo's `generative_settings` from the project config.
 - `calibrate_move(servo_pin, position)`: live-preview a servo position while searching for new calibration bounds, bypassing its currently configured limits.
 - `calibrate_save(servo_pin, neutral, min_val, max_val)`: apply new calibration values to a servo immediately and stage them for the next `calibrate_commit()`.
-- `calibrate_commit()`: persist all staged calibration values to this unit's own calibration file and push them to git on a dedicated branch (see [calibration.md](calibration.md)).
+- `calibrate_commit()`: persist all staged calibration values to this unit's own local calibration file (see [calibration.md](calibration.md); these files are gitignored and never committed/pushed automatically).
 - `standby()`: returns all servos to their rest position.
 - `xbox_start()` / `xbox_update(raw_axes)` / `xbox_stop()`: start Xbox controller mode, apply a new set of raw axis values received from the server, and stop the mode.
 

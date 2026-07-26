@@ -335,18 +335,16 @@ def test_calibrate_save_stages_pending_calibration(monkeypatch):
     }
 
 
-def test_calibrate_commit_persists_and_pushes_then_clears_pending(monkeypatch):
+def test_calibrate_commit_persists_and_clears_pending(monkeypatch):
     monkeypatch.setenv("PROJECT_ID", "skeleton")
     monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
     monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
 
     saved = {}
-    pushed = []
     monkeypatch.setattr(
         project_module, "save_calibration", lambda project_id, data: saved.update({project_id: data})
     )
-    monkeypatch.setattr(project_module, "git_commit_and_push", lambda project_id: pushed.append(project_id))
 
     project = Project(init_servos=False)
     project._Project__pending_calibration = {"servo-a": {"min": 20, "max": 150, "rest": 95}}
@@ -354,7 +352,6 @@ def test_calibrate_commit_persists_and_pushes_then_clears_pending(monkeypatch):
     project.calibrate_commit()
 
     assert saved == {"skeleton": {"servo-a": {"min": 20, "max": 150, "rest": 95}}}
-    assert pushed == ["skeleton"]
     assert project._Project__pending_calibration == {}
 
 
@@ -366,7 +363,6 @@ def test_calibrate_commit_is_no_op_without_pending_changes(monkeypatch):
 
     calls = []
     monkeypatch.setattr(project_module, "save_calibration", lambda *args, **kwargs: calls.append("save"))
-    monkeypatch.setattr(project_module, "git_commit_and_push", lambda *args, **kwargs: calls.append("push"))
 
     project = Project(init_servos=False)
     project.calibrate_commit()
