@@ -27,7 +27,7 @@ class AniServo(Logger):
         self.__name = name
         self.__pin = pin
         self.__rest_position = rest_position
-        self.__physical_limits_min = max(min(min_val, 0), 0)
+        self.__physical_limits_min = max(min_val, 0)
         self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
 
         self.__connection: Optional[AniServo] = None
@@ -110,6 +110,30 @@ class AniServo(Logger):
 
             if self.__connection.get_current_position() is not None:
                 self.__connection.move_to_angle(connection_position)
+
+    def move_to_calibration_angle(self, position: int):
+        """Moving the servo while searching for new calibration bounds. Bypasses
+        the currently configured min/max limits, clamping only to the physical
+        actuation range of the servo's fabric data."""
+        servo_position = min(position, self.__fabric_data["actuation_range"])
+        servo_position = max(servo_position, 0)
+        if self.__servo is None:
+            return
+        self.__servo.angle = servo_position
+
+    def set_calibration(self, min_val: int, max_val: int, rest_position: int):
+        """Updating the servo's calibrated limits and rest position at runtime."""
+        self.__physical_limits_min = max(min_val, 0)
+        self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
+        self.__rest_position = rest_position
+
+    def to_calibration_dict(self):
+        """Getting this servo's current calibration as a plain dict."""
+        return {
+            "min": self.__physical_limits_min,
+            "max": self.__physical_limits_max,
+            "rest": self.__rest_position,
+        }
 
 
 def initialize_servos(kit, servos_data):

@@ -1,0 +1,6 @@
+{
+  "beak": {"max": 70, "min": 40, "rest": 45},
+  "head-pitch": {"max": 155, "min": 20, "rest": 90},
+  "head-yaw": {"max": 140, "min": 40, "rest": 90},
+  "wings": {"max": 180, "min": 15, "rest": 145}
+}

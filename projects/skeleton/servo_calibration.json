@@ -1,0 +1,18 @@
+{
+  "arm-left-flexion": {"max": 140, "min": 40, "rest": 70},
+  "arm-left-rotation": {"max": 160, "min": 80, "rest": 100},
+  "arm-right-flexion": {"max": 130, "min": 25, "rest": 130},
+  "arm-right-rotation": {"max": 70, "min": 0, "rest": 10},
+  "body-flexion": {"max": 115, "min": 50, "rest": 75},
+  "body-rotation": {"max": 180, "min": 0, "rest": 95},
+  "hand-left-rotation": {"max": 155, "min": 0, "rest": 90},
+  "hand-right-rotation": {"max": 155, "min": 0, "rest": 90},
+  "head-flexion-left": {"max": 155, "min": 20, "rest": 90},
+  "head-flexion-right": {"max": 170, "min": 45, "rest": 90},
+  "head-rotation": {"max": 140, "min": 40, "rest": 90},
+  "mandible": {"max": 70, "min": 40, "rest": 45},
+  "shoulder-left-flexion": {"max": 180, "min": 15, "rest": 145},
+  "shoulder-left-rotation": {"max": 120, "min": 15, "rest": 120},
+  "shoulder-right-flexion": {"max": 170, "min": 10, "rest": 45},
+  "shoulder-right-rotation": {"max": 165, "min": 50, "rest": 50}
+}

@@ -45,7 +45,7 @@ def get_auto_discovery():
     return RUNTIME_STATE["auto_discovery"]
 
 
-async def show_options(websocket, capabilities=None):
+async def show_options(websocket, capabilities=None, servos=None):
     """Show cli options to choose what to do with your animatronic.
 
     Options are filtered by the connected client's reported `capabilities` (sent on
@@ -54,6 +54,7 @@ async def show_options(websocket, capabilities=None):
     older clients that don't report capabilities still see the full menu.
     """
     capabilities = capabilities or {}
+    servos = servos or []
     has_animation = capabilities.get("animation", True)
     has_generative = capabilities.get("generative", True)
     has_xbox = capabilities.get("xbox", True)
@@ -104,7 +105,7 @@ async def show_options(websocket, capabilities=None):
 
     elif selected_key == "calibrate":
         logger.info("Calibrate:")
-        await calibrate(websocket)
+        await calibrate(websocket, servos)
 
     elif selected_key == "evaluate":
         logger.info("Evaluate:")
@@ -129,6 +130,7 @@ async def show_options(websocket, capabilities=None):
 async def handler(websocket):
     """Handle websocket client messages."""
     capabilities = {}
+    servos = []
     try:
         async for msg in websocket:
             message = json.loads(msg)
@@ -146,41 +148,88 @@ async def handler(websocket):
             if message["action"] == WEBSOCKET_MESSAGES["ready"]:
                 data = message.get("data") or []
                 if data and isinstance(data[0], dict):
-                    capabilities = data[0]
+                    capabilities = data[0].get("capabilities", {})
+                    servos = data[0].get("servos", [])
 
             if message["action"] in (
                 [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
             ):
                 await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
-                await show_options(websocket, capabilities)
+                await show_options(websocket, capabilities, servos)
     except ConnectionClosed:
         logger.warning("Client disconnected")
 
 
-async def calibrate(websocket):
-    """Calibrate servo."""
-    servo_pin = int(input("Write Servo Pin: "))
-    position = int(input("Select start position in degrees: "))
-
-    logger.input('Type "+" or "-" to adjust the position. Press any other key to exit.')
-    print("")
-
-    while position is not None:
-        operation = input("Adjusting: ")
+async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:
+    """Interactively nudge a value in +/-5 degree increments, sending a live
+    calibrate-move preview after every nudge. Any other input confirms and
+    returns the current value."""
+    value = start_value
+    logger.input(f'{label}: type "+" or "-" to adjust. Press any other key to confirm.')
+    while True:
+        operation = input(f"{label} ({value}): ")
         if operation == "+":
-            position = position + 5
+            value += 5
         elif operation == "-":
-            position = position - 5
+            value -= 5
         else:
-            position = None
+            return value
+        await send_message(
+            websocket,
+            WEBSOCKET_MESSAGES["calibrate-move"],
+            {"servo_pin": servo_pin, "position": value},
+        )
 
-        if position is not None:
-            await send_message(
-                websocket,
-                WEBSOCKET_MESSAGES["calibrate"],
-                {"servo_pin": servo_pin, "position": position},
-            )
 
+async def _calibrate_servo(websocket, servo: dict):
+    """Run the Neutral -> Min -> Max guided calibration flow for one servo, then
+    send calibrate-save with the confirmed values."""
+    name = servo["name"]
+    pin = servo["pin"]
+    print("")
+    logger.info(f"Calibrating '{name}' (pin {pin})")
+
+    neutral_input = input("Neutral position in degrees [90]: ")
+    neutral = int(neutral_input) if neutral_input.strip() else 90
+    await send_message(
+        websocket, WEBSOCKET_MESSAGES["calibrate-move"], {"servo_pin": pin, "position": neutral}
+    )
+    neutral = await _adjust_value(websocket, pin, "Neutral", neutral)
+    minimum = await _adjust_value(websocket, pin, "Min", servo.get("min", 0))
+    maximum = await _adjust_value(websocket, pin, "Max", servo.get("max", 180))
+
+    await send_message(
+        websocket,
+        WEBSOCKET_MESSAGES["calibrate-save"],
+        {"servo_pin": pin, "neutral": neutral, "min": minimum, "max": maximum},
+    )
+
+
+async def calibrate(websocket, servos=None):
+    """Calibrate one servo or all servos: Neutral -> Min -> Max per servo, then
+    persist+push everything once at the end of the session."""
+    servos = servos or []
+    if not servos:
+        logger.error("No servos reported by client; cannot calibrate.")
+        return
+
+    options = ["[all] Calibrate ALL servos"] + [
+        f"{servo['name']} (pin {servo['pin']}) - min {servo['min']} max {servo['max']}"
+        f" rest {servo['rest']}"
+        for servo in servos
+    ]
+    terminal_menu = TerminalMenu(options, title="Select servo to calibrate")
+    menu_entry_index = terminal_menu.show()
+    if not isinstance(menu_entry_index, int):
+        logger.error("No servo selected:")
+        return
+
+    targets = servos if menu_entry_index == 0 else [servos[menu_entry_index - 1]]
+
+    for servo in targets:
+        await _calibrate_servo(websocket, servo)
+
+    await send_message(websocket, WEBSOCKET_MESSAGES["calibrate-commit"])
     await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
 
 

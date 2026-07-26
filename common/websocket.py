@@ -34,10 +34,12 @@ class WebSocketClient(Logger):
         self.info("Connected successfully")
         self.send(WEBSOCKET_MESSAGES["connected"])
 
-    async def ready(self, handler, capabilities=None):
+    async def ready(self, handler, handshake=None):
         """Tell server client is ready to receive and process messages, reporting
-        which optional features (animation/generative/xbox) this project supports."""
-        self.send(WEBSOCKET_MESSAGES["ready"], capabilities or {})
+        the project's capabilities (animation/generative/xbox) and its servo list
+        (name/pin/current calibration) so the server can build its menus without
+        importing any project-specific config."""
+        self.send(WEBSOCKET_MESSAGES["ready"], handshake or {})
         self.__continue_loop = True
 
         while self.__continue_loop:

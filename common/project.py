@@ -12,6 +12,7 @@ from projects.seagull.config import seagull_servos_data
 
 from common.servo import initialize_servos, AniServo
 from common.animation import Animation
+from common.calibration import save_calibration, git_commit_and_push
 from common.logger import Logger
 from common.generative import GenerativeMovement
 from common.xbox_servo_mapper import XboxServoMapper
@@ -35,6 +36,7 @@ class Project(Logger):
         self.__animation_data = None
         self.__automatic_mode = False
         self.__xbox_mapper = None
+        self.__pending_calibration: dict = {}
 
         self.info("Initializing for project: ", self.__project)
         self.__servos_data: list[AniServo] = servos_data_object[self.__project]
@@ -67,6 +69,15 @@ class Project(Logger):
     def get_servos_data(self):
         """Get servos data."""
         return self.__servos_data
+
+    def get_servo_summary(self):
+        """Report name/pin/current calibration for every servo, sent to the server
+        on the client-ready handshake so it can build the calibration menu without
+        importing any project-specific config."""
+        return [
+            {"name": servo.get_name(), "pin": servo.get_pin(), **servo.to_calibration_dict()}
+            for servo in self.__servos_data
+        ]
 
     def load_animation(self, animation_name):
         """Load animation on memory. Not every project ships an animation.json
@@ -210,11 +221,28 @@ class Project(Logger):
         """Stop automatic generative movements."""
         self.__automatic_mode = False  # Not sure if this will work
 
-    def calibrate(self, servo_pin: int, position: int):
-        """Calibrate manually a servo."""
+    def calibrate_move(self, servo_pin: int, position: int):
+        """Live-preview a servo position while searching for new calibration
+        bounds, bypassing its currently configured limits."""
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
-                servo.move_to_angle(position)
+                servo.move_to_calibration_angle(position)
+
+    def calibrate_save(self, servo_pin: int, neutral: int, min_val: int, max_val: int):
+        """Confirm new calibration values for a servo, apply them immediately, and
+        stage them to be persisted+pushed on the next calibrate_commit()."""
+        for servo in self.__servos_data:
+            if servo.get_pin() == servo_pin:
+                servo.set_calibration(min_val, max_val, neutral)
+                self.__pending_calibration[servo.get_name()] = servo.to_calibration_dict()
+
+    def calibrate_commit(self):
+        """Persist all staged calibration values to disk and push them to git on a
+        dedicated branch (never on main; non-fatal on failure)."""
+        if self.__pending_calibration:
+            save_calibration(self.__project, self.__pending_calibration)
+            git_commit_and_push(self.__project)
+            self.__pending_calibration = {}
 
     def standby(self):
         """Put the animatronic in standby mode."""

@@ -99,11 +99,12 @@ def test_show_options_default_capabilities_show_full_menu(monkeypatch):
     assert sent[0][0] == server_app.WEBSOCKET_MESSAGES["play"]
 
 
-def test_handler_forwards_capabilities_from_ready_message(monkeypatch):
-    received_capabilities = {}
+def test_handler_forwards_capabilities_and_servos_from_ready_message(monkeypatch):
+    received = {}
 
-    async def fake_show_options(websocket, capabilities=None):
-        received_capabilities.update(capabilities or {})
+    async def fake_show_options(websocket, capabilities=None, servos=None):
+        received["capabilities"] = capabilities
+        received["servos"] = servos
 
     async def fake_send_message(websocket, action, *data):
         return None
@@ -113,7 +114,12 @@ def test_handler_forwards_capabilities_from_ready_message(monkeypatch):
             yield json.dumps(
                 {
                     "action": "client-ready",
-                    "data": [{"animation": False, "generative": True, "xbox": True}],
+                    "data": [
+                        {
+                            "capabilities": {"animation": False, "generative": True, "xbox": True},
+                            "servos": [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}],
+                        }
+                    ],
                 }
             )
 
@@ -122,11 +128,12 @@ def test_handler_forwards_capabilities_from_ready_message(monkeypatch):
 
     asyncio.run(server_app.handler(FakeWebSocket()))
 
-    assert received_capabilities == {
+    assert received["capabilities"] == {
         "animation": False,
         "generative": True,
         "xbox": True,
     }
+    assert received["servos"] == [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}]
 
 
 
@@ -212,3 +219,94 @@ def test_xbox_stream_loop_detects_disconnect(monkeypatch):
     )
 
     assert disconnected is True
+
+
+def test_calibrate_without_servos_logs_error_and_returns(monkeypatch):
+    called = {"menu": False}
+
+    class ShouldNotBeCalledMenu:
+        def __init__(self, *args, **kwargs):
+            called["menu"] = True
+
+        def show(self):
+            return 0
+
+    monkeypatch.setattr(server_app, "TerminalMenu", ShouldNotBeCalledMenu)
+
+    asyncio.run(server_app.calibrate(FakeWebSocket(), []))
+    assert called["menu"] is False
+
+
+def test_adjust_value_nudges_then_confirms(monkeypatch):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+
+    inputs = iter(["+", "-", "-", "done"])
+    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+
+    result = asyncio.run(server_app._adjust_value(FakeWebSocket(), 1, "Min", 100))
+
+    assert result == 95
+    assert [action for action, _ in sent] == [server_app.WEBSOCKET_MESSAGES["calibrate-move"]] * 3
+
+
+def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+
+    class AllMenu(FakeTerminalMenu):
+        def show(self):
+            return 0  # "[all] Calibrate ALL servos"
+
+    monkeypatch.setattr(server_app, "TerminalMenu", AllMenu)
+
+    inputs = iter(["", "x", "x", "x"])  # blank neutral (defaults to 90), confirm x3
+    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+
+    servos = [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}]
+    asyncio.run(server_app.calibrate(FakeWebSocket(), servos))
+
+    actions = [action for action, _ in sent]
+    assert actions == [
+        server_app.WEBSOCKET_MESSAGES["calibrate-move"],
+        server_app.WEBSOCKET_MESSAGES["calibrate-save"],
+        server_app.WEBSOCKET_MESSAGES["calibrate-commit"],
+        server_app.WEBSOCKET_MESSAGES["standby"],
+    ]
+    save_payload = sent[1][1][0]
+    assert save_payload == {"servo_pin": 1, "neutral": 90, "min": 10, "max": 170}
+
+
+def test_calibrate_selects_single_servo_not_all(monkeypatch):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+
+    class SingleMenu(FakeTerminalMenu):
+        def show(self):
+            return 2  # "[all]" is 0, servos[0] is 1, servos[1] is 2
+
+    monkeypatch.setattr(server_app, "TerminalMenu", SingleMenu)
+
+    inputs = iter(["", "x", "x", "x"])
+    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+
+    servos = [
+        {"name": "a", "pin": 1, "min": 0, "max": 180, "rest": 90},
+        {"name": "b", "pin": 2, "min": 20, "max": 150, "rest": 80},
+    ]
+    asyncio.run(server_app.calibrate(FakeWebSocket(), servos))
+
+    save_payload = [data[0] for action, data in sent if action == server_app.WEBSOCKET_MESSAGES["calibrate-save"]]
+    assert save_payload == [{"servo_pin": 2, "neutral": 90, "min": 20, "max": 150}]

@@ -17,8 +17,14 @@ class FakeProject:
     def auto_stop(self):
         self.calls.append(("auto-stop",))
 
-    def calibrate(self, servo_pin, position):
-        self.calls.append(("calibrate", servo_pin, position))
+    def calibrate_move(self, servo_pin, position):
+        self.calls.append(("calibrate-move", servo_pin, position))
+
+    def calibrate_save(self, servo_pin, neutral, min_val, max_val):
+        self.calls.append(("calibrate-save", servo_pin, neutral, min_val, max_val))
+
+    def calibrate_commit(self):
+        self.calls.append(("calibrate-commit",))
 
     def evaluate(self):
         self.calls.append(("evaluate",))
@@ -62,8 +68,15 @@ def test_client_handler_routes_messages(monkeypatch):
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["auto-start"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["auto-stop"]})
     client_app.handler(
-        {"action": client_app.WEBSOCKET_MESSAGES["calibrate"], "data": [{"servo_pin": 1, "position": 2}]}
+        {"action": client_app.WEBSOCKET_MESSAGES["calibrate-move"], "data": [{"servo_pin": 1, "position": 2}]}
     )
+    client_app.handler(
+        {
+            "action": client_app.WEBSOCKET_MESSAGES["calibrate-save"],
+            "data": [{"servo_pin": 1, "neutral": 90, "min": 20, "max": 150}],
+        }
+    )
+    client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["calibrate-commit"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["evaluate"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["standby"]})
     client_app.handler({"action": client_app.WEBSOCKET_MESSAGES["xbox-start"]})
@@ -80,9 +93,11 @@ def test_client_handler_routes_messages(monkeypatch):
     assert fake_project.calls[0] == ("play",)
     assert fake_project.calls[1] == ("auto-start",)
     assert fake_project.calls[2] == ("auto-stop",)
-    assert fake_project.calls[3] == ("calibrate", 1, 2)
-    assert fake_project.calls[4] == ("evaluate",)
-    assert fake_project.calls[5] == ("standby",)
-    assert fake_project.calls[6] == ("xbox-start",)
-    assert fake_project.calls[7] == ("xbox-update", {"left_stick_x": 0.5})
-    assert fake_project.calls[8] == ("xbox-stop",)
+    assert fake_project.calls[3] == ("calibrate-move", 1, 2)
+    assert fake_project.calls[4] == ("calibrate-save", 1, 90, 20, 150)
+    assert fake_project.calls[5] == ("calibrate-commit",)
+    assert fake_project.calls[6] == ("evaluate",)
+    assert fake_project.calls[7] == ("standby",)
+    assert fake_project.calls[8] == ("xbox-start",)
+    assert fake_project.calls[9] == ("xbox-update", {"left_stick_x": 0.5})
+    assert fake_project.calls[10] == ("xbox-stop",)

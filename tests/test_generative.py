@@ -55,6 +55,18 @@ class MockServo:
         self._current = angle
         self.history.append(angle)
 
+    def move_to_calibration_angle(self, angle):
+        self._current = angle
+        self.history.append(("calibration", angle))
+
+    def set_calibration(self, min_val, max_val, rest_position):
+        self._min_limit = min_val
+        self._max_limit = max_val
+        self._rest = rest_position
+
+    def to_calibration_dict(self):
+        return {"min": self._min_limit, "max": self._max_limit, "rest": self._rest}
+
     def sleep(self):
         self._current = self._rest
 
@@ -176,7 +188,7 @@ def test_project_evaluate_play_calibrate_and_standby(monkeypatch):
 
     project.evaluate()
     project.play()
-    project.calibrate(0, 120)
+    project.calibrate_move(0, 120)
     project.standby()
     project.auto_stop()
 
@@ -261,4 +273,91 @@ def test_play_and_evaluate_are_no_ops_without_animation(monkeypatch):
     # Should not raise even though there's no animation data to build an Animation from.
     project.play()
     project.evaluate()
+
+
+def test_get_servo_summary_reports_name_pin_and_calibration(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    project = Project(init_servos=False)
+    project._Project__servos_data = [
+        MockServo(name="servo-a", pin=3, min_limit=10, max_limit=170, rest=90)
+    ]
+
+    summary = project.get_servo_summary()
+    assert summary == [{"name": "servo-a", "pin": 3, "min": 10, "max": 170, "rest": 90}]
+
+
+def test_calibrate_move_bypasses_configured_limits(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    project = Project(init_servos=False)
+    servo = MockServo(name="servo-a", pin=3, current=90)
+    project._Project__servos_data = [servo]
+
+    project.calibrate_move(3, 5)
+    assert servo.get_current_position() == 5
+    assert ("calibration", 5) in servo.history
+
+
+def test_calibrate_save_stages_pending_calibration(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    project = Project(init_servos=False)
+    servo = MockServo(name="servo-a", pin=3)
+    project._Project__servos_data = [servo]
+
+    project.calibrate_save(3, neutral=95, min_val=20, max_val=150)
+
+    assert servo.to_calibration_dict() == {"min": 20, "max": 150, "rest": 95}
+    assert project._Project__pending_calibration == {
+        "servo-a": {"min": 20, "max": 150, "rest": 95}
+    }
+
+
+def test_calibrate_commit_persists_and_pushes_then_clears_pending(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    saved = {}
+    pushed = []
+    monkeypatch.setattr(
+        project_module, "save_calibration", lambda project_id, data: saved.update({project_id: data})
+    )
+    monkeypatch.setattr(project_module, "git_commit_and_push", lambda project_id: pushed.append(project_id))
+
+    project = Project(init_servos=False)
+    project._Project__pending_calibration = {"servo-a": {"min": 20, "max": 150, "rest": 95}}
+
+    project.calibrate_commit()
+
+    assert saved == {"skeleton": {"servo-a": {"min": 20, "max": 150, "rest": 95}}}
+    assert pushed == ["skeleton"]
+    assert project._Project__pending_calibration == {}
+
+
+def test_calibrate_commit_is_no_op_without_pending_changes(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
+    monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
+
+    calls = []
+    monkeypatch.setattr(project_module, "save_calibration", lambda *args, **kwargs: calls.append("save"))
+    monkeypatch.setattr(project_module, "git_commit_and_push", lambda *args, **kwargs: calls.append("push"))
+
+    project = Project(init_servos=False)
+    project.calibrate_commit()
+
+    assert calls == []
 

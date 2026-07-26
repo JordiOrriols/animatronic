@@ -60,10 +60,19 @@ def handler(message):
         runtime_project.auto_stop()
         runtime_client.send(WEBSOCKET_MESSAGES["finished"])
 
-    elif message["action"] == WEBSOCKET_MESSAGES["calibrate"]:
-        runtime_project.calibrate(
-            int(message["data"][0]["servo_pin"]), int(message["data"][0]["position"])
+    elif message["action"] == WEBSOCKET_MESSAGES["calibrate-move"]:
+        data = message["data"][0]
+        runtime_project.calibrate_move(int(data["servo_pin"]), int(data["position"]))
+
+    elif message["action"] == WEBSOCKET_MESSAGES["calibrate-save"]:
+        data = message["data"][0]
+        runtime_project.calibrate_save(
+            int(data["servo_pin"]), int(data["neutral"]), int(data["min"]), int(data["max"])
         )
+
+    elif message["action"] == WEBSOCKET_MESSAGES["calibrate-commit"]:
+        runtime_project.calibrate_commit()
+        runtime_client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif message["action"] == WEBSOCKET_MESSAGES["evaluate"]:
         runtime_project.evaluate()
@@ -94,7 +103,11 @@ def handler(message):
 def main():
     """Run the client event loop."""
     runtime_client, runtime_project = init_runtime()
-    asyncio.run(runtime_client.ready(handler, runtime_project.get_capabilities()))
+    handshake = {
+        "capabilities": runtime_project.get_capabilities(),
+        "servos": runtime_project.get_servo_summary(),
+    }
+    asyncio.run(runtime_client.ready(handler, handshake))
 
 
 if __name__ == "__main__":
