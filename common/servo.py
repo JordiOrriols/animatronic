@@ -26,13 +26,12 @@ class AniServo(Logger):
 
         self.__name = name
         self.__pin = pin
-        self.__rest_position = rest_position
-        self.__physical_limits_min = max(min_val, 0)
-        self.__physical_limits_max = min(max_val, self.__fabric_data["actuation_range"])
 
         self.__connection: Optional[AniServo] = None
         self.__connection_direction: Optional[str] = None
         self.__servo = None
+
+        self.set_calibration(min_val, max_val, rest_position)
 
     # Getters
     def get_name(self):
