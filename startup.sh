@@ -21,11 +21,18 @@ echo "✓ Internet connection detected. Continuing startup..."
 # --- Your current startup.sh code (git pull, python, etc.) ---
 
 # cd "$(dirname "$0")"
+echo "=== Moving to project directory... ==="
 cd github/animatronic/
 
-# Check for updates
-git fetch
-git pull
+# Check for updates (optional: a failed fetch/pull should not block startup,
+# e.g. if the network drops or the remote is unreachable)
+echo "=== Checking for updates... ==="
+if git fetch && git pull; then
+    echo "✓ Repository updated successfully."
+else
+    echo "⚠️ Could not update repository (offline or git error?). Continuing with current code..."
+fi
 
-# Run client script
+# Run client script
+echo "=== Starting client... ==="
 python3 client.py
