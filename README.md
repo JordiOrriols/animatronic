@@ -44,10 +44,16 @@ A set of module-specific guides for the shared classes lives in [docs/common/REA
 
 - [docs/common/animation.md](docs/common/animation.md)
 - [docs/common/autodiscovery.md](docs/common/autodiscovery.md)
+- [docs/common/calibration.md](docs/common/calibration.md)
+- [docs/common/config.md](docs/common/config.md)
 - [docs/common/generative.md](docs/common/generative.md)
+- [docs/common/logger.md](docs/common/logger.md)
 - [docs/common/project.md](docs/common/project.md)
 - [docs/common/servo.md](docs/common/servo.md)
+- [docs/common/version.md](docs/common/version.md)
 - [docs/common/websocket.md](docs/common/websocket.md)
+- [docs/common/xbox_input.md](docs/common/xbox_input.md)
+- [docs/common/xbox_servo_mapper.md](docs/common/xbox_servo_mapper.md)
 
 ## To Install
 
@@ -150,6 +156,69 @@ Then start installing all dependencies:
 ```
 pip install pylint
 ```
+
+## How to use it
+
+Once the server (Mac/PC or a Pi with sound) and one or more clients (each animatronic's Raspberry Pi) are installed, the usual flow is:
+
+1. **Start the server** on the control-station machine, from the repository root:
+
+   ```
+   python3 server.py
+   ```
+
+   It prints a startup banner with the current project version (read from the [`.version`](.version) file), then starts broadcasting on the local network so clients can find it automatically:
+
+   ```
+   ┌────────────────────────────────┐
+   │ Animatronics Controller V0.0.5 │
+   │ by Jordi Orriols                │
+   └────────────────────────────────┘
+   ```
+
+2. **Start the client** on each animatronic's Raspberry Pi (this happens automatically on boot if you ran `setup.sh`, or manually with):
+
+   ```
+   python3 client.py
+   ```
+
+   The client auto-discovers the server via UDP broadcast, connects over WebSocket, and sends a handshake with its `capabilities` (which optional features this project/unit supports), `servos` (name/pin/current calibration for each servo), and its own `version`. The server logs `Client connected - running version <version>` once it receives it.
+
+3. **Pick an action from the server's CLI menu**, shown every time a client connects or finishes an action:
+
+   - `[p] Play animation` - plays the project's `animation.json`.
+   - `[a] Automatic mode` - starts idle/generative movement until you press a key.
+   - `[x] Xbox controller` - streams a physical Xbox controller (attached to the server) to the client in near real-time.
+   - `[c] Calibrate` - runs the guided per-servo calibration flow (see below).
+   - `[e] Evaluate` - checks the loaded animation against the unit's calibrated servo limits and reports any deviations.
+   - `[s] Standby` - returns every servo to its rest position.
+   - `[r] Reboot` / `[e] Exit` - reboots or shuts down the Raspberry Pi.
+
+   `Play animation`, `Automatic mode`, `Xbox controller`, and `Evaluate` are hidden from the menu until the connected unit has been calibrated at least once, so nobody accidentally runs an animatronic on generic, uncalibrated limits.
+
+### Calibrating a unit
+
+Each physical unit (even two units running the exact same project) tracks its own servo limits, so print tolerances or servo wear on one unit never affect another. This is controlled by `CALIBRATION_ID` in that unit's own `.env` file (see [docs/common/calibration.md](docs/common/calibration.md) for the full details):
+
+- Set `CALIBRATION_ID=default` to use the file seeded with the project's original hardcoded values.
+- Leave it unset on a brand new unit; a UUIDv4 is generated and saved to `.env` automatically the first time you calibrate it.
+
+To calibrate, choose `[c] Calibrate` from the server menu, pick a single servo or "ALL servos", then for each servo follow the guided **Neutral → Min → Max** prompts (type `+`/`-` to nudge the live position in 5° steps, any other key to confirm). Once every selected servo is done, the new values are saved to that unit's `servo_calibration/<CALIBRATION_ID>.json` file and pushed to git on a dedicated `calibration/<project>-<timestamp>` branch (never directly on `main`), so calibration changes across different units never conflict with each other.
+
+### Versioning
+
+The project version lives in a single file at the repository root, [`.version`](.version) (e.g. `0.0.5`), read by [`common/version.py`](docs/common/version.md)'s `get_version()`. Bump it by hand when cutting a release - both the server's startup banner and every client's connection handshake pick it up automatically.
+
+### Running tests and linting
+
+This project keeps a full pytest suite (with coverage) and a pylint-clean codebase:
+
+```
+pytest
+pylint $(git ls-files '*.py')
+```
+
+`pytest.ini` enforces a minimum of 80% coverage; `.pylintrc` configures which checks are relaxed for this codebase.
 
 ### Project Configuration
 
