@@ -7,6 +7,7 @@ from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
 from websockets import serve
+from websockets.exceptions import ConnectionClosed
 
 from common.autodiscovery import AutoDiscoveryServer
 from common.logger import Logger
@@ -108,24 +109,27 @@ async def show_options(websocket):
 
 async def handler(websocket):
     """Handle websocket client messages."""
-    async for msg in websocket:
-        message = json.loads(msg)
-        logger.info(f"Message received: {message}")
+    try:
+        async for msg in websocket:
+            message = json.loads(msg)
+            logger.info(f"Message received: {message}")
 
-        if message["action"] == WEBSOCKET_MESSAGES["connected"]:
-            discovery = (
-                RUNTIME_STATE["auto_discovery"]
-                if RUNTIME_STATE["auto_discovery"] is not None
-                else get_auto_discovery()
-            )
-            if discovery is not None:
-                discovery.disable()
+            if message["action"] == WEBSOCKET_MESSAGES["connected"]:
+                discovery = (
+                    RUNTIME_STATE["auto_discovery"]
+                    if RUNTIME_STATE["auto_discovery"] is not None
+                    else get_auto_discovery()
+                )
+                if discovery is not None:
+                    discovery.disable()
 
-        if message["action"] in (
-            [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
-        ):
-            await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
-            await show_options(websocket)
+            if message["action"] in (
+                [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
+            ):
+                await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
+                await show_options(websocket)
+    except ConnectionClosed:
+        logger.warning("Client disconnected")
 
 
 async def calibrate(websocket):
