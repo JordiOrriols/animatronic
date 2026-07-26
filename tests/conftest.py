@@ -41,6 +41,16 @@ sys.modules.setdefault("websockets", websockets_module)
 sys.modules.setdefault("websockets.sync", sync_module)
 sys.modules.setdefault("websockets.sync.client", client_module)
 
+exceptions_module = types.ModuleType("websockets.exceptions")
+
+
+class FakeConnectionClosed(Exception):
+    """Stand-in for websockets.exceptions.ConnectionClosed."""
+
+
+exceptions_module.ConnectionClosed = FakeConnectionClosed
+sys.modules.setdefault("websockets.exceptions", exceptions_module)
+
 playsound_module = types.ModuleType("playsound")
 playsound_module.playsound = lambda *args, **kwargs: None
 sys.modules.setdefault("playsound", playsound_module)
