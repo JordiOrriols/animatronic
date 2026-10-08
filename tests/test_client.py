@@ -1,4 +1,12 @@
+import asyncio
+import threading
+
+import pytest
+
 import client as client_app
+import common.project as project_module
+from common.project import Project
+from common.websocket import WebSocketClient
 
 
 class FakeProject:
@@ -127,3 +135,77 @@ def test_main_sends_capabilities_servos_and_version(monkeypatch):
         "servos": [{"name": "head"}],
         "version": "9.9.9",
     }
+
+
+def test_websocket_receives_auto_stop_while_movements_are_running(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    project = Project(init_servos=False)
+    updated = threading.Event()
+    movements = []
+
+    class Controller:
+        def __init__(self, servo, config):
+            self.servo = servo
+
+        def update(self):
+            movements.append(self.servo.get_name())
+            updated.set()
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", Controller)
+    fake_client = FakeClient()
+    monkeypatch.setattr(client_app.RUNTIME, "client", fake_client)
+    monkeypatch.setattr(client_app.RUNTIME, "project", project)
+    actions = iter(["auto-start", "auto-stop", "exit"])
+
+    class Connection:
+        def recv(self):
+            action = next(actions)
+            if action == "auto-stop":
+                assert updated.wait(1), "Auto worker never started"
+            return '{"action": "' + client_app.WEBSOCKET_MESSAGES[action] + '"}'
+
+        def send(self, message):
+            return None
+
+        def close(self):
+            return None
+
+    websocket = WebSocketClient()
+    websocket._WebSocketClient__websocket = Connection()
+    watchdog = threading.Timer(1, project.auto_stop)
+    watchdog.start()
+    try:
+        def handle(message):
+            if message["action"] != client_app.WEBSOCKET_MESSAGES["exit"]:
+                client_app.handler(message)
+        asyncio.run(websocket.ready(handle))
+        assert watchdog.is_alive(), "Auto start blocked receipt of the stop command"
+        assert movements
+        assert fake_client.sent == [(client_app.WEBSOCKET_MESSAGES["finished"], ())]
+        count_after_stop = len(movements)
+        threading.Event().wait(0.05)
+        assert len(movements) == count_after_stop
+    finally:
+        watchdog.cancel()
+        watchdog.join()
+        project.auto_stop()
+
+
+def test_main_stops_auto_on_connection_failure(monkeypatch):
+    fake_client = FakeClient()
+    fake_project = FakeProject()
+    fake_project.get_capabilities = lambda: {}
+    fake_project.get_servo_summary = lambda: []
+
+    async def disconnected(handler, handshake=None):
+        raise ConnectionError("Disconnected")
+
+    fake_client.ready = disconnected
+    monkeypatch.setattr(client_app.RUNTIME, "client", fake_client)
+    monkeypatch.setattr(client_app.RUNTIME, "project", fake_project)
+
+    with pytest.raises(ConnectionError, match="Disconnected"):
+        client_app.main()
+
+    assert fake_project.calls == [("auto-stop",)]

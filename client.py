@@ -109,7 +109,10 @@ def main():
         "servos": runtime_project.get_servo_summary(),
         "version": get_version(),
     }
-    asyncio.run(runtime_client.ready(handler, handshake))
+    try:
+        asyncio.run(runtime_client.ready(handler, handshake))
+    finally:
+        runtime_project.auto_stop()
 
 
 if __name__ == "__main__":

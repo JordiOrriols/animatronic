@@ -16,6 +16,8 @@ It ties together the selected project configuration (`PROJECT_ID`), the servo de
 - `evaluate()`: checks the loaded animation against each servo's calibrated limits and logs an error report.
 - `play()`: plays the loaded animation.
 - `auto_start()` / `auto_stop()`: start/stop generative (idle) movement for servos explicitly listed in the project's `generative_settings`. Unlisted servos return to their calibrated neutral/rest position when Auto mode starts and do not receive random movements.
+
+  Auto movement runs in a managed background thread so the client can keep receiving websocket messages, including `automatic-mode-stop`. Repeated starts do not create duplicate workers. Stop signals and joins the worker before returning; servos hold their last commanded position rather than automatically returning to neutral. Standby, animation playback, calibration movement/saving, and Xbox mode stop Auto before taking control of the servos. The client also stops the worker when its receive loop exits or fails.
 - `calibrate_move(servo_pin, position)`: live-preview a servo position while searching for new calibration bounds, bypassing its currently configured limits.
 - `calibrate_save(servo_pin, neutral, min_val, max_val)`: apply new calibration values to a servo immediately and stage them for the next `calibrate_commit()`.
 - `calibrate_commit()`: persist all staged calibration values to this unit's own local calibration file (see [calibration.md](calibration.md); these files are gitignored and never committed/pushed automatically).

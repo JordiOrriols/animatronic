@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+import threading
 import types
 
 import pytest
@@ -122,6 +123,7 @@ def test_project_auto_start_only_moves_configured_servos(monkeypatch, wings_conf
     beak = MockServo(name="beak", rest=75, current=120)
     monkeypatch.setitem(project_module.servos_data_object, "seagull", [wings, beak])
     controllers = []
+    updated = threading.Event()
 
     class FakeKit:
         def __init__(self, channels=16):
@@ -137,27 +139,26 @@ def test_project_auto_start_only_moves_configured_servos(monkeypatch, wings_conf
         def update(self):
             self.calls += 1
             self.servo.move_to_angle(100)
+            if self.calls == 3:
+                updated.set()
 
     monkeypatch.setattr(project_module, "ServoKit", FakeKit)
     monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
     monkeypatch.setattr(project_module, "GenerativeMovement", FakeController)
 
-    def stop_after_three_updates(*args, **kwargs):
-        assert beak.get_current_position() == 75
-        if controllers[0].calls == 3:
-            project.auto_stop()
-
-    monkeypatch.setattr(project_module.time, "sleep", stop_after_three_updates)
-
     project = Project(init_servos=False)
     project._generative_settings = {"wings": wings_config}
-    project.auto_start()
+    try:
+        project.auto_start()
+        assert updated.wait(1)
+    finally:
+        project.auto_stop()
 
     assert len(controllers) == 1
     assert controllers[0].servo is wings
     assert controllers[0].config == wings_config
-    assert controllers[0].calls == 3
-    assert wings.history == [100, 100, 100]
+    assert controllers[0].calls >= 3
+    assert wings.history == [100] * controllers[0].calls
     assert beak.get_current_position() == 75
 
 
@@ -173,11 +174,60 @@ def test_project_auto_start_without_settings_keeps_all_servos_at_rest(monkeypatc
     monkeypatch.setattr(project_module, "GenerativeMovement", fail_controller)
     project = Project(init_servos=False)
     project._generative_settings = {}
-    monkeypatch.setattr(project_module.time, "sleep", lambda _: project.auto_stop())
-
-    project.auto_start()
+    try:
+        project.auto_start()
+    finally:
+        project.auto_stop()
 
     assert servo.get_current_position() == 80
+
+
+def test_auto_worker_duplicate_start_restart_and_standby(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    servo = MockServo(name="wings", rest=80)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [servo])
+    controllers = []
+    updated = threading.Event()
+
+    class Controller:
+        def __init__(self, controlled_servo, config):
+            controllers.append(self)
+            self.servo = controlled_servo
+
+        def update(self):
+            self.servo.move_to_angle(100)
+            updated.set()
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", Controller)
+    project = Project(init_servos=False)
+    project._generative_settings = {"wings": {}}
+    try:
+        project.auto_stop()  # Safe even before starting.
+        project.auto_start()
+        assert updated.wait(1)
+        first_worker = project._Project__auto_thread
+        project.auto_start()
+        assert project._Project__auto_thread is first_worker
+        assert len(controllers) == 1
+        project.auto_stop()
+        assert not first_worker.is_alive()
+        assert servo.get_current_position() == 100
+        project.auto_stop()  # Repeated stop is also safe.
+
+        updated.clear()
+        project.auto_start()
+        assert updated.wait(1)
+        assert len(controllers) == 2
+        second_worker = project._Project__auto_thread
+        project.standby()
+        assert not second_worker.is_alive()
+        assert servo.get_current_position() == 80
+        count_after_standby = len(servo.history)
+        threading.Event().wait(0.05)
+        assert len(servo.history) == count_after_standby
+    finally:
+        project.auto_stop()
 
 
 def test_project_evaluate_play_calibrate_and_standby(monkeypatch):
@@ -226,7 +276,7 @@ def test_project_evaluate_play_calibrate_and_standby(monkeypatch):
     project.standby()
     project.auto_stop()
 
-    assert project._Project__automatic_mode is False
+    assert project._Project__auto_stop_event.is_set()
 
 
 def test_project_validation_failure_and_load_animation(monkeypatch, tmp_path):

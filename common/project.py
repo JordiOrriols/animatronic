@@ -3,7 +3,7 @@
 import os
 import json
 import importlib
-import time
+import threading
 from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 
@@ -34,7 +34,9 @@ class Project(Logger):
 
         self.__project = os.getenv("PROJECT_ID")
         self.__animation_data = None
-        self.__automatic_mode = False
+        self.__auto_thread: threading.Thread | None = None
+        self.__auto_stop_event = threading.Event()
+        self.__auto_lock = threading.Lock()
         self.__xbox_mapper = None
         self.__pending_calibration: dict = {}
 
@@ -179,6 +181,7 @@ class Project(Logger):
 
     def play(self):
         """Play animation."""
+        self.auto_stop()
         if self.__animation_data is None:
             self.error("No animation loaded for project", self.__project)
             return
@@ -200,9 +203,14 @@ class Project(Logger):
             animation.end()
 
     def auto_start(self):
-        """Move configured servos automatically and keep unlisted servos at rest."""
-        if self.__validate_servos_data():
-            self.__automatic_mode = True
+        """Start a worker for configured servos without blocking message reception."""
+        if not self.__validate_servos_data():
+            return
+        with self.__auto_lock:
+            if self.__auto_thread is not None and self.__auto_thread.is_alive():
+                self.warning("Automatic mode is already running.")
+                return
+            self.__auto_stop_event.clear()
 
             # Build per-servo controllers using per-servo generative settings
             animatronic_controllers = []
@@ -213,21 +221,34 @@ class Project(Logger):
                 cfg = self._generative_settings[servo.get_name()]
                 animatronic_controllers.append(GenerativeMovement(servo, cfg))
 
-            # Main loop: call update on each controller and yield CPU briefly
-            while self.__automatic_mode:
-                for controller in animatronic_controllers:
-                    controller.update()
+            self.__auto_thread = threading.Thread(
+                target=self.__run_auto,
+                args=(animatronic_controllers,),
+                name="animatronic-auto",
+                daemon=True,
+            )
+            self.__auto_thread.start()
 
-                # short sleep to avoid CPU spin; controllers are time-driven
-                time.sleep(0.02)
+    def __run_auto(self, controllers: list[GenerativeMovement]):
+        while not self.__auto_stop_event.is_set():
+            for controller in controllers:
+                if self.__auto_stop_event.is_set():
+                    break
+                controller.update()
+            self.__auto_stop_event.wait(0.02)
 
     def auto_stop(self):
-        """Stop automatic generative movements."""
-        self.__automatic_mode = False  # Not sure if this will work
+        """Stop and join the worker so no further servo updates occur after return."""
+        with self.__auto_lock:
+            self.__auto_stop_event.set()
+            if self.__auto_thread is not None:
+                self.__auto_thread.join()
+                self.__auto_thread = None
 
     def calibrate_move(self, servo_pin: int, position: int):
         """Live-preview a servo position while searching for new calibration
         bounds, bypassing its currently configured limits."""
+        self.auto_stop()
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
                 servo.move_to_calibration_angle(position)
@@ -235,6 +256,7 @@ class Project(Logger):
     def calibrate_save(self, servo_pin: int, neutral: int, min_val: int, max_val: int):
         """Confirm new calibration values for a servo, apply them immediately, and
         stage them to be persisted on the next calibrate_commit()."""
+        self.auto_stop()
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
                 servo.set_calibration(min_val, max_val, neutral)
@@ -250,12 +272,14 @@ class Project(Logger):
 
     def standby(self):
         """Put the animatronic in standby mode."""
+        self.auto_stop()
         if self.__validate_servos_data():
             for servo in self.__servos_data:
                 servo.sleep()
 
     def xbox_start(self):
         """Start Xbox controller mode. Prepares a mapper seeded at current positions."""
+        self.auto_stop()
         if self.__validate_servos_data():
             self.__xbox_mapper = XboxServoMapper(self.__servos_data, self._xbox_settings)
 
