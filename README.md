@@ -203,6 +203,8 @@ Each physical unit (even two units running the exact same project) tracks its ow
 
 To calibrate, choose `[c] Calibrate` from the server menu, pick a single servo or "ALL servos", then for each servo follow the guided **Neutral → Min → Max** prompts (type `+`/`-` to nudge the live position in 5° steps, any other key to confirm). Once every selected servo is done, the new values are saved to that unit's `servo_calibration/<CALIBRATION_ID>.json` file on disk. These per-unit files are listed in `.gitignore` (only the shipped `default.json` baseline per project is committed), so calibration changes across different units never conflict with each other in git.
 
+Calibration starts at the servo's saved neutral/rest position (90° if none is available). Each endpoint phase starts from the position you just reached, not from the old limit: the saved Min and Max are displayed only as references. Type `+` or `-` followed by Enter for each step; press Enter alone to confirm the current position. There are no automatic endpoint moves or return-to-neutral moves after saving. Choose Standby separately when you want to return to neutral. Calibration bypasses the old limits, so watch the mechanism closely and stop before it binds.
+
 ### Versioning
 
 The project version lives in a single file at the repository root, [`.version`](.version) (e.g. `0.0.5`), read by [`common/version.py`](docs/common/version.md)'s `get_version()`. Bump it by hand when cutting a release - both the server's startup banner and every client's connection handshake pick it up automatically.

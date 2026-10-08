@@ -38,6 +38,8 @@ print(load_calibration(project_id))
 
 ## Notes
 
+- Interactive calibration starts at the saved neutral/rest position, or 90 degrees if none is available. Neutral, Min, and Max are adjusted with `+`/`-` followed by Enter (5 degrees per step); Enter alone confirms the current position. Min starts at the confirmed neutral, and Max starts at the confirmed Min. Switching phases does not send a movement command; old endpoint values are shown for reference only, never applied automatically.
+- Saving leaves each servo at its last manually reached position. There is no automatic Standby/return-to-neutral command at the end; select Standby explicitly when desired. Calibration bypasses saved limits, so observe the mechanism during every step and stop before reaching a mechanical obstruction.
 - `CALIBRATION_ID_ENV_KEY` is `"CALIBRATION_ID"`. Set it to `default` to use the file seeded with a project's original hardcoded values, leave it unset on a brand new unit to have a UUIDv4 generated automatically on first calibration, or set it manually if you want to reuse/copy an existing unit's file.
 - `load_dotenv()` is called at **module import time** (not only inside `Project.__init__()`), because project config modules (e.g. `projects/skeleton/config.py`) read `CALIBRATION_ID` while building their servo list at import time, which happens before `Project.__init__()` ever runs.
 - The calibration flow itself (interactive Neutral/Min/Max prompts over the CLI) lives in `server.py`'s `calibrate()`/`_calibrate_servo()`/`_adjust_value()` functions, which drive `Project.calibrate_move()` / `calibrate_save()` / `calibrate_commit()` on the client through websocket messages.

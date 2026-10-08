@@ -211,20 +211,23 @@ async def _calibrate_servo(websocket, servo: dict):
     print("")
     logger.info(f"Calibrating '{name}' (pin {pin})")
 
-    neutral_input = input("Neutral position in degrees [90]: ")
-    neutral = int(neutral_input) if neutral_input.strip() else 90
+    neutral = servo.get("rest", 90)
+    logger.info(f"Starting at saved neutral position: {neutral} degrees")
     await send_message(
         websocket, WEBSOCKET_MESSAGES["calibrate-move"], {"servo_pin": pin, "position": neutral}
     )
     neutral = await _adjust_value(websocket, pin, "Neutral", neutral)
-    minimum = await _adjust_value(websocket, pin, "Min", servo.get("min", 0))
-    maximum = await _adjust_value(websocket, pin, "Max", servo.get("max", 180))
+    logger.info(f"Saved Min: {servo.get('min', 0)} degrees (reference only; not applied)")
+    minimum = await _adjust_value(websocket, pin, "Min", neutral)
+    logger.info(f"Saved Max: {servo.get('max', 180)} degrees (reference only; not applied)")
+    maximum = await _adjust_value(websocket, pin, "Max", minimum)
 
     await send_message(
         websocket,
         WEBSOCKET_MESSAGES["calibrate-save"],
         {"servo_pin": pin, "neutral": neutral, "min": minimum, "max": maximum},
     )
+    servo.update({"rest": neutral, "min": minimum, "max": maximum})
 
 
 async def calibrate(websocket, servos=None):
@@ -253,7 +256,6 @@ async def calibrate(websocket, servos=None):
         await _calibrate_servo(websocket, servo)
 
     await send_message(websocket, WEBSOCKET_MESSAGES["calibrate-commit"])
-    await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
 
 
 async def send_message(websocket, action: str, *data):

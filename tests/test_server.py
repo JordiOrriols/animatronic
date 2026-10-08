@@ -337,7 +337,7 @@ def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
 
     monkeypatch.setattr(server_app, "TerminalMenu", AllMenu)
 
-    inputs = iter(["", "x", "x", "x"])  # blank neutral (defaults to 90), confirm x3
+    inputs = iter(["x", "x", "x"])
     monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
 
     servos = [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}]
@@ -348,10 +348,9 @@ def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
         server_app.WEBSOCKET_MESSAGES["calibrate-move"],
         server_app.WEBSOCKET_MESSAGES["calibrate-save"],
         server_app.WEBSOCKET_MESSAGES["calibrate-commit"],
-        server_app.WEBSOCKET_MESSAGES["standby"],
     ]
     save_payload = sent[1][1][0]
-    assert save_payload == {"servo_pin": 1, "neutral": 90, "min": 10, "max": 170}
+    assert save_payload == {"servo_pin": 1, "neutral": 90, "min": 90, "max": 90}
 
 
 def test_calibrate_selects_single_servo_not_all(monkeypatch):
@@ -368,7 +367,7 @@ def test_calibrate_selects_single_servo_not_all(monkeypatch):
 
     monkeypatch.setattr(server_app, "TerminalMenu", SingleMenu)
 
-    inputs = iter(["", "x", "x", "x"])
+    inputs = iter(["x", "x", "x"])
     monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
 
     servos = [
@@ -378,4 +377,54 @@ def test_calibrate_selects_single_servo_not_all(monkeypatch):
     asyncio.run(server_app.calibrate(FakeWebSocket(), servos))
 
     save_payload = [data[0] for action, data in sent if action == server_app.WEBSOCKET_MESSAGES["calibrate-save"]]
-    assert save_payload == [{"servo_pin": 2, "neutral": 90, "min": 20, "max": 150}]
+    assert save_payload == [{"servo_pin": 2, "neutral": 80, "min": 80, "max": 80}]
+
+
+def test_calibrate_servo_nudges_from_last_position_not_saved_limits(monkeypatch, capsys):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+    inputs = iter(["+", "", "-", "-", "", "+", "+", "+", ""])
+    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    servo = {"name": "head", "pin": 1, "min": 0, "max": 180, "rest": 80}
+
+    asyncio.run(server_app._calibrate_servo(FakeWebSocket(), servo))
+
+    positions = [
+        data[0]["position"]
+        for action, data in sent
+        if action == server_app.WEBSOCKET_MESSAGES["calibrate-move"]
+    ]
+    assert positions == [80, 85, 80, 75, 80, 85, 90]
+    assert sent[-1] == (
+        server_app.WEBSOCKET_MESSAGES["calibrate-save"],
+        ({"servo_pin": 1, "neutral": 85, "min": 75, "max": 90},),
+    )
+    output = capsys.readouterr().out
+    assert "Saved Min: 0" in output
+    assert "Saved Max: 180" in output
+    assert servo == {"name": "head", "pin": 1, "rest": 85, "min": 75, "max": 90}
+
+
+def test_calibrate_servo_defaults_to_neutral_90_without_saved_rest(monkeypatch):
+    sent = []
+
+    async def fake_send_message(websocket, action, *data):
+        sent.append((action, data))
+
+    monkeypatch.setattr(server_app, "send_message", fake_send_message)
+    inputs = iter(["", "", ""])
+    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+
+    asyncio.run(server_app._calibrate_servo(FakeWebSocket(), {"name": "head", "pin": 1}))
+
+    assert sent == [
+        (server_app.WEBSOCKET_MESSAGES["calibrate-move"], ({"servo_pin": 1, "position": 90},)),
+        (
+            server_app.WEBSOCKET_MESSAGES["calibrate-save"],
+            ({"servo_pin": 1, "neutral": 90, "min": 90, "max": 90},),
+        ),
+    ]
