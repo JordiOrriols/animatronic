@@ -150,6 +150,7 @@ async def handler(websocket):
     """Handle websocket client messages."""
     capabilities = {}
     servos = []
+    discovery = None
     try:
         async for msg in websocket:
             message = json.loads(msg)
@@ -180,6 +181,10 @@ async def handler(websocket):
                 await show_options(websocket, capabilities, servos)
     except ConnectionClosed:
         logger.warning("Client disconnected")
+    finally:
+        if discovery is not None:
+            discovery.enable()
+            logger.info("Client session ended - looking for clients again.")
 
 
 async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:

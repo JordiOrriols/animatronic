@@ -2,6 +2,8 @@
 
 The auto-discovery modules let a client find a server on the local network and let a server announce its IP address.
 
+The server pauses announcements when a client reports `client-connected` and resumes them when that client's websocket session ends, including normal disconnects and connection errors. It keeps the existing discovery thread and websocket listener running, so another client can discover and connect without restarting the server. Announcements resume on the broadcast loop's next iteration (up to 10 seconds when previously paused).
+
 ## Classes
 
 ### `AutoDiscoveryClient`

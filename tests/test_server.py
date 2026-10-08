@@ -2,6 +2,8 @@ import asyncio
 import json
 import threading
 
+import pytest
+
 import server as server_app
 
 
@@ -48,6 +50,9 @@ def test_handler_disables_auto_discovery_on_connect(monkeypatch):
         def disable(self):
             self.disabled = True
 
+        def enable(self):
+            self.enabled = True
+
     class FakeWebSocket:
         async def __aiter__(self):
             yield '{"action": "client-connected"}'
@@ -60,6 +65,38 @@ def test_handler_disables_auto_discovery_on_connect(monkeypatch):
 
     asyncio.run(run_handler())
     assert discovery.disabled is True
+    assert discovery.enabled is True
+
+
+@pytest.mark.parametrize("termination", ["normal", "connection-closed", "invalid-message"])
+def test_handler_resumes_discovery_when_client_leaves(monkeypatch, termination):
+    calls = []
+
+    class FakeDiscovery:
+        def disable(self):
+            calls.append("disable")
+
+        def enable(self):
+            calls.append("enable")
+
+    class DisconnectingWebSocket:
+        async def __aiter__(self):
+            yield '{"action": "client-connected"}'
+            assert calls == ["disable"]
+            if termination == "connection-closed":
+                raise server_app.ConnectionClosed(None, None)
+            if termination == "invalid-message":
+                yield "invalid json"
+
+    discovery = FakeDiscovery()
+    monkeypatch.setitem(server_app.RUNTIME_STATE, "auto_discovery", discovery)
+    if termination == "invalid-message":
+        with pytest.raises(json.JSONDecodeError):
+            asyncio.run(server_app.handler(DisconnectingWebSocket()))
+    else:
+        asyncio.run(server_app.handler(DisconnectingWebSocket()))
+
+    assert calls == ["disable", "enable"]
 
 
 def test_show_options_hides_gated_options_when_unsupported(monkeypatch):
