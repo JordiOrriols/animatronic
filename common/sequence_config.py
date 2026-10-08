@@ -125,11 +125,7 @@ def build_timeline(config: dict, lengths_ms: dict[str, float]) -> dict:
         default=0,
     )
     for clip in files:
-        length = number(lengths_ms.get(clip["path"]), "audio clip length", minimum=0.001)
-        if length > min(timing["beat_interval_ms"], timing["final_pause_ms"]):
-            raise ValueError(
-                f"{clip['path']}: audio clip exceeds the beat interval; use a shorter clip"
-            )
+        number(lengths_ms.get(clip["path"]), "audio clip length", minimum=0.001)
     origin = max(0, -min(clip["animation_offset_ms"] for clip in selected))
     first_end = max(
         origin + lengths_ms[first["path"]],

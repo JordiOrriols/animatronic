@@ -21,6 +21,7 @@ class SequenceAudio(Logger):
         self.sounds = {}
         self.channel = None
         self.channel_index = None
+        self.extra_channels = {}
         self.active_id = None
         self.task = None
         self.armed = asyncio.Event()
@@ -28,6 +29,39 @@ class SequenceAudio(Logger):
     def configure(self, settings: dict):
         """Validate settings reported by the Pi without opening an audio device yet."""
         self.settings = {name: validate_sequence(config) for name, config in settings.items()}
+        self.info("Enabled audio sequences:", ", ".join(self.settings) or "none")
+
+    @classmethod
+    def _allocate_channel(cls, mixer):
+        count = mixer.get_num_channels()
+        index = next(
+            (i for i in range(count) if i not in cls._channel_indices
+             and not mixer.Channel(i).get_busy()), count,
+        )
+        if index == count:
+            mixer.set_num_channels(count + 1)
+        channel = mixer.Channel(index)
+        cls._channel_indices.add(index)
+        return index, channel
+
+    def _play(self, sound):
+        """Use a free owned channel without interrupting earlier vocal beats."""
+        pygame = importlib.import_module("pygame")
+        try:
+            channels = [self.channel, *self.extra_channels.values()]
+            channel = next((item for item in channels if item is not None
+                            and not item.get_busy()), None)
+            if channel is None:
+                index, channel = self._allocate_channel(pygame.mixer)
+                self.extra_channels[index] = channel
+            channel.play(sound)
+        except pygame.error as error:
+            raise RuntimeError(f"Cannot play sequence audio: {error}") from error
+
+    def _silence(self):
+        for channel in [self.channel, *self.extra_channels.values()]:
+            if channel is not None:
+                channel.stop()
 
     def _load(self, config):
         pygame = importlib.import_module("pygame")
@@ -36,16 +70,7 @@ class SequenceAudio(Logger):
             if not pygame.mixer.get_init():
                 pygame.mixer.init()
             if self.channel is None:
-                count = pygame.mixer.get_num_channels()
-                index = next(
-                    (i for i in range(count) if i not in self._channel_indices
-                     and not pygame.mixer.Channel(i).get_busy()), count,
-                )
-                if index == count:
-                    pygame.mixer.set_num_channels(count + 1)
-                self.channel_index = index
-                self._channel_indices.add(index)
-                self.channel = pygame.mixer.Channel(index)
+                self.channel_index, self.channel = self._allocate_channel(pygame.mixer)
             root = Path("sound").resolve()
             for clip in config["audio"]["files"]:
                 path = Path(clip["path"]).resolve()
@@ -62,6 +87,7 @@ class SequenceAudio(Logger):
         if self.active_id is not None:
             raise ValueError("A sequence is already active on this connection")
         self.active_id = data["id"]
+        self.info("Preparing sequence audio:", data.get("name"), data["id"])
         self.armed.clear()
         self.task = asyncio.create_task(self._run(data))
 
@@ -105,8 +131,7 @@ class SequenceAudio(Logger):
                 if delay < -0.1:
                     raise RuntimeError("Sequence audio deadline missed; cancelling playback")
                 await asyncio.sleep(max(0, delay))
-                channel.stop()
-                channel.play(self.sounds[beat["path"]])
+                self._play(self.sounds[beat["path"]])
             await asyncio.sleep(max(
                 0, origin + timeline["end_ms"] / 1000 - asyncio.get_running_loop().time()
             ))
@@ -115,8 +140,7 @@ class SequenceAudio(Logger):
             await self.send(WEBSOCKET_MESSAGES["sequence-cancel"],
                             {"id": data["id"], "reason": str(error)})
         finally:
-            if self.channel is not None:
-                self.channel.stop()
+            self._silence()
 
     def acknowledge(self, data: dict):
         """Ignore obsolete acknowledgements instead of arming a newer event."""
@@ -137,8 +161,7 @@ class SequenceAudio(Logger):
             except asyncio.CancelledError:
                 pass
             self.task = None
-        if self.channel is not None:
-            self.channel.stop()
+        self._silence()
         self.active_id = None
 
     async def close(self):
@@ -149,5 +172,8 @@ class SequenceAudio(Logger):
             if self.channel_index is not None:
                 self._channel_indices.discard(self.channel_index)
                 self.channel_index = None
+            for index in self.extra_channels:
+                self._channel_indices.discard(index)
+            self.extra_channels.clear()
             self.channel = None
             self.sounds.clear()

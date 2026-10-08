@@ -117,7 +117,6 @@ async def show_options(websocket, capabilities=None, servos=None):
     elif selected_key == "auto":
         logger.success("Automatic mode:")
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-start"])
-        playsound("sound/background.mp3", False)
         await wait_for_auto_stop()
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-stop"])
 

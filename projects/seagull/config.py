@@ -87,10 +87,10 @@ generative_settings = {
     },
 }
 
-# Enable after adding these MP3 files on the server under sound/seagull/.
+# These clips are played on the server; overlapping beats play each clip fully.
 generative_sequences = {
     "mine": {
-        "enabled": False,
+        "enabled": True,
         "min_wait_ms": 15000,
         "max_wait_ms": 45000,
         "audio": {

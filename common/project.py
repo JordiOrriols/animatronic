@@ -256,6 +256,7 @@ class Project(Logger):
             while not self.__sequence_commands.empty():
                 self.__sequence_commands.get_nowait()
             sequences = self.get_sequence_settings()
+            self.info("Automatic sequences enabled:", ", ".join(sequences) or "none")
             if sequences and self.sequence_sender is None:
                 raise RuntimeError("Generative sequences require a server message sender")
 
@@ -306,6 +307,7 @@ class Project(Logger):
                     ready = [name for name, deadline in due.items() if now >= deadline]
                     if ready:
                         sequence_name = min(ready, key=lambda name: due[name])
+                        self.info("Starting generative sequence:", sequence_name)
                         sequence_id = str(uuid.uuid4())
                         active = ServoSequence(sequences[sequence_name], self.__servos_data, now)
                 if active is not None:
@@ -314,6 +316,7 @@ class Project(Logger):
                         self.__send_sequence(WEBSOCKET_MESSAGES["sequence-ready"],
                                              {"id": sequence_id, "name": sequence_name})
                     elif result == "complete":
+                        self.info("Generative sequence complete:", sequence_name)
                         self.__send_sequence(WEBSOCKET_MESSAGES["sequence-complete"],
                                              {"id": sequence_id})
                         active = None
