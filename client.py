@@ -56,7 +56,13 @@ def handler(message):
         runtime_client.send(WEBSOCKET_MESSAGES["finished"])
 
     elif message["action"] == WEBSOCKET_MESSAGES["auto-start"]:
+        runtime_project.sequence_sender = runtime_client.send
         runtime_project.auto_start()
+
+    elif message["action"] in (
+        WEBSOCKET_MESSAGES["sequence-arm"], WEBSOCKET_MESSAGES["sequence-cancel"],
+    ):
+        runtime_project.sequence_command(message["action"], message["data"][0])
 
     elif message["action"] == WEBSOCKET_MESSAGES["auto-stop"]:
         runtime_project.auto_stop()
@@ -117,6 +123,7 @@ def main():
             "capabilities": runtime_project.get_capabilities(),
             "servos": runtime_project.get_servo_summary(),
             "version": get_version(),
+            "generative_sequences": runtime_project.get_sequence_settings(),
         }
         asyncio.run(runtime_client.ready(handler, handshake))
     finally:

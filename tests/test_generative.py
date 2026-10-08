@@ -3,6 +3,8 @@ import os
 import sys
 import threading
 import types
+import copy
+import time
 
 import pytest
 
@@ -22,6 +24,91 @@ sys.modules.setdefault("board", types.ModuleType("board"))
 import common.generative as generative_module
 import common.project as project_module
 from common.project import Project
+from common.config import WEBSOCKET_MESSAGES
+from common.sequence_config import build_timeline
+from projects.seagull.config import generative_sequences
+
+
+@pytest.mark.parametrize("cancel", [False, True])
+def test_auto_sequence_pauses_all_controllers_then_resumes_or_cancels(monkeypatch, cancel):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    pitch = MockServo(name="head-pitch")
+    beak = MockServo(name="beak")
+    yaw = MockServo(name="head-yaw", current=65)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [pitch, beak, yaw])
+    config = copy.deepcopy(generative_sequences["mine"])
+    config["enabled"] = True
+    config["servos"].pop("wings")
+    config["restore_ms"] = 10
+    config["timing"].update(intro_pause_ms=20, beat_interval_ms=50, final_pause_ms=50,
+                            min_repeated_beats=3, max_repeated_beats=3)
+    for settings in config["servos"].values():
+        settings.update(transition_ms=0, out_ms=10, back_ms=10)
+    controllers = []
+    resumed = threading.Event()
+    prepared = threading.Event()
+    pause_count = []
+    sent = []
+
+    class Controller:
+        def __init__(self, servo, settings):
+            self.servo = servo
+            self.calls = 0
+            self.start_position = servo.get_current_position()
+            controllers.append(self)
+
+        def update(self):
+            self.calls += 1
+            self.servo.move_to_angle(100)
+            if len(controllers) > 2:
+                resumed.set()
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", Controller)
+    deadlines = iter([time.monotonic() + 0.03, time.monotonic() + 1000])
+    monkeypatch.setattr(Project, "_Project__next_sequence_due", staticmethod(
+        lambda cfg: next(deadlines)
+    ))
+    project = Project(init_servos=False)
+    project._generative_settings = {"head-yaw": {}, "head-pitch": {}}
+    project._sequence_settings = {"mine": config}
+
+    def send(action, data):
+        sent.append((action, data))
+        if action == WEBSOCKET_MESSAGES["sequence-ready"]:
+            pause_count[:] = [controller.calls for controller in controllers]
+            prepared.set()
+            if not cancel:
+                timeline = build_timeline(
+                    config, {clip["path"]: 10 for clip in config["audio"]["files"]}
+                )
+                project.sequence_command(WEBSOCKET_MESSAGES["sequence-arm"],
+                                         {"id": data["id"], "timeline": timeline,
+                                          "lead_ms": 100})
+        elif action == WEBSOCKET_MESSAGES["sequence-complete"]:
+            assert [controller.calls for controller in controllers] == pause_count
+            assert pitch.get_current_position() == 90
+            assert beak.get_current_position() == 90
+
+    project.sequence_sender = send
+    try:
+        project.auto_start()
+        assert prepared.wait(1)
+        if cancel:
+            threading.Event().wait(0.05)
+            assert [controller.calls for controller in controllers] == pause_count
+        else:
+            assert resumed.wait(2)
+            assert controllers[2].start_position == 90
+            assert any(action == WEBSOCKET_MESSAGES["sequence-complete"] for action, _ in sent)
+    finally:
+        project.auto_stop()
+    assert all(servo.get_current_position() == 90 for servo in [pitch, beak, yaw])
+    if cancel:
+        ready_id = next(data["id"] for action, data in sent
+                        if action == WEBSOCKET_MESSAGES["sequence-ready"])
+        assert sent[-1] == (WEBSOCKET_MESSAGES["sequence-cancel"],
+                            {"id": ready_id, "reason": "Auto stopped"})
 
 
 class MockServo:

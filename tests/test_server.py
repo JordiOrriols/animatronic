@@ -31,6 +31,70 @@ class FakeTerminalMenu:
         return 0
 
 
+def test_handler_receives_sequence_messages_while_auto_menu_is_waiting(monkeypatch):
+    menu_started = asyncio.Event()
+    received = []
+
+    async def menu(*args):
+        menu_started.set()
+        await asyncio.Event().wait()
+
+    async def send(*args):
+        return None
+
+    async def handle(self, action, data):
+        if action == "sequence-ready":
+            assert menu_started.is_set()
+            received.append(data)
+
+    class Socket:
+        async def __aiter__(self):
+            yield json.dumps({"action": "client-ready", "data": [{}]})
+            await menu_started.wait()
+            yield json.dumps({"action": "sequence-ready",
+                              "data": [{"id": "one", "name": "mine"}]})
+
+    monkeypatch.setattr(server_app, "show_options", menu)
+    monkeypatch.setattr(server_app, "send_message", send)
+    monkeypatch.setattr(server_app.SequenceAudio, "handle", handle)
+    asyncio.run(server_app.handler(Socket()))
+    assert received == [[{"id": "one", "name": "mine"}]]
+    assert server_app.SEQUENCE_AUDIO == {}
+
+
+def test_auto_stop_prompt_removes_stdin_reader_on_cancellation(monkeypatch):
+    calls = []
+    async def exercise():
+        loop = asyncio.get_running_loop()
+        monkeypatch.setattr(loop, "add_reader", lambda stream, callback: calls.append("add"))
+        monkeypatch.setattr(loop, "remove_reader", lambda stream: calls.append("remove"))
+        task = asyncio.create_task(server_app.wait_for_auto_stop())
+        await asyncio.sleep(0)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    asyncio.run(exercise())
+    assert calls == ["add", "remove"]
+
+
+@pytest.mark.parametrize("key", ["auto-stop", "play", "standby", "xbox-start", "reboot"])
+def test_mode_change_silences_audio_before_sending_command(key):
+    calls = []
+    class Audio:
+        async def stop(self):
+            calls.append("stop")
+    class Socket:
+        async def send(self, message):
+            calls.append(json.loads(message)["action"])
+    socket = Socket()
+    server_app.SEQUENCE_AUDIO[id(socket)] = Audio()
+    try:
+        asyncio.run(server_app.send_message(socket, server_app.WEBSOCKET_MESSAGES[key]))
+    finally:
+        server_app.SEQUENCE_AUDIO.pop(id(socket))
+    assert calls == ["stop", server_app.WEBSOCKET_MESSAGES[key]]
+
+
 def test_show_options_sends_play_action(monkeypatch):
     sent = []
 

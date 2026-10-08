@@ -87,6 +87,59 @@ generative_settings = {
     },
 }
 
+# Enable after adding these MP3 files on the server under sound/seagull/.
+generative_sequences = {
+    "mine": {
+        "enabled": False,
+        "min_wait_ms": 15000,
+        "max_wait_ms": 45000,
+        "audio": {
+            "files": [
+                {"path": "sound/seagull/mine-1.mp3", "animation_offset_ms": 0},
+                {"path": "sound/seagull/mine-2.mp3", "animation_offset_ms": 0},
+                {"path": "sound/seagull/mine-3.mp3", "animation_offset_ms": 0},
+            ],
+            "random_per_beat": True,
+        },
+        "timing": {
+            "intro_pause_ms": 2000,
+            "beat_interval_ms": 500,
+            "min_repeated_beats": 3,
+            "max_repeated_beats": 6,
+            "final_pause_ms": 500,
+        },
+        "servos": {
+            "head-pitch": {
+                "mode": "hold",
+                "position_1": {"reference": "max", "fraction": 1.0},
+                "position_2": {"reference": "neutral", "fraction": 0.0},
+                "transition_ms": 600,
+                "ease_in": 0.2,
+                "ease_out": 0.2,
+            },
+            "beak": {
+                "mode": "pulse",
+                "position_1": {"reference": "neutral", "fraction": 0.0},
+                "position_2": {"reference": "max", "fraction": 0.8},
+                "out_ms": 100,
+                "back_ms": 200,
+                "ease_in": 0.2,
+                "ease_out": 0.2,
+            },
+            "wings": {
+                "mode": "pulse",
+                "position_1": {"reference": "min", "fraction": 0.2},
+                "position_2": {"reference": "max", "fraction": 0.9},
+                "out_ms": 200,
+                "back_ms": 200,
+                "ease_in": 0.2,
+                "ease_out": 0.2,
+            },
+        },
+        "restore_ms": 600,
+    },
+}
+
 # Per-servo Xbox controller mapping (used by XboxServoMapper on the client).
 # "input" refers to a named axis from common/xbox_input.py AXIS_INDEX:
 # left_stick_x, left_stick_y, right_stick_x, right_stick_y, left_trigger, right_trigger

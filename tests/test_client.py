@@ -26,6 +26,9 @@ class FakeProject:
     def auto_stop(self):
         self.calls.append(("auto-stop",))
 
+    def get_sequence_settings(self):
+        return {}
+
     def calibrate_move(self, servo_pin, position):
         self.calls.append(("calibrate-move", servo_pin, position))
 
@@ -138,6 +141,7 @@ def test_main_sends_capabilities_servos_and_version(monkeypatch):
         "capabilities": {"animation": True},
         "servos": [{"name": "head"}],
         "version": "9.9.9",
+        "generative_sequences": {},
     }
 
 

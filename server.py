@@ -3,6 +3,7 @@
 import json
 import asyncio
 import threading
+import sys
 from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
@@ -14,9 +15,11 @@ from common.logger import Logger
 from common.version import get_version
 from common.websocket import WEBSOCKET_PORT, WEBSOCKET_MESSAGES
 from common.xbox_input import XboxInputReader
+from common.sequence_audio import SequenceAudio
 
 
 logger = Logger("Main")
+SEQUENCE_AUDIO = {}
 
 
 def _print_banner():
@@ -115,7 +118,7 @@ async def show_options(websocket, capabilities=None, servos=None):
         logger.success("Automatic mode:")
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-start"])
         playsound("sound/background.mp3", False)
-        input("Press any key to stop")
+        await wait_for_auto_stop()
         await send_message(websocket, WEBSOCKET_MESSAGES["auto-stop"])
 
     elif selected_key == "xbox":
@@ -146,11 +149,34 @@ async def show_options(websocket, capabilities=None, servos=None):
         logger.error("Option not supported:")
 
 
+async def wait_for_auto_stop():
+    """Read Enter without leaving a blocking input thread behind on disconnect."""
+    print("Press Enter to stop", flush=True)
+    loop = asyncio.get_running_loop()
+    stopped = loop.create_future()
+
+    def read_line():
+        sys.stdin.readline()
+        if not stopped.done():
+            stopped.set_result(None)
+
+    loop.add_reader(sys.stdin, read_line)
+    try:
+        await stopped
+    finally:
+        loop.remove_reader(sys.stdin)
+
+
 async def handler(websocket):
     """Handle websocket client messages."""
     capabilities = {}
     servos = []
     discovery = None
+    menu_task = None
+    async def sequence_send(action, data):
+        await send_message(websocket, action, data)
+    audio = SequenceAudio(sequence_send)
+    SEQUENCE_AUDIO[id(websocket)] = audio
     try:
         async for msg in websocket:
             message = json.loads(msg)
@@ -168,23 +194,45 @@ async def handler(websocket):
             if message["action"] == WEBSOCKET_MESSAGES["ready"]:
                 data = message.get("data") or []
                 if data and isinstance(data[0], dict):
-                    capabilities = data[0].get("capabilities", {})
-                    servos = data[0].get("servos", [])
+                    capabilities, servos = (
+                        data[0].get("capabilities", {}), data[0].get("servos", [])
+                    )
+                    audio.configure(data[0].get("generative_sequences", {}))
                     client_version = data[0].get("version")
                     if client_version:
                         logger.success(f"Client connected - running version {client_version}")
 
-            if message["action"] in (
+            action = message["action"]
+            data = message.get("data") or []
+            await audio.handle(action, data)
+
+            if action in (
                 [WEBSOCKET_MESSAGES["ready"], WEBSOCKET_MESSAGES["finished"]]
             ):
                 await send_message(websocket, WEBSOCKET_MESSAGES["waiting"])
-                await show_options(websocket, capabilities, servos)
+                if menu_task is not None:
+                    await menu_task
+                menu_task = asyncio.create_task(show_options(websocket, capabilities, servos))
+                await asyncio.sleep(0)
     except ConnectionClosed:
         logger.warning("Client disconnected")
     finally:
-        if discovery is not None:
-            discovery.enable()
-            logger.info("Client session ended - looking for clients again.")
+        try:
+            await audio.close()
+        finally:
+            SEQUENCE_AUDIO.pop(id(websocket), None)
+            try:
+                if menu_task is not None:
+                    if not menu_task.done():
+                        menu_task.cancel()
+                    try:
+                        await menu_task
+                    except asyncio.CancelledError:
+                        pass
+            finally:
+                if discovery is not None:
+                    discovery.enable()
+                    logger.info("Client session ended - looking for clients again.")
 
 
 async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:
@@ -265,6 +313,16 @@ async def calibrate(websocket, servos=None):
 
 async def send_message(websocket, action: str, *data):
     """Send message to the client."""
+    if action in (
+        WEBSOCKET_MESSAGES["auto-stop"], WEBSOCKET_MESSAGES["standby"],
+        WEBSOCKET_MESSAGES["reboot"], WEBSOCKET_MESSAGES["exit"],
+        WEBSOCKET_MESSAGES["play"], WEBSOCKET_MESSAGES["evaluate"],
+        WEBSOCKET_MESSAGES["xbox-start"], WEBSOCKET_MESSAGES["calibrate-neutral"],
+        WEBSOCKET_MESSAGES["calibrate-move"], WEBSOCKET_MESSAGES["calibrate-save"],
+    ):
+        audio = SEQUENCE_AUDIO.get(id(websocket))
+        if audio is not None:
+            await audio.stop()
     msg = json.dumps({"action": action, "data": data})
     await websocket.send(msg)
     logger.success("Message sent", msg)

@@ -10,6 +10,65 @@ In project Auto mode, only servos explicitly listed in `generative_settings` on 
 
 The project runs Auto updates in a background worker, leaving websocket reception available for `automatic-mode-stop`. Stop waits for any current update and the eased return to neutral to finish before the client sends its completion message.
 
+## Audio-backed generative sequences
+
+`generative_sequences` in the Pi project configuration adds occasional coordinated
+events alongside `generative_settings`. The `mine` example in
+[the seagull configuration](../../projects/seagull/config.py) is **disabled**
+until you provide real audio files. Copy your MP3s to `sound/seagull/` on the
+**server**, install the server's `pygame` dependency, adjust the paths, then set
+`"enabled": True` and restart/reconnect the client. No audio is played on the Pi.
+
+Each event has:
+
+- `min_wait_ms` / `max_wait_ms`: random wait before the next event. Waits restart
+  after completion; the event plays once, not for a random duration.
+- `audio.files`: a list of `{"path": "sound/seagull/mine-1.mp3",
+  "animation_offset_ms": 100}` objects. Paths must stay under the server's
+  `sound/` directory. Positive offsets start movement **after** audio; negative
+  offsets start movement **before** audio. Zero starts them together.
+- `audio.random_per_beat`: choose a new clip for each vocal beat (default `True`).
+- `timing`: `intro_pause_ms` (2000), `beat_interval_ms` (500),
+  `min_repeated_beats` (3), `max_repeated_beats` (6), `final_pause_ms` (500).
+  One intro, 3–6 rhythmic beats, and one final beat gives 5–8 vocal beats.
+  The intro pause starts after both its sound and movement finish.
+- `servos`: named entries using `mode`, `position_1`, `position_2`,
+  `transition_ms`, `ease_in` and `ease_out`. A position is
+  `{"reference": "min" | "max" | "neutral", "fraction": 0.0..1.0}`.
+  Fractions describe calibrated travel relative to neutral, not absolute angles.
+- `restore_ms`: eased restoration duration (default 600).
+
+For `mode: "hold"`, the servo eases to `position_1`, holds through the
+sequence, then eases to `position_2`. For `mode: "pulse"`, it prepares at
+`position_1`, moves to `position_2` over `out_ms`, and back over `back_ms` per
+beat, then restores its pre-event position. The example holds head-pitch at
+Max, pulses beak and wings, and leaves head-yaw at its existing position.
+
+All ordinary generative controllers pause during preparation, playback, and
+restoration. Unlisted servos do not receive event commands. Normal movement
+resumes from current positions with fresh waits, without replaying an old target.
+With multiple enabled events, only one runs at a time and all waits restart
+after it finishes.
+
+Pulse durations plus the spread of clip offsets must fit within the shortest
+beat/final interval. Audio clips must also fit that interval (500 ms by default);
+longer files raise an explicit error instead of being cut off. Trim clips or
+increase the interval if needed.
+
+The Pi prepares the servos before requesting a schedule. The server preselects
+clips and sends a relative timeline with a 500 ms lead, and waits for the Pi's
+acknowledgement before starting audio. Signed offsets get additional lead when
+needed; acknowledgement round-trip time estimates the one-way network delay.
+This avoids sharing machine clocks, but network and audio-device latency
+still affect alignment: this is not sample-accurate synchronization.
+
+Auto stop, mode changes, and disconnect cancel sequence audio and return the Pi
+to neutral with the existing easing. Missing files, invalid settings, decoding
+failures, missed audio deadlines, and missing acknowledgements fail explicitly
+and stop Auto safely; they are not silently retried. Servo preparation times out
+if the server does not send a schedule within ten seconds. Older servers cannot
+run enabled sequences: update both server and client together.
+
 ## Configuration keys
 
 The configuration dictionary may contain:

@@ -4,8 +4,14 @@ import os
 import json
 import importlib
 import threading
+import time
+import random
+import queue
+import uuid
+from collections.abc import Callable
 from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
+from websockets.exceptions import ConnectionClosed
 
 from projects.skeleton.config import skeleton_servos_data
 from projects.seagull.config import seagull_servos_data
@@ -16,6 +22,9 @@ from common.calibration import has_calibration, save_calibration
 from common.logger import Logger
 from common.generative import GenerativeMovement
 from common.xbox_servo_mapper import XboxServoMapper
+from common.sequence import ServoSequence
+from common.sequence_config import validate_sequence
+from common.config import WEBSOCKET_MESSAGES
 
 servos_data_object = {
     "skeleton": skeleton_servos_data,
@@ -40,6 +49,8 @@ class Project(Logger):
         self.__auto_error: Exception | None = None
         self.__xbox_mapper = None
         self.__pending_calibration: dict = {}
+        self.sequence_sender: Callable[[str, dict], None] | None = None
+        self.__sequence_commands = queue.Queue()
 
         self.info("Initializing for project: ", self.__project)
         self.__servos_data: list[AniServo] = servos_data_object[self.__project]
@@ -53,9 +64,11 @@ class Project(Logger):
                 project_cfg_module, "generative_settings", {}
             )
             self._xbox_settings = getattr(project_cfg_module, "xbox_settings", {})
+            self._sequence_settings = getattr(project_cfg_module, "generative_sequences", {})
         except (ImportError, AttributeError):
             self._generative_settings = {}
             self._xbox_settings = {}
+            self._sequence_settings = {}
 
         if self.__validate_servos_data():
             kit = ServoKit(channels=16)
@@ -102,10 +115,32 @@ class Project(Logger):
         so the server can only show options the client can actually run."""
         return {
             "animation": self.__animation_data is not None,
-            "generative": bool(self._generative_settings),
+            "generative": bool(self._generative_settings) or bool(self.get_sequence_settings()),
             "xbox": bool(self._xbox_settings),
             "calibrated": has_calibration(self.__project),
         }
+
+    def get_sequence_settings(self):
+        """Report enabled, validated sequences to the audio-playing server."""
+        for name, config in self._sequence_settings.items():
+            if not isinstance(config.get("enabled", True), bool):
+                raise ValueError(f"{name}.enabled must be a boolean")
+        return {
+            name: validate_sequence(config) for name, config in self._sequence_settings.items()
+            if config.get("enabled", True)
+        }
+
+    def sequence_command(self, action: str, data: dict):
+        """Queue sequence messages for the single servo-owning Auto worker."""
+        if not isinstance(data, dict) or not isinstance(data.get("id"), str):
+            raise ValueError("Sequence command requires an id")
+        self.__sequence_commands.put((action, data, time.monotonic()))
+
+    def __send_sequence(self, action: str, data: dict):
+        sender = self.sequence_sender
+        if sender is None:
+            raise RuntimeError("Generative sequences require a server message sender")
+        sender(action, data)
 
     def evaluate(self):
         """Validate animation and generate error report."""
@@ -215,6 +250,11 @@ class Project(Logger):
                 return
             self.__auto_stop_event.clear()
             self.__auto_error = None
+            while not self.__sequence_commands.empty():
+                self.__sequence_commands.get_nowait()
+            sequences = self.get_sequence_settings()
+            if sequences and self.sequence_sender is None:
+                raise RuntimeError("Generative sequences require a server message sender")
 
             # Build per-servo controllers using per-servo generative settings
             animatronic_controllers = []
@@ -227,27 +267,87 @@ class Project(Logger):
 
             self.__auto_thread = threading.Thread(
                 target=self.__run_auto,
-                args=(animatronic_controllers,),
+                args=(animatronic_controllers, sequences),
                 name="animatronic-auto",
                 daemon=True,
             )
             self.__auto_thread.start()
 
-    def __run_auto(self, controllers: list[GenerativeMovement]):
+    @staticmethod
+    def __next_sequence_due(config):
+        return time.monotonic() + random.uniform(
+            config["min_wait_ms"], config["max_wait_ms"]
+        ) / 1000
+
+    def __run_auto(self, controllers: list[GenerativeMovement], sequences=None):
+        sequences = sequences or {}
+        due = {name: self.__next_sequence_due(config) for name, config in sequences.items()}
+        active = None
+        sequence_id = None
+        sequence_name = None
         try:
             while not self.__auto_stop_event.is_set():
-                for controller in controllers:
-                    if self.__auto_stop_event.is_set():
-                        break
-                    controller.update()
+                now = time.monotonic()
+                while not self.__sequence_commands.empty():
+                    action, data, received = self.__sequence_commands.get_nowait()
+                    if active is None or data.get("id") != sequence_id:
+                        self.warning("Ignoring stale sequence command:", data.get("id"))
+                        continue
+                    if action == WEBSOCKET_MESSAGES["sequence-cancel"]:
+                        raise RuntimeError(f"Server cancelled sequence: {data.get('reason')}")
+                    if action == WEBSOCKET_MESSAGES["sequence-arm"]:
+                        active.arm(data.get("timeline"), received, data.get("lead_ms"))
+                        self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"],
+                                             {"id": sequence_id})
+                if active is None:
+                    ready = [name for name, deadline in due.items() if now >= deadline]
+                    if ready:
+                        sequence_name = min(ready, key=lambda name: due[name])
+                        sequence_id = str(uuid.uuid4())
+                        active = ServoSequence(sequences[sequence_name], self.__servos_data, now)
+                if active is not None:
+                    result = active.update(now)
+                    if result == "ready":
+                        self.__send_sequence(WEBSOCKET_MESSAGES["sequence-ready"],
+                                             {"id": sequence_id, "name": sequence_name})
+                    elif result == "complete":
+                        self.__send_sequence(WEBSOCKET_MESSAGES["sequence-complete"],
+                                             {"id": sequence_id})
+                        active = None
+                        sequence_id = None
+                        due = {
+                            name: self.__next_sequence_due(config)
+                            for name, config in sequences.items()
+                        }
+                        controllers = [
+                            GenerativeMovement(servo, self._generative_settings[servo.get_name()])
+                            for servo in self.__servos_data
+                            if servo.get_name() in self._generative_settings
+                        ]
+                else:
+                    for controller in controllers:
+                        if self.__auto_stop_event.is_set():
+                            break
+                        controller.update()
                 self.__auto_stop_event.wait(0.02)
-        except (OSError, ValueError, RuntimeError) as error:
+        except (OSError, ValueError, RuntimeError, ConnectionClosed) as error:
             self.error("Automatic movement failed:", error)
             self.__auto_error = error
+        finally:
+            self.__finish_auto(sequence_id)
+
+    def __finish_auto(self, sequence_id):
+        try:
+            if sequence_id is not None and self.sequence_sender is not None:
+                self.__send_sequence(WEBSOCKET_MESSAGES["sequence-cancel"],
+                                     {"id": sequence_id, "reason": "Auto stopped"})
+        except (OSError, RuntimeError, ConnectionClosed) as error:
+            self.error("Could not notify server of sequence cancellation:", error)
         finally:
             try:
                 self.__return_to_rest()
             except (OSError, ValueError, RuntimeError) as error:
+                self.error("Automatic mode neutral return failed:", error)
                 self.__auto_error = error
 
     def auto_stop(self):

@@ -185,7 +185,7 @@ Once the server (Mac/PC or a Pi with sound) and one or more clients (each animat
 
 3. **Pick an action from the server's CLI menu**, shown every time a client connects or finishes an action:
    - `[p] Play animation` - plays the project's `animation.json`.
-   - `[a] Automatic mode` - starts idle/generative movement until you press a key.
+   - `[a] Automatic mode` - starts idle/generative movement until you press Enter.
    - `[x] Xbox controller` - streams a physical Xbox controller (attached to the server) to the client in near real-time.
    - `[c] Calibrate` - runs the guided per-servo calibration flow (see below).
    - `[e] Evaluate` - checks the loaded animation against the unit's calibrated servo limits and reports any deviations.
@@ -208,6 +208,13 @@ Calibration eases to the servo's saved neutral/rest position (90° if none is av
 ### Movement limits and soft neutral returns
 
 Per-servo `generative_settings` support `min_range_fraction` and `max_range_fraction`: numbers from 0 to 1 describing permitted travel from calibrated neutral toward each endpoint. Both default to `1.0` (100%). For example, `0.5` permits half the travel on that side; `0.0` permits none. Only listed servos move in Auto mode.
+
+`generative_sequences` adds coordinated audio-backed events that pause ordinary
+Auto movements. The seagull `mine` example is disabled until you supply MP3 files
+on the server, set `"enabled": True` in the Pi config, and reconnect. Audio stays
+on the server using `pygame`; each clip has a signed `animation_offset_ms` for
+alignment. See [sequence configuration and timing](docs/common/generative.md#audio-backed-generative-sequences)
+for hold/pulse servo settings, beat timing, cancellation, and clip limits.
 
 Standby, completed playback, Auto/Xbox stop, and client shutdown reuse `AniServo.move_to_angle_eased(position, duration_ms=1000, ease_in=0.2, ease_out=0.2)` for neutral returns. The duration is fixed, not limited by degrees/second. Generative movement shares the same easing formula with non-blocking updates and uses its configured duration range for returns. Calibration nudges remain manual, and calibration saving does not move the servos.
 
