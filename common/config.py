@@ -31,6 +31,7 @@ WEBSOCKET_MESSAGES = {
     "auto-start": "automatic-mode-start",
     "auto-stop": "automatic-mode-stop",
     "calibrate-move": "calibrate-move",
+    "calibrate-neutral": "calibrate-neutral",
     "calibrate-save": "calibrate-save",
     "calibrate-commit": "calibrate-commit",
     "evaluate": "evaluate",

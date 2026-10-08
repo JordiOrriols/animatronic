@@ -203,7 +203,15 @@ Each physical unit (even two units running the exact same project) tracks its ow
 
 To calibrate, choose `[c] Calibrate` from the server menu, pick a single servo or "ALL servos", then for each servo follow the guided **Neutral → Min → Max** prompts (type `+`/`-` to nudge the live position in 5° steps, any other key to confirm). Once every selected servo is done, the new values are saved to that unit's `servo_calibration/<CALIBRATION_ID>.json` file on disk. These per-unit files are listed in `.gitignore` (only the shipped `default.json` baseline per project is committed), so calibration changes across different units never conflict with each other in git.
 
-Calibration starts at the servo's saved neutral/rest position (90° if none is available). Each endpoint phase starts from the position you just reached, not from the old limit: the saved Min and Max are displayed only as references. Type `+` or `-` followed by Enter for each step; press Enter alone to confirm the current position. There are no automatic endpoint moves or return-to-neutral moves after saving. Choose Standby separately when you want to return to neutral. Calibration bypasses the old limits, so watch the mechanism closely and stop before it binds.
+Calibration eases to the servo's saved neutral/rest position (90° if none is available). Each endpoint phase starts from the position you just reached, not from the old limit: the saved Min and Max are displayed only as references. Type `+` or `-` followed by Enter for each step; press Enter alone to confirm the current position. There are no automatic endpoint moves or return-to-neutral moves after saving. Choose Standby separately when you want to return to neutral. Calibration bypasses the old limits, so watch the mechanism closely and stop before it binds.
+
+### Movement limits and soft neutral returns
+
+Per-servo `generative_settings` support `min_range_fraction` and `max_range_fraction`: numbers from 0 to 1 describing permitted travel from calibrated neutral toward each endpoint. Both default to `1.0` (100%). For example, `0.5` permits half the travel on that side; `0.0` permits none. Only listed servos move in Auto mode.
+
+Standby, completed playback, Auto/Xbox stop, and client shutdown reuse `AniServo.move_to_angle_eased(position, duration_ms=1000, ease_in=0.2, ease_out=0.2)` for neutral returns. The duration is fixed, not limited by degrees/second. Generative movement shares the same easing formula with non-blocking updates and uses its configured duration range for returns. Calibration nudges remain manual, and calibration saving does not move the servos.
+
+Servo positions are not saved to disk or restored after restart. When no current angle is known, startup logs a warning and commands calibrated neutral directly; there is no known starting angle to ease from. Abrupt power loss/SIGKILL cannot return the mechanism to neutral.
 
 ### Versioning
 

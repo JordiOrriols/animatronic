@@ -37,6 +37,7 @@ class Project(Logger):
         self.__auto_thread: threading.Thread | None = None
         self.__auto_stop_event = threading.Event()
         self.__auto_lock = threading.Lock()
+        self.__auto_error: Exception | None = None
         self.__xbox_mapper = None
         self.__pending_calibration: dict = {}
 
@@ -190,17 +191,19 @@ class Project(Logger):
                 self.__animation_data
             )  # maybe we can move to load animation
 
-            animation.start()
-
-            while animation.in_progress():
-                animation.refresh()
-
-                for servo in self.__servos_data:
-                    if servo.get_name() in animation.get_positions().keys():
-                        new_position = animation.get_current_position(servo)
-                        servo.move_to_angle(int(new_position))
-
-            animation.end()
+            try:
+                animation.start()
+                while animation.in_progress():
+                    animation.refresh()
+                    for servo in self.__servos_data:
+                        if servo.get_name() in animation.get_positions().keys():
+                            new_position = animation.get_current_position(servo)
+                            servo.move_to_angle(int(new_position))
+            finally:
+                try:
+                    animation.end()
+                finally:
+                    self.standby()
 
     def auto_start(self):
         """Start a worker for configured servos without blocking message reception."""
@@ -211,6 +214,7 @@ class Project(Logger):
                 self.warning("Automatic mode is already running.")
                 return
             self.__auto_stop_event.clear()
+            self.__auto_error = None
 
             # Build per-servo controllers using per-servo generative settings
             animatronic_controllers = []
@@ -230,20 +234,40 @@ class Project(Logger):
             self.__auto_thread.start()
 
     def __run_auto(self, controllers: list[GenerativeMovement]):
-        while not self.__auto_stop_event.is_set():
-            for controller in controllers:
-                if self.__auto_stop_event.is_set():
-                    break
-                controller.update()
-            self.__auto_stop_event.wait(0.02)
+        try:
+            while not self.__auto_stop_event.is_set():
+                for controller in controllers:
+                    if self.__auto_stop_event.is_set():
+                        break
+                    controller.update()
+                self.__auto_stop_event.wait(0.02)
+        except (OSError, ValueError, RuntimeError) as error:
+            self.error("Automatic movement failed:", error)
+            self.__auto_error = error
+        finally:
+            try:
+                self.__return_to_rest()
+            except (OSError, ValueError, RuntimeError) as error:
+                self.__auto_error = error
 
     def auto_stop(self):
-        """Stop and join the worker so no further servo updates occur after return."""
+        """Stop and join the worker, including its eased return to neutral."""
         with self.__auto_lock:
             self.__auto_stop_event.set()
             if self.__auto_thread is not None:
                 self.__auto_thread.join()
                 self.__auto_thread = None
+            if self.__auto_error is not None:
+                error = self.__auto_error
+                self.__auto_error = None
+                raise error
+
+    def calibrate_neutral(self, servo_pin: int):
+        """Ease the selected servo to neutral before manual calibration nudges."""
+        self.auto_stop()
+        for servo in self.__servos_data:
+            if servo.get_pin() == servo_pin:
+                servo.sleep()
 
     def calibrate_move(self, servo_pin: int, position: int):
         """Live-preview a servo position while searching for new calibration
@@ -274,8 +298,18 @@ class Project(Logger):
         """Put the animatronic in standby mode."""
         self.auto_stop()
         if self.__validate_servos_data():
-            for servo in self.__servos_data:
+            self.__return_to_rest()
+
+    def __return_to_rest(self):
+        failure = None
+        for servo in self.__servos_data:
+            try:
                 servo.sleep()
+            except (OSError, ValueError, RuntimeError) as error:
+                self.error(f"Cannot return {servo.get_name()} to neutral:", error)
+                failure = error
+        if failure is not None:
+            raise failure
 
     def xbox_start(self):
         """Start Xbox controller mode. Prepares a mapper seeded at current positions."""
@@ -289,5 +323,6 @@ class Project(Logger):
             self.__xbox_mapper.update(raw_axes)
 
     def xbox_stop(self):
-        """Stop Xbox controller mode. Servos hold their last commanded position."""
+        """Stop Xbox controller mode and return softly to neutral."""
         self.__xbox_mapper = None
+        self.standby()

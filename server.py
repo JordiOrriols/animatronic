@@ -219,7 +219,7 @@ async def _calibrate_servo(websocket, servo: dict):
     neutral = servo.get("rest", 90)
     logger.info(f"Starting at saved neutral position: {neutral} degrees")
     await send_message(
-        websocket, WEBSOCKET_MESSAGES["calibrate-move"], {"servo_pin": pin, "position": neutral}
+        websocket, WEBSOCKET_MESSAGES["calibrate-neutral"], {"servo_pin": pin}
     )
     neutral = await _adjust_value(websocket, pin, "Neutral", neutral)
     logger.info(f"Saved Min: {servo.get('min', 0)} degrees (reference only; not applied)")

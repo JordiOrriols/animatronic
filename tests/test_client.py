@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import signal
 
 import pytest
 
@@ -27,6 +28,9 @@ class FakeProject:
 
     def calibrate_move(self, servo_pin, position):
         self.calls.append(("calibrate-move", servo_pin, position))
+
+    def calibrate_neutral(self, servo_pin):
+        self.calls.append(("calibrate-neutral", servo_pin))
 
     def calibrate_save(self, servo_pin, neutral, min_val, max_val):
         self.calls.append(("calibrate-save", servo_pin, neutral, min_val, max_val))
@@ -208,4 +212,41 @@ def test_main_stops_auto_on_connection_failure(monkeypatch):
     with pytest.raises(ConnectionError, match="Disconnected"):
         client_app.main()
 
-    assert fake_project.calls == [("auto-stop",)]
+    assert fake_project.calls == [("standby",)]
+
+
+def test_calibration_neutral_message_is_routed_separately_from_nudges(monkeypatch):
+    project = FakeProject()
+    monkeypatch.setattr(client_app.RUNTIME, "client", FakeClient())
+    monkeypatch.setattr(client_app.RUNTIME, "project", project)
+    client_app.handler({
+        "action": client_app.WEBSOCKET_MESSAGES["calibrate-neutral"],
+        "data": [{"servo_pin": 2}],
+    })
+    assert project.calls == [("calibrate-neutral", 2)]
+
+
+@pytest.mark.parametrize("termination", ["normal", "interrupt", "sigterm"])
+def test_main_returns_to_neutral_on_normal_exit_and_signals(monkeypatch, termination):
+    project = FakeProject()
+    project.get_capabilities = lambda: {}
+    project.get_servo_summary = lambda: []
+    connection = FakeClient()
+    previous = signal.getsignal(signal.SIGTERM)
+
+    async def finish(handler, handshake=None):
+        if termination == "interrupt":
+            raise KeyboardInterrupt
+        if termination == "sigterm":
+            signal.getsignal(signal.SIGTERM)(signal.SIGTERM, None)
+
+    connection.ready = finish
+    monkeypatch.setattr(client_app.RUNTIME, "client", connection)
+    monkeypatch.setattr(client_app.RUNTIME, "project", project)
+    if termination == "normal":
+        client_app.main()
+    else:
+        with pytest.raises(KeyboardInterrupt if termination == "interrupt" else SystemExit):
+            client_app.main()
+    assert project.calls == [("standby",)]
+    assert signal.getsignal(signal.SIGTERM) == previous

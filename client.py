@@ -2,6 +2,7 @@
 
 import asyncio
 import subprocess
+import signal
 from common.project import Project
 
 from common.version import get_version
@@ -65,6 +66,9 @@ def handler(message):
         data = message["data"][0]
         runtime_project.calibrate_move(int(data["servo_pin"]), int(data["position"]))
 
+    elif message["action"] == WEBSOCKET_MESSAGES["calibrate-neutral"]:
+        runtime_project.calibrate_neutral(int(message["data"][0]["servo_pin"]))
+
     elif message["action"] == WEBSOCKET_MESSAGES["calibrate-save"]:
         data = message["data"][0]
         runtime_project.calibrate_save(
@@ -103,16 +107,24 @@ def handler(message):
 
 def main():
     """Run the client event loop."""
-    runtime_client, runtime_project = init_runtime()
-    handshake = {
-        "capabilities": runtime_project.get_capabilities(),
-        "servos": runtime_project.get_servo_summary(),
-        "version": get_version(),
-    }
+    def request_shutdown(signum, frame):
+        raise SystemExit(f"Received shutdown signal {signum}")
+
+    previous_sigterm = signal.signal(signal.SIGTERM, request_shutdown)
     try:
+        runtime_client, runtime_project = init_runtime()
+        handshake = {
+            "capabilities": runtime_project.get_capabilities(),
+            "servos": runtime_project.get_servo_summary(),
+            "version": get_version(),
+        }
         asyncio.run(runtime_client.ready(handler, handshake))
     finally:
-        runtime_project.auto_stop()
+        try:
+            if RUNTIME.project is not None:
+                RUNTIME.project.standby()
+        finally:
+            signal.signal(signal.SIGTERM, previous_sigterm)
 
 
 if __name__ == "__main__":

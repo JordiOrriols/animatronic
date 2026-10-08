@@ -88,16 +88,26 @@ def test_generative_movement_moves_and_returns_to_rest(monkeypatch):
         "rest_hold_ms": 50,
     }
 
-    times = iter([0.0, 0.2, 0.3, 0.4])
-    monkeypatch.setattr(generative_module.time, "time", lambda: next(times))
+    clock = [0.0]
+    monkeypatch.setattr(generative_module.time, "monotonic", lambda: clock[0])
     monkeypatch.setattr(generative_module.random, "uniform", lambda a, b: 0.1)
     monkeypatch.setattr(generative_module.random, "randint", lambda a, b: a)
 
     controller = generative_module.GenerativeMovement(servo, config)
 
-    controller.update()  # start waiting -> moving at t=0.2
-    controller.update()  # move to target -> return to rest at t=0.3
-    controller.update()  # finish return to rest at t=0.4
+    clock[0] = 0.2
+    controller.update()
+    clock[0] = 0.4
+    controller.update()
+    assert servo.get_current_position() == 40
+    assert controller._state == "moving_rest"
+    clock[0] = 0.45
+    controller.update()
+    assert servo.get_current_position() == pytest.approx(
+        40 + 50 * generative_module.AniServo.apply_easing(0.5)
+    )
+    clock[0] = 0.6
+    controller.update()
 
     assert 40 in servo.history
     assert servo.get_current_position() == 90
@@ -105,7 +115,7 @@ def test_generative_movement_moves_and_returns_to_rest(monkeypatch):
 
 def test_generative_movement_uses_default_bounds_when_no_config(monkeypatch):
     servo = MockServo(current=90)
-    monkeypatch.setattr(generative_module.time, "time", lambda: 0.0)
+    monkeypatch.setattr(generative_module.time, "monotonic", lambda: 0.0)
     monkeypatch.setattr(generative_module.random, "uniform", lambda a, b: 0.1)
     monkeypatch.setattr(generative_module.random, "randint", lambda a, b: 120)
 
@@ -113,6 +123,144 @@ def test_generative_movement_uses_default_bounds_when_no_config(monkeypatch):
     controller.update()
 
     assert servo.get_current_position() == 90
+
+
+@pytest.mark.parametrize(
+    ("minimum_fraction", "maximum_fraction", "expected"),
+    [(1, 1, (20, 160)), (0, 0, (80, 80)), (0.5, 0.25, (50, 100)),
+     (0, 1, (80, 160)), (1, 0, (20, 80))],
+)
+def test_generative_limits_are_relative_to_neutral(minimum_fraction, maximum_fraction, expected):
+    controller = generative_module.GenerativeMovement(
+        MockServo(rest=80),
+        {"min_range_fraction": minimum_fraction, "max_range_fraction": maximum_fraction},
+    )
+    assert controller._get_angle_bounds() == expected
+
+
+@pytest.mark.parametrize("key", ["min_range_fraction", "max_range_fraction"])
+@pytest.mark.parametrize("value", [-0.1, 1.1, float("nan"), float("inf"), None, True, "0.5"])
+def test_generative_rejects_invalid_range_fractions(key, value):
+    with pytest.raises(ValueError, match=key):
+        generative_module.GenerativeMovement(MockServo(), {key: value})
+
+
+def test_zero_range_targets_neutral_not_current_position():
+    controller = generative_module.GenerativeMovement(
+        MockServo(rest=80, current=120),
+        {"min_range_fraction": 0, "max_range_fraction": 0},
+    )
+    assert controller._choose_target() == 80
+
+
+def test_fraction_limits_intersect_angle_overrides():
+    controller = generative_module.GenerativeMovement(
+        MockServo(rest=80),
+        {"min_range_fraction": 0.5, "max_range_fraction": 0.25,
+         "min_angle": 60, "max_angle": 150},
+    )
+    assert controller._get_angle_bounds() == (60, 100)
+
+
+def test_invalid_neutral_and_nonintersecting_overrides_are_rejected():
+    with pytest.raises(ValueError, match="neutral position"):
+        generative_module.GenerativeMovement(MockServo(rest=10))
+    with pytest.raises(ValueError, match="do not intersect"):
+        generative_module.GenerativeMovement(MockServo(), {"min_angle": 170})
+
+
+def test_auto_failure_returns_to_neutral_and_is_not_acknowledged_as_success(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    servo = MockServo(name="wings", rest=80, current=120)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [servo])
+    updated = threading.Event()
+
+    class Controller:
+        def __init__(self, controlled_servo, config):
+            return None
+
+        def update(self):
+            updated.set()
+            raise OSError("hardware unavailable")
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", Controller)
+    project = Project(init_servos=False)
+    project._generative_settings = {"wings": {}}
+    project.auto_start()
+    assert updated.wait(1)
+    with pytest.raises(OSError, match="hardware unavailable"):
+        project.auto_stop()
+    assert servo.get_current_position() == 80
+
+
+def test_standby_attempts_all_servos_even_if_one_fails(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    bad = MockServo(name="bad")
+    good = MockServo(name="good", rest=80, current=120)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [bad, good])
+
+    def fail_sleep():
+        raise OSError("servo disconnected")
+
+    monkeypatch.setattr(bad, "sleep", fail_sleep)
+    project = Project(init_servos=False)
+    with pytest.raises(OSError, match="servo disconnected"):
+        project.standby()
+    assert good.get_current_position() == 80
+
+
+@pytest.mark.parametrize("fails", [False, True])
+def test_animation_returns_to_neutral_on_completion_and_failure(monkeypatch, fails):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    servo = MockServo(name="wings", rest=80, current=120)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [servo])
+
+    class Animation:
+        def __init__(self, data):
+            return None
+
+        def start(self):
+            if fails:
+                raise RuntimeError("animation failed")
+
+        def in_progress(self):
+            return False
+
+        def end(self):
+            return None
+
+    monkeypatch.setattr(project_module, "Animation", Animation)
+    project = Project(init_servos=False)
+    project._Project__animation_data = {"dummy": True}
+    if fails:
+        with pytest.raises(RuntimeError, match="animation failed"):
+            project.play()
+    else:
+        project.play()
+    assert servo.get_current_position() == 80
+
+
+def test_xbox_stop_returns_to_neutral_and_calibration_only_moves_selected_servo(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    monkeypatch.setattr(project_module, "save_calibration", lambda *args: None)
+    wings = MockServo(name="wings", pin=2, rest=80, current=120)
+    beak = MockServo(name="beak", pin=3, rest=75, current=100)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [wings, beak])
+    project = Project(init_servos=False)
+    project.calibrate_neutral(2)
+    assert wings.get_current_position() == 80
+    assert beak.get_current_position() == 100
+    project.calibrate_move(2, 30)
+    project.calibrate_save(2, 80, 30, 150)
+    project.calibrate_commit()
+    assert wings.get_current_position() == 30
+    project.xbox_stop()
+    assert wings.get_current_position() == 80
+    assert beak.get_current_position() == 75
 
 
 @pytest.mark.parametrize("wings_config", [{}, {"min_wait_ms": 400}])
@@ -212,7 +360,7 @@ def test_auto_worker_duplicate_start_restart_and_standby(monkeypatch):
         assert len(controllers) == 1
         project.auto_stop()
         assert not first_worker.is_alive()
-        assert servo.get_current_position() == 100
+        assert servo.get_current_position() == 80
         project.auto_stop()  # Repeated stop is also safe.
 
         updated.clear()

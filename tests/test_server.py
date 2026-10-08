@@ -382,7 +382,7 @@ def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
 
     actions = [action for action, _ in sent]
     assert actions == [
-        server_app.WEBSOCKET_MESSAGES["calibrate-move"],
+        server_app.WEBSOCKET_MESSAGES["calibrate-neutral"],
         server_app.WEBSOCKET_MESSAGES["calibrate-save"],
         server_app.WEBSOCKET_MESSAGES["calibrate-commit"],
     ]
@@ -435,7 +435,8 @@ def test_calibrate_servo_nudges_from_last_position_not_saved_limits(monkeypatch,
         for action, data in sent
         if action == server_app.WEBSOCKET_MESSAGES["calibrate-move"]
     ]
-    assert positions == [80, 85, 80, 75, 80, 85, 90]
+    assert sent[0] == (server_app.WEBSOCKET_MESSAGES["calibrate-neutral"], ({"servo_pin": 1},))
+    assert positions == [85, 80, 75, 80, 85, 90]
     assert sent[-1] == (
         server_app.WEBSOCKET_MESSAGES["calibrate-save"],
         ({"servo_pin": 1, "neutral": 85, "min": 75, "max": 90},),
@@ -459,7 +460,7 @@ def test_calibrate_servo_defaults_to_neutral_90_without_saved_rest(monkeypatch):
     asyncio.run(server_app._calibrate_servo(FakeWebSocket(), {"name": "head", "pin": 1}))
 
     assert sent == [
-        (server_app.WEBSOCKET_MESSAGES["calibrate-move"], ({"servo_pin": 1, "position": 90},)),
+        (server_app.WEBSOCKET_MESSAGES["calibrate-neutral"], ({"servo_pin": 1},)),
         (
             server_app.WEBSOCKET_MESSAGES["calibrate-save"],
             ({"servo_pin": 1, "neutral": 90, "min": 90, "max": 90},),

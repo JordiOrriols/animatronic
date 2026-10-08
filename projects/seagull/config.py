@@ -49,16 +49,20 @@ seagull_servos_data = _build_servos_data()
 # each servo's own calibrated physical limits (see servo_calibration.json).
 generative_settings = {
     "head-yaw": {
-        "min_duration_ms": 100,
+        "min_range_fraction": 1.0,
+        "max_range_fraction": 1.0,
+        "min_duration_ms": 200,
         "max_duration_ms": 1200,
         "min_wait_ms": 800,
         "max_wait_ms": 3000,
         "random_factor": 0.8,
-        "ease_in": 0.1,
-        "ease_out": 0.1,
+        "ease_in": 0.15,
+        "ease_out": 0.15,
         "return_to_rest": False,
     },
     "head-pitch": {
+        "min_range_fraction": 1.0,
+        "max_range_fraction": 1.0,
         "min_duration_ms": 300,
         "max_duration_ms": 900,
         "min_wait_ms": 600,
@@ -69,6 +73,8 @@ generative_settings = {
         "return_to_rest": False,
     },
     "wings": {
+        "min_range_fraction": 1.0,
+        "max_range_fraction": 1.0,
         "min_duration_ms": 200,
         "max_duration_ms": 600,
         "min_wait_ms": 400,
