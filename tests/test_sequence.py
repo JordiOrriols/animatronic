@@ -168,6 +168,14 @@ def test_schedule_timeout_and_overlap_are_explicit(config):
                       "end_ms": 1000}, 1, 500)
 
 
+async def wait_until(condition, timeout=5.0):
+    """Poll instead of sleeping a fixed time so slow CI runners do not flake."""
+    deadline = asyncio.get_running_loop().time() + timeout
+    while not condition():
+        assert asyncio.get_running_loop().time() < deadline, "condition not met in time"
+        await asyncio.sleep(0.01)
+
+
 def test_audio_waits_for_ack_plays_on_server_and_cancels(config, monkeypatch):
     played = []
 
@@ -190,20 +198,24 @@ def test_audio_waits_for_ack_plays_on_server_and_cancels(config, monkeypatch):
         audio.channel = Channel()
         monkeypatch.setitem(sys.modules, "pygame", types.SimpleNamespace(error=RuntimeError))
         audio.sounds = {"sound/seagull/a.mp3": "a", "sound/seagull/b.mp3": "b"}
-        monkeypatch.setattr(audio, "_load", lambda cfg: {key: 100 for key in audio.sounds})
+
+        def slow_load(cfg):
+            # Simulate a slow CI worker thread; the test must not rely on fixed sleeps.
+            threading.Event().wait(0.1)
+            return {key: 100 for key in audio.sounds}
+        monkeypatch.setattr(audio, "_load", slow_load)
         monkeypatch.setattr("common.sequence_audio.build_timeline", lambda *args: {
             "beats": [{"path": "sound/seagull/a.mp3", "audio_ms": 0, "movement_ms": 0}],
             "end_ms": 1000,
         })
         await audio.ready({"id": "one", "name": "mine"})
-        await asyncio.sleep(0.05)
+        await wait_until(lambda: sent)
         assert sent[0][0] == WEBSOCKET_MESSAGES["sequence-arm"]
         assert "a" not in played
         audio.acknowledge({"id": "stale"})
         assert not audio.armed.is_set()
         audio.acknowledge({"id": "one"})
-        await asyncio.sleep(1.05)
-        assert "a" in played
+        await wait_until(lambda: "a" in played)
         await audio.stop({"id": "stale"})
         assert audio.active_id == "one"
         await audio.stop()
