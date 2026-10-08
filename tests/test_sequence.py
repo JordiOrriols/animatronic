@@ -23,7 +23,21 @@ def test_sequence_return_annotation_supports_python_before_310():
 @pytest.fixture(name="config")
 def sequence_config():
     result = copy.deepcopy(generative_sequences["mine"])
-    result["servos"].pop("wings")
+    result["timing"] = {
+        "intro_pause_ms": 2000, "beat_interval_ms": 500,
+        "min_repeated_beats": 3, "max_repeated_beats": 6, "final_pause_ms": 500,
+    }
+    result["servos"] = {
+        "head-pitch": {
+            "mode": "hold", "position_1": {"reference": "max", "fraction": 1.0},
+            "position_2": {"reference": "neutral", "fraction": 0.0}, "transition_ms": 600,
+        },
+        "beak": {
+            "mode": "pulse", "position_1": {"reference": "neutral", "fraction": 0.0},
+            "position_2": {"reference": "max", "fraction": 0.8},
+            "transition_ms": 600, "out_ms": 100, "back_ms": 200,
+        },
+    }
     result["audio"]["files"] = [
         {"path": "sound/seagull/a.mp3", "animation_offset_ms": 100},
         {"path": "sound/seagull/b.mp3", "animation_offset_ms": -80},
@@ -70,6 +84,35 @@ def test_random_timeline_count_spacing_offsets_and_intro_pause(config, monkeypat
     assert beats[1]["audio_ms"] - (beats[0]["movement_ms"] + 300) >= 2000
     assert [b["audio_ms"] - a["audio_ms"] for a, b in zip(beats[1:], beats[2:])] == [500] * 4
     assert timeline["end_ms"] >= beats[-1]["movement_ms"] + 300
+
+
+def test_beat_intervals_are_random_within_configured_range(config):
+    config["timing"] = {"intro_pause_ms": 100, "min_beat_interval_ms": 350,
+                        "max_beat_interval_ms": 800, "min_repeated_beats": 6,
+                        "max_repeated_beats": 6, "final_pause_ms": 500}
+    config["audio"]["files"] = [{"path": "sound/seagull/a.mp3", "animation_offset_ms": 0}]
+    gaps = set()
+    for _ in range(20):
+        beats = build_timeline(config, {"sound/seagull/a.mp3": 900})["beats"]
+        rhythm = [b["audio_ms"] - a["audio_ms"] for a, b in zip(beats[1:-1], beats[2:-1])]
+        assert len(rhythm) == 5
+        assert all(350 <= gap <= 800 for gap in rhythm)
+        gaps.update(round(gap) for gap in rhythm)
+    assert len(gaps) > 1
+
+
+def test_beat_interval_range_is_validated(config):
+    config["timing"].pop("beat_interval_ms")
+    config["timing"].update(min_beat_interval_ms=800, max_beat_interval_ms=350)
+    with pytest.raises(ValueError, match="exceeds"):
+        validate_sequence(config)
+    config["timing"].update(max_beat_interval_ms=900, beat_interval_ms=500)
+    with pytest.raises(ValueError, match="not both"):
+        validate_sequence(config)
+    config["timing"].pop("beat_interval_ms")
+    config["timing"]["min_beat_interval_ms"] = 250
+    with pytest.raises(ValueError, match="overlap"):
+        validate_sequence(config)
 
 
 def test_sequence_holds_head_pulses_beak_preserves_yaw_and_restores(config):

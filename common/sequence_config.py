@@ -29,6 +29,34 @@ def _position(value, name: str) -> dict:
     return {"reference": value["reference"], "fraction": fraction}
 
 
+def _timing(value) -> dict:
+    timing = _object(value, "timing")
+    times = {}
+    for key, default in (
+        ("intro_pause_ms", 2000), ("final_pause_ms", 500),
+        ("min_repeated_beats", 3), ("max_repeated_beats", 6),
+    ):
+        times[key] = number(timing.get(key, default), key)
+    has_range = "min_beat_interval_ms" in timing or "max_beat_interval_ms" in timing
+    if has_range and "beat_interval_ms" in timing:
+        raise ValueError("Use beat_interval_ms or min/max_beat_interval_ms, not both")
+    # A fixed beat_interval_ms is shorthand for an equal min/max range.
+    fixed = timing.get("beat_interval_ms", 500)
+    for key in ("min_beat_interval_ms", "max_beat_interval_ms"):
+        times[key] = number(timing.get(key, fixed) if has_range else fixed, key)
+    for key in ("min_repeated_beats", "max_repeated_beats"):
+        if not times[key].is_integer() or not 1 <= times[key] <= 100:
+            raise ValueError(f"{key} must be an integer from 1 to 100")
+        times[key] = int(times[key])
+    if times["min_repeated_beats"] > times["max_repeated_beats"]:
+        raise ValueError("min_repeated_beats exceeds max_repeated_beats")
+    if times["min_beat_interval_ms"] <= 0:
+        raise ValueError("min_beat_interval_ms must be positive")
+    if times["min_beat_interval_ms"] > times["max_beat_interval_ms"]:
+        raise ValueError("min_beat_interval_ms exceeds max_beat_interval_ms")
+    return times
+
+
 def validate_sequence(config: dict) -> dict:
     """Normalize a sequence, failing before movement on invalid settings."""
     config = _object(config, "sequence")
@@ -50,21 +78,7 @@ def validate_sequence(config: dict) -> dict:
     random_per_beat = audio.get("random_per_beat", True)
     if not isinstance(random_per_beat, bool):
         raise ValueError("audio.random_per_beat must be a boolean")
-    timing = _object(config.get("timing", {}), "timing")
-    times = {}
-    for key, default in (
-        ("intro_pause_ms", 2000), ("beat_interval_ms", 500),
-        ("final_pause_ms", 500), ("min_repeated_beats", 3), ("max_repeated_beats", 6),
-    ):
-        times[key] = number(timing.get(key, default), key)
-    for key in ("min_repeated_beats", "max_repeated_beats"):
-        if not times[key].is_integer() or not 1 <= times[key] <= 100:
-            raise ValueError(f"{key} must be an integer from 1 to 100")
-        times[key] = int(times[key])
-    if times["min_repeated_beats"] > times["max_repeated_beats"]:
-        raise ValueError("min_repeated_beats exceeds max_repeated_beats")
-    if times["beat_interval_ms"] <= 0:
-        raise ValueError("beat_interval_ms must be positive")
+    times = _timing(config.get("timing", {}))
     servo_configs = _object(config.get("servos"), "servos")
     if not servo_configs:
         raise ValueError("servos must contain at least one servo")
@@ -95,7 +109,7 @@ def validate_sequence(config: dict) -> dict:
         default=0,
     )
     # Independent random variants may shorten the gap between movement starts.
-    minimum_gap = min(times["beat_interval_ms"], times["final_pause_ms"])
+    minimum_gap = min(times["min_beat_interval_ms"], times["final_pause_ms"])
     if pulse_ms and pulse_ms + max(offsets) - min(offsets) > minimum_gap:
         raise ValueError("Audio offsets and pulse durations would overlap consecutive beats")
     minimum_wait = number(config.get("min_wait_ms", 15000), "min_wait_ms")
@@ -135,7 +149,11 @@ def build_timeline(config: dict, lengths_ms: dict[str, float]) -> dict:
         first_end + timing["intro_pause_ms"],
         origin + pulse_ms + first["animation_offset_ms"] - selected[1]["animation_offset_ms"],
     )
-    starts = [origin] + [start + i * timing["beat_interval_ms"] for i in range(repeats)]
+    starts = [origin, start]
+    for _ in range(repeats - 1):
+        starts.append(starts[-1] + random.uniform(
+            timing["min_beat_interval_ms"], timing["max_beat_interval_ms"]
+        ))
     starts.append(starts[-1] + timing["final_pause_ms"])
     beats = [
         {"path": clip["path"], "audio_ms": audio_start,

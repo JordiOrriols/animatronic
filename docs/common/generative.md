@@ -33,7 +33,9 @@ Each event has:
   `sound/` directory. Positive offsets start movement **after** audio; negative
   offsets start movement **before** audio. Zero starts them together.
 - `audio.random_per_beat`: choose a new clip for each vocal beat (default `True`).
-- `timing`: `intro_pause_ms` (2000), `beat_interval_ms` (500),
+- `timing`: `intro_pause_ms` (2000), `min_beat_interval_ms` /
+  `max_beat_interval_ms` (each gap between rhythmic beats is picked randomly in
+  this range; a fixed `beat_interval_ms`, default 500, may be used instead),
   `min_repeated_beats` (3), `max_repeated_beats` (6), `final_pause_ms` (500).
   One intro, 3–6 rhythmic beats, and one final beat gives 5–8 vocal beats.
   The intro pause starts after both its sound and movement finish.
@@ -46,8 +48,11 @@ Each event has:
 For `mode: "hold"`, the servo eases to `position_1`, holds through the
 sequence, then eases to `position_2`. For `mode: "pulse"`, it prepares at
 `position_1`, moves to `position_2` over `out_ms`, and back over `back_ms` per
-beat, then restores its pre-event position. The example holds head-pitch at
-Max, pulses beak and wings, and leaves head-yaw at its existing position.
+beat, then restores its pre-event position. The seagull example pulses
+head-pitch between 50% and 90% of Max, the beak between 20% and 80% of Max,
+and the wings between 50% and 90% toward Min (their neutral is Max), leaving
+head-yaw at its existing position. A pulse needs enough `out_ms` for the servo
+to physically reach `position_2`; very short pulses barely move it.
 
 All ordinary generative controllers pause during preparation, playback, and
 restoration. Unlisted servos do not receive event commands. Normal movement
@@ -56,7 +61,7 @@ With multiple enabled events, only one runs at a time and all waits restart
 after it finishes.
 
 Pulse durations plus the spread of clip offsets must fit within the shortest
-beat/final interval. Audio clips may exceed that interval (500 ms by default):
+beat/final interval. Audio clips may exceed that interval:
 each beat gets a free audio channel so clips overlap and play fully without
 being cut off. The sequence waits for all clips and pulses to finish before
 restoration. Cancellation stops every channel owned by the connection.

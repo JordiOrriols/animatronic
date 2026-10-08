@@ -43,7 +43,9 @@ def test_seagull_reports_enabled_mine_sequence(monkeypatch):
     project = Project(init_servos=False)
     settings = project.get_sequence_settings()
     assert "mine" in settings
-    assert settings["mine"]["timing"]["beat_interval_ms"] == 500
+    assert settings["mine"]["timing"]["min_beat_interval_ms"] == 350
+    assert settings["mine"]["timing"]["max_beat_interval_ms"] == 800
+    assert all(servo["mode"] == "pulse" for servo in settings["mine"]["servos"].values())
     assert settings["mine"]["min_wait_ms"] == 15000
     assert settings["mine"]["max_wait_ms"] == 45000
     assert all(os.path.isfile(clip["path"]) for clip in settings["mine"]["audio"]["files"])
@@ -61,8 +63,12 @@ def test_auto_sequence_pauses_all_controllers_then_resumes_or_cancels(monkeypatc
     config["enabled"] = True
     config["servos"].pop("wings")
     config["restore_ms"] = 10
-    config["timing"].update(intro_pause_ms=20, beat_interval_ms=50, final_pause_ms=50,
+    config["timing"].update(intro_pause_ms=20, min_beat_interval_ms=50,
+                            max_beat_interval_ms=50, final_pause_ms=50,
                             min_repeated_beats=3, max_repeated_beats=3)
+    config["servos"]["head-pitch"].update(
+        mode="hold", position_2={"reference": "neutral", "fraction": 0.0}
+    )
     for settings in config["servos"].values():
         settings.update(transition_ms=0, out_ms=10, back_ms=10)
     controllers = []
