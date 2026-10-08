@@ -61,8 +61,8 @@ generative_settings = {
         "return_to_rest": False,
     },
     "head-pitch": {
-        "min_range_fraction": 1.0,
-        "max_range_fraction": 1.0,
+        "min_range_fraction": 0.2,
+        "max_range_fraction": 0.2,
         "min_duration_ms": 300,
         "max_duration_ms": 900,
         "min_wait_ms": 600,
