@@ -292,33 +292,50 @@ class Project(Logger):
         try:
             while not self.__auto_stop_event.is_set():
                 now = time.monotonic()
-                while not self.__sequence_commands.empty():
-                    action, data, received = self.__sequence_commands.get_nowait()
-                    if active is None or data.get("id") != sequence_id:
-                        self.warning("Ignoring stale sequence command:", data.get("id"))
-                        continue
-                    if action == WEBSOCKET_MESSAGES["sequence-cancel"]:
-                        raise RuntimeError(f"Server cancelled sequence: {data.get('reason')}")
-                    if action == WEBSOCKET_MESSAGES["sequence-arm"]:
-                        active.arm(data.get("timeline"), received, data.get("lead_ms"))
-                        self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"],
-                                             {"id": sequence_id})
-                if active is None:
-                    ready = [name for name, deadline in due.items() if now >= deadline]
-                    if ready:
-                        sequence_name = min(ready, key=lambda name: due[name])
-                        self.info("Starting generative sequence:", sequence_name)
-                        sequence_id = str(uuid.uuid4())
-                        active = ServoSequence(sequences[sequence_name], self.__servos_data, now)
-                if active is not None:
-                    result = active.update(now)
+                try:
+                    while not self.__sequence_commands.empty():
+                        action, data, received = self.__sequence_commands.get_nowait()
+                        if active is None or active.aborted or data.get("id") != sequence_id:
+                            self.warning("Ignoring stale sequence command:", data.get("id"))
+                            continue
+                        if action == WEBSOCKET_MESSAGES["sequence-cancel"]:
+                            self.warning("Server cancelled sequence:", data.get("reason"))
+                            active.abort(now)
+                            continue
+                        if action == WEBSOCKET_MESSAGES["sequence-arm"]:
+                            active.arm(data.get("timeline"), received, data.get("lead_ms"))
+                            self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"],
+                                                 {"id": sequence_id})
+                    if active is None:
+                        ready = [name for name, deadline in due.items() if now >= deadline]
+                        if ready:
+                            sequence_name = min(ready, key=lambda name: due[name])
+                            self.info("Starting generative sequence:", sequence_name)
+                            sequence_id = str(uuid.uuid4())
+                            active = ServoSequence(
+                                sequences[sequence_name], self.__servos_data, now
+                            )
+                    result = active.update(now) if active is not None else None
                     if result == "ready":
                         self.__send_sequence(WEBSOCKET_MESSAGES["sequence-ready"],
                                              {"id": sequence_id, "name": sequence_name})
-                    elif result == "complete":
-                        self.info("Generative sequence complete:", sequence_name)
-                        self.__send_sequence(WEBSOCKET_MESSAGES["sequence-complete"],
-                                             {"id": sequence_id})
+                except (ValueError, RuntimeError, TimeoutError) as error:
+                    if active is None or active.aborted:
+                        raise
+                    # A failed event must not end Auto: restore, then resume normal movement.
+                    self.warning("Generative sequence failed; resuming Auto:", error)
+                    self.__cancel_sequence(sequence_id, str(error))
+                    active.abort(now)
+                    result = None
+                if active is not None:
+                    if result == "complete":
+                        if active.aborted:
+                            self.info("Generative sequence aborted; resuming Auto:",
+                                      sequence_name)
+                        else:
+                            self.info("Generative sequence complete:", sequence_name)
+                            self.__send_sequence(WEBSOCKET_MESSAGES["sequence-complete"],
+                                                 {"id": sequence_id})
                         active = None
                         sequence_id = None
                         due = {
@@ -342,13 +359,18 @@ class Project(Logger):
         finally:
             self.__finish_auto(sequence_id)
 
-    def __finish_auto(self, sequence_id):
+    def __cancel_sequence(self, sequence_id, reason: str):
+        """Best-effort notice so the server silences audio for this event."""
         try:
             if sequence_id is not None and self.sequence_sender is not None:
                 self.__send_sequence(WEBSOCKET_MESSAGES["sequence-cancel"],
-                                     {"id": sequence_id, "reason": "Auto stopped"})
+                                     {"id": sequence_id, "reason": reason})
         except (OSError, RuntimeError, ConnectionClosed) as error:
             self.error("Could not notify server of sequence cancellation:", error)
+
+    def __finish_auto(self, sequence_id):
+        try:
+            self.__cancel_sequence(sequence_id, "Auto stopped")
         finally:
             try:
                 self.__return_to_rest()

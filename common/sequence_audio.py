@@ -2,11 +2,17 @@
 
 import asyncio
 import importlib
+import threading
 from pathlib import Path
 
 from common.config import WEBSOCKET_MESSAGES
 from common.logger import Logger
 from common.sequence_config import build_timeline, validate_sequence
+
+# Time the Pi gets between receiving the schedule and the first beat.
+LEAD_MS = 1000
+LOAD_TIMEOUT_S = 15
+_LOAD_LOCK = threading.Lock()
 
 
 class SequenceAudio(Logger):
@@ -64,11 +70,17 @@ class SequenceAudio(Logger):
                 channel.stop()
 
     def _load(self, config):
+        with _LOAD_LOCK:
+            return self._load_locked(config)
+
+    def _load_locked(self, config):
         pygame = importlib.import_module("pygame")
 
         try:
             if not pygame.mixer.get_init():
+                self.info("Opening audio mixer...")
                 pygame.mixer.init()
+                self.info("Audio mixer opened:", pygame.mixer.get_init())
             if self.channel is None:
                 self.channel_index, self.channel = self._allocate_channel(pygame.mixer)
             root = Path("sound").resolve()
@@ -85,11 +97,28 @@ class SequenceAudio(Logger):
     async def ready(self, data: dict):
         """Prepare the audio and send a complete schedule only after Pi preparation."""
         if self.active_id is not None:
-            raise ValueError("A sequence is already active on this connection")
+            self.warning("Replacing unfinished sequence:", self.active_id)
+            await self.stop()
         self.active_id = data["id"]
         self.info("Preparing sequence audio:", data.get("name"), data["id"])
         self.armed.clear()
         self.task = asyncio.create_task(self._run(data))
+
+    async def preload(self):
+        """Open the mixer and decode clips at connect time so problems show early."""
+        for name, config in self.settings.items():
+            try:
+                lengths = await self._load_async(config)
+                self.info(f"Sequence audio '{name}' ready:", len(lengths), "clips")
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                self.error(f"Sequence audio '{name}' cannot be loaded:",
+                           f"{type(error).__name__}: {error}")
+
+    async def _load_async(self, config):
+        # pygame.mixer.init() and MP3 decoding block; keep the websocket loop responsive.
+        return await asyncio.wait_for(
+            asyncio.to_thread(self._load, config), timeout=LOAD_TIMEOUT_S
+        )
 
     async def handle(self, action: str, data: list):
         """Route sequence protocol messages for this connection."""
@@ -111,12 +140,11 @@ class SequenceAudio(Logger):
     async def _run(self, data: dict):
         try:
             config = self.settings[data["name"]]
-            lengths = self._load(config)
-            channel = self.channel
-            if channel is None:
+            lengths = await self._load_async(config)
+            if self.channel is None:
                 raise RuntimeError("Sequence audio channel was not initialized")
             timeline = build_timeline(config, lengths)
-            lead_ms = 500
+            lead_ms = LEAD_MS
             loop = asyncio.get_running_loop()
             sent_at = loop.time()
             await self.send(WEBSOCKET_MESSAGES["sequence-arm"], {
@@ -125,20 +153,28 @@ class SequenceAudio(Logger):
             await asyncio.wait_for(self.armed.wait(), timeout=lead_ms / 1000)
             # Estimate one-way latency without comparing clocks across machines.
             origin = sent_at + lead_ms / 1000 + (loop.time() - sent_at) / 2
-            for beat in timeline["beats"]:
+            beats = timeline["beats"]
+            self.info(f"Sequence armed; playing {len(beats)} beats")
+            for number_, beat in enumerate(beats, start=1):
                 deadline = origin + beat["audio_ms"] / 1000
-                delay = deadline - asyncio.get_running_loop().time()
+                delay = deadline - loop.time()
                 if delay < -0.1:
                     raise RuntimeError("Sequence audio deadline missed; cancelling playback")
                 await asyncio.sleep(max(0, delay))
                 self._play(self.sounds[beat["path"]])
-            await asyncio.sleep(max(
-                0, origin + timeline["end_ms"] / 1000 - asyncio.get_running_loop().time()
-            ))
-        except (OSError, ValueError, RuntimeError, KeyError, ImportError, TimeoutError) as error:
-            self.error("Sequence playback failed:", error)
-            await self.send(WEBSOCKET_MESSAGES["sequence-cancel"],
-                            {"id": data["id"], "reason": str(error)})
+                self.info(f"Beat {number_}/{len(beats)}:", beat["path"])
+            await asyncio.sleep(max(0, origin + timeline["end_ms"] / 1000 - loop.time()))
+        except asyncio.CancelledError:
+            raise
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            # Never fail silently: the Pi is waiting and must be told to resume Auto.
+            reason = f"{type(error).__name__}: {error}" if str(error) else type(error).__name__
+            self.error("Sequence playback failed:", reason)
+            try:
+                await self.send(WEBSOCKET_MESSAGES["sequence-cancel"],
+                                {"id": data["id"], "reason": reason})
+            except Exception as send_error:  # pylint: disable=broad-exception-caught
+                self.error("Could not send sequence cancellation:", send_error)
         finally:
             self._silence()
 
@@ -160,6 +196,8 @@ class SequenceAudio(Logger):
                 await self.task
             except asyncio.CancelledError:
                 pass
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                self.error("Sequence audio task failed:", error)
             self.task = None
         self._silence()
         self.active_id = None

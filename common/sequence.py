@@ -40,6 +40,16 @@ class ServoSequence:
         self.started = now
         self.timeline: Optional[dict] = None
         self.restore_from: dict = {}
+        self.aborted = False
+
+    def abort(self, now: float) -> None:
+        """Ease the selected servos back from wherever they are after a failure."""
+        self.aborted = True
+        self.restore_from = {
+            name: servo.get_current_position() for name, servo in self.servos.items()
+        }
+        self.phase = "restoring"
+        self.started = now
 
     def arm(self, timeline: dict, now: float, lead_ms: float) -> None:
         """Accept relative timing only after preparation has completed."""

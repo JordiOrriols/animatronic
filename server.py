@@ -172,6 +172,7 @@ async def handler(websocket):
     servos = []
     discovery = None
     menu_task = None
+    preload_task = None
     async def sequence_send(action, data):
         await send_message(websocket, action, data)
     audio = SequenceAudio(sequence_send)
@@ -197,6 +198,7 @@ async def handler(websocket):
                         data[0].get("capabilities", {}), data[0].get("servos", [])
                     )
                     audio.configure(data[0].get("generative_sequences", {}))
+                    preload_task = asyncio.create_task(audio.preload())
                     client_version = data[0].get("version")
                     if client_version:
                         logger.success(f"Client connected - running version {client_version}")
@@ -216,6 +218,8 @@ async def handler(websocket):
     except ConnectionClosed:
         logger.warning("Client disconnected")
     finally:
+        if preload_task is not None and not preload_task.done():
+            preload_task.cancel()
         try:
             await audio.close()
         finally:
