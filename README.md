@@ -210,8 +210,10 @@ Calibration eases to the servo's saved neutral/rest position (90° if none is av
 Per-servo `generative_settings` support `min_range_fraction` and `max_range_fraction`: numbers from 0 to 1 describing permitted travel from calibrated neutral toward each endpoint. Both default to `1.0` (100%). For example, `0.5` permits half the travel on that side; `0.0` permits none. Only listed servos move in Auto mode.
 
 `generative_sequences` adds coordinated audio-backed events that pause ordinary
-Auto movements. The seagull `mine` example is disabled until you supply MP3 files
-on the server, set `"enabled": True` in the Pi config, and reconnect. Audio stays
+Auto movements. The seagull `mine` sequence is enabled and uses the three MP3s in
+`sound/seagull/` on the server. Its first event starts after 15–45 seconds in Auto;
+clips overlap at 500 ms beat intervals without being cut off. Update/restart both
+server and client. Auto no longer plays the shared skeleton background track. Audio stays
 on the server using `pygame`; each clip has a signed `animation_offset_ms` for
 alignment. See [sequence configuration and timing](docs/common/generative.md#audio-backed-generative-sequences)
 for hold/pulse servo settings, beat timing, cancellation, and clip limits.

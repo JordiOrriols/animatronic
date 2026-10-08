@@ -16,10 +16,13 @@ Sequence annotations support Python 3.9; Python 3.10 is not required.
 
 `generative_sequences` in the Pi project configuration adds occasional coordinated
 events alongside `generative_settings`. The `mine` example in
-[the seagull configuration](../../projects/seagull/config.py) is **disabled**
-until you provide real audio files. Copy your MP3s to `sound/seagull/` on the
-**server**, install the server's `pygame` dependency, adjust the paths, then set
-`"enabled": True` and restart/reconnect the client. No audio is played on the Pi.
+[the seagull configuration](../../projects/seagull/config.py) is **enabled** and
+uses the three MP3s in `sound/seagull/` on the **server**. Install the server's
+`pygame` dependency and restart both server and client after updating.
+The first event starts after a random 15–45 second wait in Auto mode, then repeats
+after another random wait from completion. No audio is played on the Pi.
+Auto does not play the shared skeleton background track; only configured
+sequence audio is played. Set `"enabled": False` to disable this event.
 
 Each event has:
 
@@ -53,9 +56,10 @@ With multiple enabled events, only one runs at a time and all waits restart
 after it finishes.
 
 Pulse durations plus the spread of clip offsets must fit within the shortest
-beat/final interval. Audio clips must also fit that interval (500 ms by default);
-longer files raise an explicit error instead of being cut off. Trim clips or
-increase the interval if needed.
+beat/final interval. Audio clips may exceed that interval (500 ms by default):
+each beat gets a free audio channel so clips overlap and play fully without
+being cut off. The sequence waits for all clips and pulses to finish before
+restoration. Cancellation stops every channel owned by the connection.
 
 The Pi prepares the servos before requesting a schedule. The server preselects
 clips and sends a relative timeline with a 500 ms lead, and waits for the Pi's

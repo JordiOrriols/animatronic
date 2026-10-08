@@ -23,10 +23,30 @@ sys.modules.setdefault("board", types.ModuleType("board"))
 
 import common.generative as generative_module
 import common.project as project_module
+import projects.seagull.config as seagull_config
 from common.project import Project
 from common.config import WEBSOCKET_MESSAGES
 from common.sequence_config import build_timeline
 from projects.seagull.config import generative_sequences
+
+
+@pytest.fixture(autouse=True)
+def isolate_optional_sequences(monkeypatch):
+    """Ordinary movement tests opt into sequences only when testing them."""
+    monkeypatch.setattr(seagull_config, "generative_sequences", {})
+
+
+def test_seagull_reports_enabled_mine_sequence(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    monkeypatch.setattr(seagull_config, "generative_sequences", generative_sequences)
+    project = Project(init_servos=False)
+    settings = project.get_sequence_settings()
+    assert "mine" in settings
+    assert settings["mine"]["timing"]["beat_interval_ms"] == 500
+    assert settings["mine"]["min_wait_ms"] == 15000
+    assert settings["mine"]["max_wait_ms"] == 45000
+    assert all(os.path.isfile(clip["path"]) for clip in settings["mine"]["audio"]["files"])
 
 
 @pytest.mark.parametrize("cancel", [False, True])

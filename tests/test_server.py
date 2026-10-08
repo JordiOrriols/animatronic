@@ -109,6 +109,33 @@ def test_show_options_sends_play_action(monkeypatch):
     assert sent[0][0] == server_app.WEBSOCKET_MESSAGES["play"]
 
 
+def test_auto_does_not_play_shared_skeleton_background(monkeypatch):
+    sent = []
+
+    class AutoMenu(FakeTerminalMenu):
+        def show(self):
+            return 0
+
+    async def send(socket, action, *data):
+        sent.append(action)
+
+    async def stop_prompt():
+        return None
+
+    def unexpected_sound(*args):
+        pytest.fail("Auto must not play hard-coded background audio")
+
+    monkeypatch.setattr(server_app, "TerminalMenu", AutoMenu)
+    monkeypatch.setattr(server_app, "send_message", send)
+    monkeypatch.setattr(server_app, "wait_for_auto_stop", stop_prompt)
+    monkeypatch.setattr(server_app, "playsound", unexpected_sound)
+    asyncio.run(server_app.show_options(
+        FakeWebSocket(), {"animation": False, "generative": True}
+    ))
+    assert sent == [server_app.WEBSOCKET_MESSAGES["auto-start"],
+                    server_app.WEBSOCKET_MESSAGES["auto-stop"]]
+
+
 def test_handler_disables_auto_discovery_on_connect(monkeypatch):
     class FakeDiscovery:
         def disable(self):

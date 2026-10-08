@@ -128,6 +128,9 @@ def test_audio_waits_for_ack_plays_on_server_and_cancels(config, monkeypatch):
     played = []
 
     class Channel:
+        def get_busy(self):
+            return False
+
         def play(self, sound):
             played.append(sound)
 
@@ -141,6 +144,7 @@ def test_audio_waits_for_ack_plays_on_server_and_cancels(config, monkeypatch):
         audio = SequenceAudio(send)
         audio.configure({"mine": config})
         audio.channel = Channel()
+        monkeypatch.setitem(sys.modules, "pygame", types.SimpleNamespace(error=RuntimeError))
         audio.sounds = {"sound/seagull/a.mp3": "a", "sound/seagull/b.mp3": "b"}
         monkeypatch.setattr(audio, "_load", lambda cfg: {key: 100 for key in audio.sounds})
         monkeypatch.setattr("common.sequence_audio.build_timeline", lambda *args: {
@@ -183,9 +187,12 @@ def test_audio_failure_sends_cancel_not_success(config, monkeypatch):
     asyncio.run(exercise())
 
 
-def test_audio_clips_cannot_be_truncated_by_next_beat(config):
-    with pytest.raises(ValueError, match="shorter clip"):
-        build_timeline(config, {clip["path"]: 600 for clip in config["audio"]["files"]})
+def test_long_audio_clips_overlap_without_changing_beat_spacing(config):
+    timeline = build_timeline(config, {clip["path"]: 984 for clip in config["audio"]["files"]})
+    beats = timeline["beats"]
+    assert all(b["audio_ms"] - a["audio_ms"] == 500
+               for a, b in zip(beats[1:], beats[2:]))
+    assert timeline["end_ms"] >= beats[-1]["audio_ms"] + 984
 
 
 def test_server_audio_loads_clips_and_allocates_isolated_channels(config, monkeypatch, tmp_path):
@@ -198,11 +205,21 @@ def test_server_audio_loads_clips_and_allocates_isolated_channels(config, monkey
     count = [1]
 
     class Channel:
+        def __init__(self):
+            self.busy = False
+            self.played = []
+            self.stops = 0
+
         def get_busy(self):
-            return False
+            return self.busy
+
+        def play(self, sound):
+            self.busy = True
+            self.played.append(sound)
 
         def stop(self):
-            return None
+            self.busy = False
+            self.stops += 1
 
     class Sound:
         def __init__(self, path):
@@ -239,6 +256,21 @@ def test_server_audio_loads_clips_and_allocates_isolated_channels(config, monkey
         assert set(lengths.values()) == {250}
         assert first.channel is not second.channel
         assert first.channel_index != second.channel_index
+        sound = first.sounds[config["audio"]["files"][0]["path"]]
+        first._play(sound)
+        first._play(sound)
+        assert first.channel.stops == 0
+        assert len(first.extra_channels) == 1
+        overlapping = next(iter(first.extra_channels.values()))
+        assert overlapping.get_busy()
+        assert second.channel.played == []
+        first.channel.busy = False
+        first._play(sound)
+        assert len(first.extra_channels) == 1
+        assert len(first.channel.played) == 2
+        asyncio.run(first.stop())
+        assert not overlapping.get_busy()
+        assert not first.channel.get_busy()
         missing = copy.deepcopy(config)
         missing["audio"]["files"][0]["path"] = "sound/seagull/missing.mp3"
         with pytest.raises(ValueError, match="missing"):
