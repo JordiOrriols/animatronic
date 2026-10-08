@@ -43,18 +43,19 @@ seagull_servos_data = _build_servos_data()
 
 # Per-servo generative configuration (all values in ms or degrees where noted)
 # This file uses only per-servo settings as requested.
+# Unlisted servos (such as the beak) stay at their calibrated rest position in Auto mode.
 #
 # min_angle/max_angle are intentionally omitted - GenerativeMovement falls back to
 # each servo's own calibrated physical limits (see servo_calibration.json).
 generative_settings = {
     "head-yaw": {
-        "min_duration_ms": 300,
+        "min_duration_ms": 100,
         "max_duration_ms": 1200,
         "min_wait_ms": 800,
-        "max_wait_ms": 2500,
+        "max_wait_ms": 3000,
         "random_factor": 0.8,
-        "ease_in": 0.2,
-        "ease_out": 0.2,
+        "ease_in": 0.1,
+        "ease_out": 0.1,
         "return_to_rest": False,
     },
     "head-pitch": {

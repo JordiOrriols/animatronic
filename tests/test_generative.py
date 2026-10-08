@@ -114,9 +114,14 @@ def test_generative_movement_uses_default_bounds_when_no_config(monkeypatch):
     assert servo.get_current_position() == 90
 
 
-def test_project_auto_start_uses_generative_controllers(monkeypatch):
-    monkeypatch.setenv("PROJECT_ID", "skeleton")
+@pytest.mark.parametrize("wings_config", [{}, {"min_wait_ms": 400}])
+def test_project_auto_start_only_moves_configured_servos(monkeypatch, wings_config):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
     monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    wings = MockServo(name="wings")
+    beak = MockServo(name="beak", rest=75, current=120)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [wings, beak])
+    controllers = []
 
     class FakeKit:
         def __init__(self, channels=16):
@@ -127,23 +132,52 @@ def test_project_auto_start_uses_generative_controllers(monkeypatch):
             self.servo = servo
             self.config = config
             self.calls = 0
+            controllers.append(self)
 
         def update(self):
             self.calls += 1
+            self.servo.move_to_angle(100)
 
     monkeypatch.setattr(project_module, "ServoKit", FakeKit)
     monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
     monkeypatch.setattr(project_module, "GenerativeMovement", FakeController)
 
-    def stop_after_first_sleep(*args, **kwargs):
-        project._Project__automatic_mode = False
+    def stop_after_three_updates(*args, **kwargs):
+        assert beak.get_current_position() == 75
+        if controllers[0].calls == 3:
+            project.auto_stop()
 
-    monkeypatch.setattr(project_module.time, "sleep", stop_after_first_sleep)
+    monkeypatch.setattr(project_module.time, "sleep", stop_after_three_updates)
 
     project = Project(init_servos=False)
+    project._generative_settings = {"wings": wings_config}
     project.auto_start()
 
-    assert len(project.get_servos_data()) > 0
+    assert len(controllers) == 1
+    assert controllers[0].servo is wings
+    assert controllers[0].config == wings_config
+    assert controllers[0].calls == 3
+    assert wings.history == [100, 100, 100]
+    assert beak.get_current_position() == 75
+
+
+def test_project_auto_start_without_settings_keeps_all_servos_at_rest(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "skeleton")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
+    servo = MockServo(rest=80, current=120)
+    monkeypatch.setitem(project_module.servos_data_object, "skeleton", [servo])
+
+    def fail_controller(*args, **kwargs):
+        pytest.fail("Unconfigured servos must not receive generative controllers")
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", fail_controller)
+    project = Project(init_servos=False)
+    project._generative_settings = {}
+    monkeypatch.setattr(project_module.time, "sleep", lambda _: project.auto_stop())
+
+    project.auto_start()
+
+    assert servo.get_current_position() == 80
 
 
 def test_project_evaluate_play_calibrate_and_standby(monkeypatch):
@@ -368,4 +402,3 @@ def test_calibrate_commit_is_no_op_without_pending_changes(monkeypatch):
     project.calibrate_commit()
 
     assert calls == []
-

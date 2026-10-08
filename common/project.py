@@ -200,14 +200,17 @@ class Project(Logger):
             animation.end()
 
     def auto_start(self):
-        """Start automatic generative movements."""
+        """Move configured servos automatically and keep unlisted servos at rest."""
         if self.__validate_servos_data():
             self.__automatic_mode = True
 
             # Build per-servo controllers using per-servo generative settings
             animatronic_controllers = []
             for servo in self.__servos_data:
-                cfg = self._generative_settings.get(servo.get_name(), None)
+                if servo.get_name() not in self._generative_settings:
+                    servo.sleep()
+                    continue
+                cfg = self._generative_settings[servo.get_name()]
                 animatronic_controllers.append(GenerativeMovement(servo, cfg))
 
             # Main loop: call update on each controller and yield CPU briefly

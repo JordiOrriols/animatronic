@@ -6,6 +6,8 @@
 
 It keeps a simple state machine with a waiting phase and a moving phase. Each cycle chooses a target angle, applies easing, and optionally returns to the servo rest position.
 
+In project Auto mode, only servos explicitly listed in `generative_settings` on the client/Pi are enabled. Unlisted servos return to their calibrated neutral/rest position and stay there. An entry such as `"wings": {}` enables movement with default settings; remove the entry to disable that servo's automatic movement. Creating `GenerativeMovement(servo)` directly still uses defaults.
+
 ## Configuration keys
 
 The configuration dictionary may contain:
