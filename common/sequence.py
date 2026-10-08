@@ -1,5 +1,7 @@
 """Non-blocking, coordinated servo playback owned by the existing Auto worker."""
 
+from typing import Optional
+
 from common.servo import AniServo
 from common.sequence_config import number, validate_sequence
 
@@ -36,7 +38,7 @@ class ServoSequence:
         }
         self.phase = "preparing"
         self.started = now
-        self.timeline: dict | None = None
+        self.timeline: Optional[dict] = None
         self.restore_from: dict = {}
 
     def arm(self, timeline: dict, now: float, lead_ms: float) -> None:
@@ -74,7 +76,7 @@ class ServoSequence:
         eased = AniServo.apply_easing(progress, settings["ease_in"], settings["ease_out"])
         self.servos[name].move_to_angle(start + (target - start) * eased)
 
-    def update(self, now: float) -> str | None:
+    def update(self, now: float) -> Optional[str]:
         """Return ready/complete once, without sleeping or touching unlisted servos."""
         elapsed = (now - self.started) * 1000
         if self.phase == "preparing":

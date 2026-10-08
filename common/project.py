@@ -1,5 +1,7 @@
 """Project module to handle all different data for projects."""
 
+from __future__ import annotations
+
 import os
 import json
 import importlib
@@ -9,6 +11,7 @@ import random
 import queue
 import uuid
 from collections.abc import Callable
+from typing import Optional
 from dotenv import load_dotenv
 from adafruit_servokit import ServoKit
 from websockets.exceptions import ConnectionClosed
@@ -43,10 +46,10 @@ class Project(Logger):
 
         self.__project = os.getenv("PROJECT_ID")
         self.__animation_data = None
-        self.__auto_thread: threading.Thread | None = None
+        self.__auto_thread: Optional[threading.Thread] = None
         self.__auto_stop_event = threading.Event()
         self.__auto_lock = threading.Lock()
-        self.__auto_error: Exception | None = None
+        self.__auto_error: Optional[Exception] = None
         self.__xbox_mapper = None
         self.__pending_calibration: dict = {}
         self.sequence_sender: Callable[[str, dict], None] | None = None

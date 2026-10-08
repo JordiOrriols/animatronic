@@ -13,6 +13,12 @@ from common.sequence_audio import SequenceAudio
 from projects.seagull.config import generative_sequences
 
 
+def test_sequence_return_annotation_supports_python_before_310():
+    from typing import Optional
+
+    assert ServoSequence.update.__annotations__["return"] == Optional[str]
+
+
 @pytest.fixture(name="config")
 def sequence_config():
     result = copy.deepcopy(generative_sequences["mine"])

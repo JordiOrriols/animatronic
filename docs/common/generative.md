@@ -12,6 +12,8 @@ The project runs Auto updates in a background worker, leaving websocket receptio
 
 ## Audio-backed generative sequences
 
+Sequence annotations support Python 3.9; Python 3.10 is not required.
+
 `generative_sequences` in the Pi project configuration adds occasional coordinated
 events alongside `generative_settings`. The `mine` example in
 [the seagull configuration](../../projects/seagull/config.py) is **disabled**
