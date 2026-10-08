@@ -30,12 +30,15 @@ class SequenceAudio(Logger):
         self.extra_channels = {}
         self.active_id = None
         self.task = None
+        self.preload_task = None
         self.armed = asyncio.Event()
 
-    def configure(self, settings: dict):
-        """Validate settings reported by the Pi without opening an audio device yet."""
+    def configure(self, settings: dict, preload: bool = False):
+        """Validate settings reported by the Pi, optionally loading audio in the background."""
         self.settings = {name: validate_sequence(config) for name, config in settings.items()}
         self.info("Enabled audio sequences:", ", ".join(self.settings) or "none")
+        if preload and self.settings:
+            self.start_preload()
 
     @classmethod
     def _allocate_channel(cls, mixer):
@@ -104,6 +107,10 @@ class SequenceAudio(Logger):
         self.armed.clear()
         self.task = asyncio.create_task(self._run(data))
 
+    def start_preload(self):
+        """Load audio in the background without delaying the menu."""
+        self.preload_task = asyncio.create_task(self.preload())
+
     async def preload(self):
         """Open the mixer and decode clips at connect time so problems show early."""
         for name, config in self.settings.items():
@@ -164,8 +171,6 @@ class SequenceAudio(Logger):
                 self._play(self.sounds[beat["path"]])
                 self.info(f"Beat {number_}/{len(beats)}:", beat["path"])
             await asyncio.sleep(max(0, origin + timeline["end_ms"] / 1000 - loop.time()))
-        except asyncio.CancelledError:
-            raise
         except Exception as error:  # pylint: disable=broad-exception-caught
             # Never fail silently: the Pi is waiting and must be told to resume Auto.
             reason = f"{type(error).__name__}: {error}" if str(error) else type(error).__name__
@@ -175,6 +180,8 @@ class SequenceAudio(Logger):
                                 {"id": data["id"], "reason": reason})
             except Exception as send_error:  # pylint: disable=broad-exception-caught
                 self.error("Could not send sequence cancellation:", send_error)
+            if self.active_id == data["id"]:
+                self.active_id = None
         finally:
             self._silence()
 
@@ -204,6 +211,8 @@ class SequenceAudio(Logger):
 
     async def close(self):
         """Release this connection's channel even when pending playback failed."""
+        if self.preload_task is not None and not self.preload_task.done():
+            self.preload_task.cancel()
         try:
             await self.stop()
         finally:

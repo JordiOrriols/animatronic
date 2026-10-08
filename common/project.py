@@ -283,6 +283,18 @@ class Project(Logger):
             config["min_wait_ms"], config["max_wait_ms"]
         ) / 1000
 
+    def __apply_sequence_commands(self, active, sequence_id, now: float):
+        while not self.__sequence_commands.empty():
+            action, data, received = self.__sequence_commands.get_nowait()
+            if active is None or active.aborted or data.get("id") != sequence_id:
+                self.warning("Ignoring stale sequence command:", data.get("id"))
+            elif action == WEBSOCKET_MESSAGES["sequence-cancel"]:
+                self.warning("Server cancelled sequence:", data.get("reason"))
+                active.abort(now)
+            elif action == WEBSOCKET_MESSAGES["sequence-arm"]:
+                active.arm(data.get("timeline"), received, data.get("lead_ms"))
+                self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"], {"id": sequence_id})
+
     def __run_auto(self, controllers: list[GenerativeMovement], sequences=None):
         sequences = sequences or {}
         due = {name: self.__next_sequence_due(config) for name, config in sequences.items()}
@@ -293,19 +305,7 @@ class Project(Logger):
             while not self.__auto_stop_event.is_set():
                 now = time.monotonic()
                 try:
-                    while not self.__sequence_commands.empty():
-                        action, data, received = self.__sequence_commands.get_nowait()
-                        if active is None or active.aborted or data.get("id") != sequence_id:
-                            self.warning("Ignoring stale sequence command:", data.get("id"))
-                            continue
-                        if action == WEBSOCKET_MESSAGES["sequence-cancel"]:
-                            self.warning("Server cancelled sequence:", data.get("reason"))
-                            active.abort(now)
-                            continue
-                        if action == WEBSOCKET_MESSAGES["sequence-arm"]:
-                            active.arm(data.get("timeline"), received, data.get("lead_ms"))
-                            self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"],
-                                                 {"id": sequence_id})
+                    self.__apply_sequence_commands(active, sequence_id, now)
                     if active is None:
                         ready = [name for name, deadline in due.items() if now >= deadline]
                         if ready:

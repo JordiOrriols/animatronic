@@ -131,6 +131,68 @@ def test_auto_sequence_pauses_all_controllers_then_resumes_or_cancels(monkeypatc
                             {"id": ready_id, "reason": "Auto stopped"})
 
 
+@pytest.mark.parametrize("failure", ["server-cancel", "bad-schedule"])
+def test_failed_sequence_restores_and_auto_keeps_running(monkeypatch, failure):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    pitch = MockServo(name="head-pitch")
+    beak = MockServo(name="beak")
+    yaw = MockServo(name="head-yaw", current=65)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [pitch, beak, yaw])
+    config = copy.deepcopy(generative_sequences["mine"])
+    config["servos"].pop("wings")
+    config["restore_ms"] = 10
+    for settings in config["servos"].values():
+        settings.update(transition_ms=0)
+    controllers = []
+    resumed = threading.Event()
+    sent = []
+
+    class Controller:
+        def __init__(self, servo, settings):
+            controllers.append(self)
+
+        def update(self):
+            if len(controllers) > 1:
+                resumed.set()
+
+    monkeypatch.setattr(project_module, "GenerativeMovement", Controller)
+    deadlines = iter([time.monotonic() + 0.03, time.monotonic() + 1000])
+    monkeypatch.setattr(Project, "_Project__next_sequence_due", staticmethod(
+        lambda cfg: next(deadlines)
+    ))
+    project = Project(init_servos=False)
+    project._generative_settings = {"head-yaw": {}}
+    project._sequence_settings = {"mine": config}
+
+    def send(action, data):
+        sent.append((action, data))
+        if action != WEBSOCKET_MESSAGES["sequence-ready"]:
+            return
+        if failure == "server-cancel":
+            project.sequence_command(WEBSOCKET_MESSAGES["sequence-cancel"],
+                                     {"id": data["id"], "reason": "TimeoutError"})
+        else:
+            project.sequence_command(WEBSOCKET_MESSAGES["sequence-arm"],
+                                     {"id": data["id"], "timeline": {}, "lead_ms": 100})
+
+    project.sequence_sender = send
+    try:
+        project.auto_start()
+        assert resumed.wait(2)
+        assert project._Project__auto_thread.is_alive()
+        assert pitch.get_current_position() == 90
+        assert beak.get_current_position() == 90
+    finally:
+        project.auto_stop()
+    actions = [action for action, _ in sent]
+    assert WEBSOCKET_MESSAGES["sequence-complete"] not in actions
+    if failure == "bad-schedule":
+        assert actions[-1] == WEBSOCKET_MESSAGES["sequence-cancel"]
+    else:
+        assert WEBSOCKET_MESSAGES["sequence-cancel"] not in actions
+
+
 class MockServo:
     def __init__(self, name="servo", rest=90, current=90, min_limit=20, max_limit=160, pin=0):
         self._name = name

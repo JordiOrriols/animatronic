@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import sys
+import threading
 import types
 
 import pytest
@@ -152,13 +153,13 @@ def test_audio_waits_for_ack_plays_on_server_and_cancels(config, monkeypatch):
             "end_ms": 1000,
         })
         await audio.ready({"id": "one", "name": "mine"})
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.05)
         assert sent[0][0] == WEBSOCKET_MESSAGES["sequence-arm"]
         assert "a" not in played
         audio.acknowledge({"id": "stale"})
         assert not audio.armed.is_set()
         audio.acknowledge({"id": "one"})
-        await asyncio.sleep(0.55)
+        await asyncio.sleep(1.05)
         assert "a" in played
         await audio.stop({"id": "stale"})
         assert audio.active_id == "one"
@@ -182,7 +183,34 @@ def test_audio_failure_sends_cancel_not_success(config, monkeypatch):
         assert audio.task is not None
         await audio.task
         assert sent == [(WEBSOCKET_MESSAGES["sequence-cancel"],
-                         {"id": "one", "reason": "Missing audio file"})]
+                         {"id": "one", "reason": "ValueError: Missing audio file"})]
+        await audio.stop()
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("error", [AttributeError("mixer"), "hang"])
+def test_unexpected_or_hung_audio_load_still_cancels(config, monkeypatch, error):
+    monkeypatch.setattr("common.sequence_audio.LOAD_TIMEOUT_S", 0.1)
+
+    async def exercise():
+        sent = []
+        async def send(action, data):
+            sent.append((action, data))
+        audio = SequenceAudio(send)
+        audio.configure({"mine": config})
+        def load(cfg):
+            if error == "hang":
+                threading.Event().wait(0.5)
+            else:
+                raise error
+        monkeypatch.setattr(audio, "_load", load)
+        await audio.ready({"id": "one", "name": "mine"})
+        await audio.task
+        assert sent[0][0] == WEBSOCKET_MESSAGES["sequence-cancel"]
+        assert sent[0][1]["reason"].startswith(
+            "TimeoutError" if error == "hang" else "AttributeError"
+        )
+        assert audio.active_id is None
         await audio.stop()
     asyncio.run(exercise())
 
