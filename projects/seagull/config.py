@@ -102,12 +102,12 @@ generative_sequences = {
             "random_per_beat": True,
         },
         "timing": {
-            "intro_pause_ms": 800,
+            "intro_pause_ms": 200,
             # Each gap between rhythmic beats is chosen randomly in this range.
-            "min_beat_interval_ms": 350,
+            "min_beat_interval_ms": 400,
             "max_beat_interval_ms": 800,
             "min_repeated_beats": 3,
-            "max_repeated_beats": 6,
+            "max_repeated_beats": 9,
             "final_pause_ms": 500,
         },
         # Pulses (out_ms + back_ms) must fit in min_beat_interval_ms.
@@ -125,7 +125,7 @@ generative_sequences = {
             "beak": {
                 "mode": "pulse",
                 "position_1": {"reference": "max", "fraction": 0.2},
-                "position_2": {"reference": "max", "fraction": 0.8},
+                "position_2": {"reference": "max", "fraction": 0.9},
                 "transition_ms": 300,
                 "out_ms": 140,
                 "back_ms": 190,
