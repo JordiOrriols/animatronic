@@ -43,11 +43,16 @@ def test_seagull_reports_enabled_mine_sequence(monkeypatch):
     project = Project(init_servos=False)
     settings = project.get_sequence_settings()
     assert "mine" in settings
-    assert settings["mine"]["timing"]["min_beat_interval_ms"] == 350
-    assert settings["mine"]["timing"]["max_beat_interval_ms"] == 800
-    assert all(servo["mode"] == "pulse" for servo in settings["mine"]["servos"].values())
-    assert settings["mine"]["min_wait_ms"] == 15000
-    assert settings["mine"]["max_wait_ms"] == 45000
+    # Check invariants rather than exact tuning values, so config tweaks don't break tests.
+    timing = settings["mine"]["timing"]
+    assert 0 < timing["min_beat_interval_ms"] <= timing["max_beat_interval_ms"]
+    assert 1 <= timing["min_repeated_beats"] <= timing["max_repeated_beats"]
+    servos = settings["mine"]["servos"]
+    assert set(servos) <= {"head-pitch", "beak", "wings"}
+    assert all(servo["mode"] == "pulse" for servo in servos.values())
+    assert all(servo["out_ms"] + servo["back_ms"] <= timing["min_beat_interval_ms"]
+               for servo in servos.values())
+    assert 0 < settings["mine"]["min_wait_ms"] <= settings["mine"]["max_wait_ms"]
     assert all(os.path.isfile(clip["path"]) for clip in settings["mine"]["audio"]["files"])
 
 
