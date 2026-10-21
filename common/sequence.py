@@ -3,7 +3,7 @@
 from typing import Optional
 
 from common.servo import AniServo
-from common.sequence_config import number, validate_sequence
+from common.sequence_config import number, validate_movement_timeline, validate_sequence
 
 
 def resolve_position(servo: AniServo, position: dict) -> float:
@@ -56,26 +56,7 @@ class ServoSequence:
         if self.phase != "waiting":
             raise ValueError("Sequence is not waiting for a schedule")
         lead_ms = number(lead_ms, "lead_ms", minimum=100)
-        if not isinstance(timeline, dict):
-            raise ValueError("Sequence timeline must be an object")
-        beats = timeline.get("beats")
-        if not isinstance(beats, list) or not beats:
-            raise ValueError("Sequence timeline requires beats")
-        if any(not isinstance(beat, dict) for beat in beats):
-            raise ValueError("Each sequence beat must be an object")
-        movement_times = [number(beat.get("movement_ms"), "movement_ms") for beat in beats]
-        if movement_times != sorted(movement_times):
-            raise ValueError("Sequence movement timestamps must be ordered")
-        pulse_ms = max(
-            (s["out_ms"] + s["back_ms"] for s in self.config["servos"].values()
-             if s["mode"] == "pulse"), default=0,
-        )
-        if any(b - a < pulse_ms for a, b in zip(movement_times, movement_times[1:])):
-            raise ValueError("Sequence movement timestamps overlap")
-        end_ms = number(timeline.get("end_ms"), "end_ms")
-        if end_ms < movement_times[-1] + pulse_ms:
-            raise ValueError("Sequence end precedes the last pulse completion")
-        self.timeline = {"beats": [dict(beat) for beat in beats], "end_ms": end_ms}
+        self.timeline = validate_movement_timeline(self.config, timeline)
         self.started = now + lead_ms / 1000
         self.phase = "playing"
 

@@ -3,6 +3,7 @@
 import math
 import random
 from pathlib import PurePosixPath
+from typing import Optional
 
 
 def number(value, name: str, minimum: float = 0, maximum: float = math.inf) -> float:
@@ -116,17 +117,85 @@ def validate_sequence(config: dict) -> dict:
     maximum_wait = number(config.get("max_wait_ms", 45000), "max_wait_ms")
     if minimum_wait > maximum_wait:
         raise ValueError("min_wait_ms exceeds max_wait_ms")
-    return {
+    result = {
         "min_wait_ms": minimum_wait, "max_wait_ms": maximum_wait,
         "audio": {"files": clips, "random_per_beat": random_per_beat},
         "timing": times, "servos": servos,
         "restore_ms": number(config.get("restore_ms", 600), "restore_ms"),
     }
+    if "flock" in config:
+        result["flock"] = _validate_flock(config["flock"], servos)
+        if "audio_by_member" in config["flock"]:
+            result["flock"]["audio_by_member"] = _member_audio(
+                result, config["flock"]["audio_by_member"]
+            )
+    return result
 
 
-def build_timeline(config: dict, lengths_ms: dict[str, float]) -> dict:
+def _member_audio(config: dict, value) -> dict:
+    overrides = _object(value, "flock.audio_by_member")
+    unknown = overrides.keys() - config["flock"]["members"].keys()
+    if unknown:
+        raise ValueError(f"Unknown flock audio members: {sorted(unknown, key=str)}")
+    result = {}
+    for member, audio in overrides.items():
+        audio = _object(audio, f"flock.audio_by_member.{member}")
+        settings = member_config(config, member)
+        settings["audio"] = {**config["audio"], **audio}
+        result[member] = validate_sequence(settings)["audio"]
+    return result
+
+
+def _validate_flock(value, servos: dict) -> dict:
+    flock = _object(value, "flock")
+    members = _object(flock.get("members"), "flock.members")
+    if len(members) < 2:
+        raise ValueError("flock.members requires at least two birds")
+    assigned = set()
+    for name, names in members.items():
+        if (not isinstance(name, str) or not name or not isinstance(names, list)
+                or not names or any(not isinstance(item, str) or not item for item in names)):
+            raise ValueError("Each flock member needs a name and a list of servo names")
+        if len(set(names)) != len(names) or assigned.intersection(names):
+            raise ValueError("Flock members cannot share servos")
+        if not set(names).intersection(servos):
+            raise ValueError(f"Flock member {name} has no sequence servos")
+        assigned.update(names)
+    if servos.keys() - assigned:
+        raise ValueError("All sequence servos must belong to a flock member")
+    joins = flock.get("join_after_beats", [1, 2])
+    if (not isinstance(joins, list) or not joins
+            or any(isinstance(item, bool) or not isinstance(item, int)
+                   or item not in (1, 2) for item in joins)):
+        raise ValueError("flock.join_after_beats must contain 1 or 2")
+    minimum = number(flock.get("min_stagger_ms", 100), "flock.min_stagger_ms")
+    maximum = number(flock.get("max_stagger_ms", 400), "flock.max_stagger_ms")
+    if minimum > maximum:
+        raise ValueError("flock.min_stagger_ms exceeds max_stagger_ms")
+    return {
+        "members": {name: list(names) for name, names in members.items()},
+        "join_after_beats": list(joins),
+        "min_stagger_ms": minimum, "max_stagger_ms": maximum,
+    }
+
+
+def member_config(config: dict, member: str) -> dict:
+    """Extract one bird's ordinary sequence from a validated flock event."""
+    names = config["flock"]["members"][member]
+    return {
+        **{key: value for key, value in config.items() if key != "flock"},
+        "audio": config["flock"].get("audio_by_member", {}).get(member, config["audio"]),
+        "servos": {name: settings for name, settings in config["servos"].items()
+                   if name in names},
+    }
+
+
+def build_timeline(config: dict, lengths_ms: dict[str, float],
+                   leader: Optional[str] = None) -> dict:
     """Preselect variants and schedule audio/pulses with signed per-clip offsets."""
     config = validate_sequence(config)
+    if "flock" in config:
+        return _flock_timeline(config, lengths_ms, leader)
     timing = config["timing"]
     repeats = random.randint(timing["min_repeated_beats"], timing["max_repeated_beats"])
     files = config["audio"]["files"]
@@ -165,3 +234,69 @@ def build_timeline(config: dict, lengths_ms: dict[str, float]) -> dict:
         for beat in beats
     )
     return {"beats": beats, "end_ms": end_ms}
+
+
+def _flock_timeline(config: dict, lengths_ms: dict[str, float],
+                    leader: Optional[str]) -> dict:
+    flock = config["flock"]
+    if not isinstance(leader, str) or leader not in flock["members"]:
+        raise ValueError("Flock schedule requires a valid leader")
+    first = build_timeline(member_config(config, leader), lengths_ms)
+    members = {leader: {**first, "prepare_ms": 0}}
+    for bird in flock["members"]:
+        if bird == leader:
+            continue
+        calls = random.choice(flock["join_after_beats"])
+        beat = first["beats"][calls - 1]
+        join_ms = beat["audio_ms"] + lengths_ms[beat["path"]] + random.uniform(
+            flock["min_stagger_ms"], flock["max_stagger_ms"]
+        )
+        settings = member_config(config, bird)
+        preparation = max(item["transition_ms"] for item in settings["servos"].values())
+        timeline = build_timeline(settings, lengths_ms)
+        first_beat = timeline["beats"][0]
+        first_action = min(first_beat["audio_ms"], first_beat["movement_ms"])
+        # Prepare ahead of the join cue, with margin for the Pi worker's 20 ms ticks.
+        start_ms = max(join_ms, preparation + 100)
+        prepare_ms = start_ms - preparation - 100
+        shift_ms = start_ms - first_action
+        members[bird] = {
+            "prepare_ms": prepare_ms,
+            "beats": [{**item, "audio_ms": item["audio_ms"] + shift_ms,
+                       "movement_ms": item["movement_ms"] + shift_ms}
+                      for item in timeline["beats"]],
+            "end_ms": timeline["end_ms"] + shift_ms,
+        }
+    return {
+        "leader": leader, "members": members,
+        "beats": sorted(
+            [{**beat, "member": bird}
+             for bird, timeline in members.items() for beat in timeline["beats"]],
+            key=lambda beat: beat["audio_ms"],
+        ),
+        "end_ms": max(item["end_ms"] for item in members.values()),
+    }
+
+
+def validate_movement_timeline(config: dict, timeline: dict) -> dict:
+    """Validate ordered, non-overlapping pulses before accepting a server schedule."""
+    if not isinstance(timeline, dict):
+        raise ValueError("Sequence timeline must be an object")
+    beats = timeline.get("beats")
+    if not isinstance(beats, list) or not beats:
+        raise ValueError("Sequence timeline requires beats")
+    if any(not isinstance(beat, dict) for beat in beats):
+        raise ValueError("Each sequence beat must be an object")
+    times = [number(beat.get("movement_ms"), "movement_ms") for beat in beats]
+    if times != sorted(times):
+        raise ValueError("Sequence movement timestamps must be ordered")
+    pulse_ms = max(
+        (s["out_ms"] + s["back_ms"] for s in config["servos"].values()
+         if s["mode"] == "pulse"), default=0,
+    )
+    if any(b - a < pulse_ms for a, b in zip(times, times[1:])):
+        raise ValueError("Sequence movement timestamps overlap")
+    end_ms = number(timeline.get("end_ms"), "end_ms")
+    if end_ms < times[-1] + pulse_ms:
+        raise ValueError("Sequence end precedes the last pulse completion")
+    return {"beats": [dict(beat) for beat in beats], "end_ms": end_ms}

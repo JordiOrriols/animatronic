@@ -1,5 +1,8 @@
 """Seagull configuration module. Add here all servos for the animatronic."""
 
+import os
+from copy import deepcopy
+
 from common.calibration import load_calibration
 from common.config import MG90S_TYPE, GHS37A_TYPE
 from common.logger import Logger
@@ -23,23 +26,24 @@ _SERVO_TYPES = {
 _DEFAULT_LIMITS = {"min": 0, "max": 180, "rest": 90}
 
 
-def _build_servos_data():
+def _build_servos_data(count=1):
     """Build every AniServo from calibration data, falling back to sane defaults
     for any servo not yet present in servo_calibration.json."""
     calibration = load_calibration("seagull")
     servos = []
-    for name, (pin, servo_type) in _SERVO_TYPES.items():
-        limits = calibration.get(name)
-        if limits is None:
-            logger.warning(f"No calibration data for servo '{name}'; using defaults.")
-            limits = _DEFAULT_LIMITS
-        servos.append(
-            AniServo(name, pin, servo_type, limits["min"], limits["max"], limits["rest"])
-        )
+    for index in range(count):
+        for part, (pin, servo_type) in _SERVO_TYPES.items():
+            name = part if count == 1 else f"seagull-{index + 1}-{part}"
+            limits = calibration.get(name)
+            if limits is None:
+                logger.warning(f"No calibration data for servo '{name}'; using defaults.")
+                limits = _DEFAULT_LIMITS
+            servos.append(
+                AniServo(name, pin + index * 4, servo_type,
+                         limits["min"], limits["max"], limits["rest"])
+            )
     return servos
 
-
-seagull_servos_data = _build_servos_data()
 
 # Per-servo generative configuration (all values in ms or degrees where noted)
 # This file uses only per-servo settings as requested.
@@ -160,3 +164,62 @@ xbox_settings = {
     "wings": {"input": "right_stick_y", "invert": True},
     "beak": {"input": "right_trigger"},
 }
+
+_IDLE_TEMPLATE = generative_settings
+_SEQUENCE_TEMPLATE = generative_sequences
+_XBOX_TEMPLATE = xbox_settings
+
+# Optional audio overrides keyed by seagull-1, seagull-2, etc.; omitted birds
+# use the shared mine audio. Files must exist under sound/ on the server.
+seagull_voices = {}
+
+
+def build_seagull_configuration(count: int) -> tuple:
+    """Build independently calibrated birds on consecutive four-channel blocks."""
+    if isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 4:
+        raise ValueError("SEAGULL_COUNT must be an integer from 1 to 4")
+    if seagull_voices.keys() - {f"seagull-{index}" for index in range(1, 5)}:
+        raise ValueError("seagull_voices keys must be seagull-1 through seagull-4")
+    servos = _build_servos_data(count)
+    if count == 1:
+        sequences = deepcopy(_SEQUENCE_TEMPLATE)
+        if "seagull-1" in seagull_voices:
+            sequences["mine"]["audio"].update(deepcopy(seagull_voices["seagull-1"]))
+        return servos, deepcopy(_IDLE_TEMPLATE), sequences, deepcopy(_XBOX_TEMPLATE)
+    idle, sequences, xbox = {}, deepcopy(_SEQUENCE_TEMPLATE), {}
+    members = {}
+    for index in range(1, count + 1):
+        bird = f"seagull-{index}"
+        members[bird] = [f"{bird}-{part}" for part in _SERVO_TYPES]
+        idle.update({f"{bird}-{part}": deepcopy(settings)
+                     for part, settings in _IDLE_TEMPLATE.items()})
+        xbox.update({f"{bird}-{part}": deepcopy(settings)
+                     for part, settings in _XBOX_TEMPLATE.items()})
+    for name, config in sequences.items():
+        config["servos"] = {
+            f"{bird}-{part}": deepcopy(settings)
+            for bird in members
+            for part, settings in _SEQUENCE_TEMPLATE[name]["servos"].items()
+        }
+        config["flock"] = {
+            "members": members,
+            "join_after_beats": [1, 2],
+            "min_stagger_ms": 100,
+            "max_stagger_ms": 400,
+        }
+        if name == "mine":
+            config["flock"]["audio_by_member"] = {
+                bird: deepcopy(seagull_voices[bird]) for bird in members
+                if bird in seagull_voices
+            }
+    return servos, idle, sequences, xbox
+
+
+try:
+    _COUNT = int(os.getenv("SEAGULL_COUNT", "1"))
+except ValueError as error:
+    raise ValueError("SEAGULL_COUNT must be an integer from 1 to 4") from error
+
+seagull_servos_data, generative_settings, generative_sequences, xbox_settings = (
+    build_seagull_configuration(_COUNT)
+)

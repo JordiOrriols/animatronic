@@ -678,7 +678,7 @@ def test_get_capabilities_calibrated_false_without_saved_calibration(monkeypatch
     monkeypatch.setattr(project_module, "load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setattr(project_module, "ServoKit", FakeServoKit)
     monkeypatch.setattr(project_module, "initialize_servos", lambda kit, servos: None)
-    monkeypatch.setattr(project_module, "has_calibration", lambda project_id: False)
+    monkeypatch.setattr(project_module, "has_calibration", lambda project_id, names: False)
 
     project = Project(init_servos=False)
 

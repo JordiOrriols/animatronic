@@ -67,7 +67,7 @@ being cut off. The sequence waits for all clips and pulses to finish before
 restoration. Cancellation stops every channel owned by the connection.
 
 The Pi prepares the servos before requesting a schedule. The server preselects
-clips and sends a relative timeline with a 500 ms lead, and waits for the Pi's
+clips and sends a relative timeline with a 1000 ms lead, and waits for the Pi's
 acknowledgement before starting audio. Signed offsets get additional lead when
 needed; acknowledgement round-trip time estimates the one-way network delay.
 This avoids sharing machine clocks, but network and audio-device latency
@@ -75,10 +75,134 @@ still affect alignment: this is not sample-accurate synchronization.
 
 Auto stop, mode changes, and disconnect cancel sequence audio and return the Pi
 to neutral with the existing easing. Missing files, invalid settings, decoding
-failures, missed audio deadlines, and missing acknowledgements fail explicitly
-and stop Auto safely; they are not silently retried. Servo preparation times out
+failures, missed audio deadlines, and missing acknowledgements fail explicitly.
+Failed events cancel audio, restore their servos, and resume idle; an unrecoverable
+worker or restoration error stops Auto. Servo preparation times out
 if the server does not send a schedule within ten seconds. Older servers cannot
 run enabled sequences: update both server and client together.
+
+## Multiple seagulls on one Pi
+
+Set `PROJECT_ID=seagull` and `SEAGULL_COUNT=3` in the Pi's `.env`. One client and
+one ServoKit own all twelve channels; do not launch three client processes.
+The default count is `1` for backwards compatibility. Multi-bird servo names
+are prefixed with `seagull-1-`, `seagull-2-`, etc. Their calibration entries
+are stored separately by servo name in the same unit's calibration file.
+Calibrate every servo when changing between single-bird and multi-bird layouts.
+See the [wiring and setup table](../../README.md#three-seagulls-on-one-raspberry-pi).
+
+The generated `mine` sequence includes a `flock` section:
+
+```python
+"flock": {
+    "members": {
+        "seagull-1": ["seagull-1-head-yaw", "seagull-1-head-pitch",
+                      "seagull-1-wings", "seagull-1-beak"],
+        # The other birds have their own disjoint lists.
+    },
+    "join_after_beats": [1, 2],
+    "min_stagger_ms": 100,
+    "max_stagger_ms": 400,
+}
+```
+
+At least two members are required. Every sequence servo must belong to exactly
+one member; member lists can also include idle-only servos. Only the bird that
+is preparing, calling, or restoring pauses its idle controllers. Followers
+continue idle until they join, and finished birds immediately resume idle
+with fresh waits. Unrelated birds' idle controllers are never reset.
+
+For every event, the Pi randomly chooses a leader (successive events may happen
+to pick the same bird). After the leader is prepared, the server creates one
+independent timeline per bird and combines their audio into chronological order.
+Each follower independently chooses `1` or `2` leader calls to wait for. After
+that call's audio finishes and a random stagger, it starts calling. Servo
+preparation is scheduled ahead of that cue, with a short margin before the first
+pulse. Followers stay idle until their own preparation window; unusually short
+clips or long preparation times can delay a join until preparation can safely
+finish. Followers do not share the leader's subsequent beats:
+their clips, random intervals, repetition counts, and finishing times are chosen
+independently. Overlap is allowed, not forced; calls are not locked in unison.
+
+The next group wait starts only after all birds finish restoring. Cancellation,
+Auto stop, disconnect, or a group scheduling error cancels the entire group's
+audio, not just the leader. Auto stop returns all twelve servos to neutral.
+Flock events require the updated code on **both** server and client.
+
+The ordinary `generative_settings` and sequence servo settings are deep-copied
+per bird. To give a bird a different idle personality, add overrides **after**
+the `build_seagull_configuration(...)` assignment in the seagull configuration,
+using the prefixed names, for example:
+
+```python
+generative_settings["seagull-2-wings"].update(
+    min_wait_ms=1500, max_wait_ms=3000,
+)
+```
+
+Apply prefixed overrides only when using a multi-bird layout. Shared template
+settings still define the default behavior, with fresh random draws for each
+bird's performance. Xbox mode maps the same controller inputs to all birds,
+using each servo's own calibration; it does not select a single bird.
+
+### Different voices for each seagull
+
+Edit `seagull_voices` in
+[the seagull configuration](../../projects/seagull/config.py), **before**
+`build_seagull_configuration` is called. Replace its empty dictionary with
+your own MP3 lists, for example:
+
+```python
+seagull_voices = {
+    "seagull-1": {
+        "files": [
+            {"path": "sound/seagull/voice-1/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-1/mine-2.mp3", "animation_offset_ms": 0},
+        ],
+    },
+    "seagull-2": {
+        "files": [
+            {"path": "sound/seagull/voice-2/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-2/mine-2.mp3", "animation_offset_ms": 0},
+        ],
+    },
+    "seagull-3": {
+        "files": [
+            {"path": "sound/seagull/voice-3/mine-1.mp3", "animation_offset_ms": 0},
+        ],
+    },
+}
+```
+
+These are example filenames, not supplied recordings. Put your MP3 files at
+those paths on the **server** and use this configuration on the **Pi**. Update
+both server and client code, then restart both. All voices still play through
+the server's audio output, not separate speakers on each bird.
+
+Omitted birds use the shared `generative_sequences["mine"]["audio"]` list.
+With `SEAGULL_COUNT=1`, the `seagull-1` override applies to the single bird;
+valid overrides for birds outside the current count are unused. Unknown or
+misspelled bird names are rejected.
+
+Each override replaces `files` as a complete list, while `random_per_beat`
+inherits from the shared audio settings unless explicitly supplied. Set it to
+`False` to choose one clip from that bird's list per performance and reuse it
+for every call. Otherwise each beat draws independently from that bird's list.
+An empty override inherits shared audio; an explicitly empty `files` list is
+invalid.
+
+The bird keeps its voice whether it leads or follows. Its own clip duration and
+per-file `animation_offset_ms` drive the audio/movement timeline, and followers'
+join cues use the leader's actual voice duration. Positive offsets start
+movement after sound; negative offsets start it before sound. Pulse-overlap
+validation is performed separately for each bird's effective clip list.
+Missing files or decoding errors are reported explicitly, not replaced by
+another bird's voice.
+
+Internally, the client sends these overrides under
+`generative_sequences["mine"]["flock"]["audio_by_member"]`. The server preloads
+the effective lists for every member, including shared fallback clips, before
+building the group's independent timelines.
 
 ## Configuration keys
 

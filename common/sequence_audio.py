@@ -7,7 +7,7 @@ from pathlib import Path
 
 from common.config import WEBSOCKET_MESSAGES
 from common.logger import Logger
-from common.sequence_config import build_timeline, validate_sequence
+from common.sequence_config import build_timeline, member_config, validate_sequence
 
 # Time the Pi gets between receiving the schedule and the first beat.
 LEAD_MS = 1000
@@ -16,7 +16,7 @@ _LOAD_LOCK = threading.Lock()
 
 
 class SequenceAudio(Logger):
-    """One audio channel per connection; pygame is loaded only for enabled events."""
+    """Own overlapping audio channels for a connection's single or flock events."""
 
     _channel_indices: set[int] = set()
 
@@ -87,7 +87,12 @@ class SequenceAudio(Logger):
             if self.channel is None:
                 self.channel_index, self.channel = self._allocate_channel(pygame.mixer)
             root = Path("sound").resolve()
-            for clip in config["audio"]["files"]:
+            audio_configs = (
+                [member_config(config, member) for member in config["flock"]["members"]]
+                if "flock" in config else [config]
+            )
+            clips = [clip for item in audio_configs for clip in item["audio"]["files"]]
+            for clip in clips:
                 path = Path(clip["path"]).resolve()
                 if not path.is_relative_to(root) or not path.is_file():
                     raise ValueError(f"Sequence audio file missing or outside sound/: {path}")
@@ -150,7 +155,10 @@ class SequenceAudio(Logger):
             lengths = await self._load_async(config)
             if self.channel is None:
                 raise RuntimeError("Sequence audio channel was not initialized")
-            timeline = build_timeline(config, lengths)
+            if "flock" in config:
+                timeline = build_timeline(config, lengths, data.get("leader"))
+            else:
+                timeline = build_timeline(config, lengths)
             lead_ms = LEAD_MS
             loop = asyncio.get_running_loop()
             sent_at = loop.time()

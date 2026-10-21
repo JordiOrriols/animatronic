@@ -26,6 +26,7 @@ from common.logger import Logger
 from common.generative import GenerativeMovement
 from common.xbox_servo_mapper import XboxServoMapper
 from common.sequence import ServoSequence
+from common.flock import FlockSequence
 from common.sequence_config import validate_sequence
 from common.config import WEBSOCKET_MESSAGES
 
@@ -44,7 +45,10 @@ class Project(Logger):
         self.info("Loading environment...")
         load_dotenv()
 
-        self.__project = os.getenv("PROJECT_ID")
+        project_id = os.getenv("PROJECT_ID")
+        if project_id is None or project_id not in servos_data_object:
+            raise KeyError("PROJECT_ID must name a configured project")
+        self.__project = project_id
         self.__animation_data = None
         self.__auto_thread: Optional[threading.Thread] = None
         self.__auto_stop_event = threading.Event()
@@ -120,7 +124,9 @@ class Project(Logger):
             "animation": self.__animation_data is not None,
             "generative": bool(self._generative_settings) or bool(self.get_sequence_settings()),
             "xbox": bool(self._xbox_settings),
-            "calibrated": has_calibration(self.__project),
+            "calibrated": has_calibration(
+                self.__project, [servo.get_name() for servo in self.__servos_data]
+            ),
         }
 
     def get_sequence_settings(self):
@@ -261,13 +267,13 @@ class Project(Logger):
                 raise RuntimeError("Generative sequences require a server message sender")
 
             # Build per-servo controllers using per-servo generative settings
-            animatronic_controllers = []
+            animatronic_controllers = {}
             for servo in self.__servos_data:
                 if servo.get_name() not in self._generative_settings:
                     servo.sleep()
                     continue
                 cfg = self._generative_settings[servo.get_name()]
-                animatronic_controllers.append(GenerativeMovement(servo, cfg))
+                animatronic_controllers[servo.get_name()] = GenerativeMovement(servo, cfg)
 
             self.__auto_thread = threading.Thread(
                 target=self.__run_auto,
@@ -295,12 +301,13 @@ class Project(Logger):
                 active.arm(data.get("timeline"), received, data.get("lead_ms"))
                 self.__send_sequence(WEBSOCKET_MESSAGES["sequence-armed"], {"id": sequence_id})
 
-    def __run_auto(self, controllers: list[GenerativeMovement], sequences=None):
+    def __run_auto(self, controllers: dict[str, GenerativeMovement], sequences=None):
         sequences = sequences or {}
         due = {name: self.__next_sequence_due(config) for name, config in sequences.items()}
         active = None
         sequence_id = None
         sequence_name = None
+        paused = set()
         try:
             while not self.__auto_stop_event.is_set():
                 now = time.monotonic()
@@ -312,13 +319,21 @@ class Project(Logger):
                             sequence_name = min(ready, key=lambda name: due[name])
                             self.info("Starting generative sequence:", sequence_name)
                             sequence_id = str(uuid.uuid4())
-                            active = ServoSequence(
+                            sequence_type = (
+                                FlockSequence if "flock" in sequences[sequence_name]
+                                else ServoSequence
+                            )
+                            active = sequence_type(
                                 sequences[sequence_name], self.__servos_data, now
                             )
                     result = active.update(now) if active is not None else None
                     if result == "ready":
+                        data = {"id": sequence_id, "name": sequence_name}
+                        if isinstance(active, FlockSequence):
+                            data["leader"] = active.leader
+                            self.info("Flock leader:", active.leader)
                         self.__send_sequence(WEBSOCKET_MESSAGES["sequence-ready"],
-                                             {"id": sequence_id, "name": sequence_name})
+                                             data)
                 except (ValueError, RuntimeError, TimeoutError) as error:
                     if active is None or active.aborted:
                         raise
@@ -342,22 +357,31 @@ class Project(Logger):
                             name: self.__next_sequence_due(config)
                             for name, config in sequences.items()
                         }
-                        controllers = [
-                            GenerativeMovement(servo, self._generative_settings[servo.get_name()])
-                            for servo in self.__servos_data
-                            if servo.get_name() in self._generative_settings
-                        ]
-                else:
-                    for controller in controllers:
-                        if self.__auto_stop_event.is_set():
-                            break
-                        controller.update()
+                paused = self.__update_idle(controllers, active, paused)
                 self.__auto_stop_event.wait(0.02)
         except (OSError, ValueError, RuntimeError, ConnectionClosed) as error:
             self.error("Automatic movement failed:", error)
             self.__auto_error = error
         finally:
             self.__finish_auto(sequence_id)
+
+    def __update_idle(self, controllers, active, paused):
+        if isinstance(active, FlockSequence):
+            next_paused = active.paused_servos
+        elif active is not None:
+            next_paused = {servo.get_name() for servo in self.__servos_data}
+        else:
+            next_paused = set()
+        for servo in self.__servos_data:
+            name = servo.get_name()
+            if name in paused - next_paused and name in self._generative_settings:
+                controllers[name] = GenerativeMovement(servo, self._generative_settings[name])
+        for name, controller in controllers.items():
+            if self.__auto_stop_event.is_set():
+                break
+            if name not in next_paused:
+                controller.update()
+        return next_paused
 
     def __cancel_sequence(self, sequence_id, reason: str):
         """Best-effort notice so the server silences audio for this event."""

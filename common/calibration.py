@@ -12,6 +12,7 @@ they are listed in .gitignore and are never committed or pushed automatically.
 import json
 import os
 import uuid
+from typing import Optional
 
 from dotenv import find_dotenv, load_dotenv, set_key
 
@@ -70,11 +71,15 @@ def load_calibration(project_id: str) -> dict:
         return {}
 
 
-def has_calibration(project_id: str) -> bool:
+def has_calibration(project_id: str, servo_names: Optional[list[str]] = None) -> bool:
     """Whether this physical unit already has saved calibration data for this
     project. Used to gate movement features (play/generative/xbox/evaluate)
-    until the unit has actually been calibrated."""
-    return bool(load_calibration(project_id))
+    until the unit has actually been calibrated. When servo_names is supplied,
+    every configured servo must have its own entry."""
+    calibration = load_calibration(project_id)
+    return bool(calibration) and (
+        servo_names is None or all(name in calibration for name in servo_names)
+    )
 
 
 def save_calibration(project_id: str, data: dict) -> None:

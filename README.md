@@ -129,6 +129,54 @@ git). `default` is the file seeded with the project's original values; leave it
 unset on a brand new unit and a UUIDv4 will be generated and saved automatically
 the first time you calibrate it from the server's "Calibrate" menu.
 
+#### Three seagulls on one Raspberry Pi
+
+One client can control three seagulls on a single 16-channel Servo Bonnet.
+Set these values in the Pi's `.env` (preserve any other settings):
+
+```dotenv
+PROJECT_ID=seagull
+SEAGULL_COUNT=3
+```
+
+`SEAGULL_COUNT` defaults to `1`, preserving existing single-bird names and
+calibration. Values from `1` to `4` are supported. With multiple birds, each gets
+unique servo names such as `seagull-2-beak`:
+
+| Bird | Head yaw | Head pitch | Wings | Beak |
+| --- | --- | --- | --- | --- |
+| seagull-1 | 0 | 1 | 2 | 3 |
+| seagull-2 | 4 | 5 | 6 | 7 |
+| seagull-3 | 8 | 9 | 10 | 11 |
+
+These are **Servo Bonnet channels, not GPIO pins**. Use an external servo power
+supply sized for all servos, with the controller and servo supply sharing ground;
+do not power twelve servos from the Pi's GPIO supply.
+
+Update **both server and Pi**, restart the client, and use **Calibrate** to set
+safe Min/Max/rest values for all twelve servos individually. Do not copy one
+bird's limits to the others without measuring them. For a new flock, leave
+`CALIBRATION_ID` unset so calibration creates a new local file; do not use the
+single-bird `default.json` as a flock calibration. An existing flock calibration
+can be reused by keeping its `CALIBRATION_ID`. Movement options remain hidden
+until every configured servo has a calibration entry.
+
+Select **Automatic mode** on the server. Idle movements are independent. Every
+15–45 seconds after the previous group event finishes, a randomly selected bird
+leads a "mine" event. Each follower independently joins after the leader's first
+or second call, with a small random stagger and advance servo preparation.
+Each bird then uses independently randomized clips, intervals, and repetition
+counts, and returns to idle without waiting for the others. Calls can overlap,
+but are not synchronized to shared beats. All sound still plays on the server.
+
+For distinct voices, set `seagull_voices` in the seagull configuration to each
+bird's MP3 list. Files must exist on the server; birds without an override keep
+the shared voice list. See the
+[per-bird voice example](docs/common/generative.md#different-voices-for-each-seagull).
+
+Starting the client on boot does **not** automatically select Automatic mode.
+For tuning and details, see [flock generative playback](docs/common/generative.md#multiple-seagulls-on-one-pi).
+
 ### SERVER On MacOs or PI with sound capabilities
 
 Then start cloning the repo:
