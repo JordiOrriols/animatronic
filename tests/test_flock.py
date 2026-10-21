@@ -40,6 +40,7 @@ class Servo(AniServo):
 @pytest.fixture
 def flock(monkeypatch):
     monkeypatch.setattr(seagull_config, "load_calibration", lambda project: {})
+    monkeypatch.setattr(seagull_config, "seagull_voices", {})
     data, idle, sequences, xbox = seagull_config.build_seagull_configuration(3)
     servos = [Servo(servo.get_name(), servo.get_pin()) for servo in data]
     config = sequences["mine"]
@@ -207,6 +208,13 @@ def test_environment_selects_three_birds_at_import(monkeypatch):
     namespace = runpy.run_path(seagull_config.__file__)
     assert len(namespace["seagull_servos_data"]) == 12
     assert "flock" in namespace["generative_sequences"]["mine"]
+    config = validate_sequence(namespace["generative_sequences"]["mine"])
+    for index in range(1, 4):
+        audio = member_config(config, f"seagull-{index}")["audio"]
+        assert audio["files"] == [
+            {"path": f"sound/seagull/voice-{index}/mine-{clip}.mp3", "animation_offset_ms": 0}
+            for clip in range(1, 4)
+        ]
 
 
 @pytest.mark.parametrize("value", ["many", "0", "5"])

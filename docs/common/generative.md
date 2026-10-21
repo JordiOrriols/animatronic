@@ -149,8 +149,8 @@ using each servo's own calibration; it does not select a single bird.
 
 Edit `seagull_voices` in
 [the seagull configuration](../../projects/seagull/config.py), **before**
-`build_seagull_configuration` is called. Replace its empty dictionary with
-your own MP3 lists, for example:
+`build_seagull_configuration` is called. It is configured for three voices,
+each with `mine-1.mp3`, `mine-2.mp3`, and `mine-3.mp3`:
 
 ```python
 seagull_voices = {
@@ -158,23 +158,27 @@ seagull_voices = {
         "files": [
             {"path": "sound/seagull/voice-1/mine-1.mp3", "animation_offset_ms": 0},
             {"path": "sound/seagull/voice-1/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-1/mine-3.mp3", "animation_offset_ms": 0},
         ],
     },
     "seagull-2": {
         "files": [
             {"path": "sound/seagull/voice-2/mine-1.mp3", "animation_offset_ms": 0},
             {"path": "sound/seagull/voice-2/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-2/mine-3.mp3", "animation_offset_ms": 0},
         ],
     },
     "seagull-3": {
         "files": [
             {"path": "sound/seagull/voice-3/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-3/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-3/mine-3.mp3", "animation_offset_ms": 0},
         ],
     },
 }
 ```
 
-These are example filenames, not supplied recordings. Put your MP3 files at
+The recordings are not supplied. Put your nine MP3 files at
 those paths on the **server** and use this configuration on the **Pi**. Update
 both server and client code, then restart both. All voices still play through
 the server's audio output, not separate speakers on each bird.

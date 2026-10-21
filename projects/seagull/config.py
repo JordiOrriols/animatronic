@@ -99,9 +99,9 @@ generative_sequences = {
         "max_wait_ms": 45000,
         "audio": {
             "files": [
-                {"path": "sound/seagull/mine-1.mp3", "animation_offset_ms": 0},
-                {"path": "sound/seagull/mine-2.mp3", "animation_offset_ms": 0},
-                {"path": "sound/seagull/mine-3.mp3", "animation_offset_ms": 0},
+                {"path": "sound/seagull/voice-1/mine-1.mp3", "animation_offset_ms": 0},
+                {"path": "sound/seagull/voice-1/mine-2.mp3", "animation_offset_ms": 0},
+                {"path": "sound/seagull/voice-1/mine-3.mp3", "animation_offset_ms": 0},
             ],
             "random_per_beat": True,
         },
@@ -171,7 +171,29 @@ _XBOX_TEMPLATE = xbox_settings
 
 # Optional audio overrides keyed by seagull-1, seagull-2, etc.; omitted birds
 # use the shared mine audio. Files must exist under sound/ on the server.
-seagull_voices = {}
+seagull_voices = {
+    "seagull-1": {
+        "files": [
+            {"path": "sound/seagull/voice-1/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-1/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-1/mine-3.mp3", "animation_offset_ms": 0},
+        ],
+    },
+    "seagull-2": {
+        "files": [
+            {"path": "sound/seagull/voice-2/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-2/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-2/mine-3.mp3", "animation_offset_ms": 0},
+        ],
+    },
+    "seagull-3": {
+        "files": [
+            {"path": "sound/seagull/voice-3/mine-1.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-3/mine-2.mp3", "animation_offset_ms": 0},
+            {"path": "sound/seagull/voice-3/mine-3.mp3", "animation_offset_ms": 0},
+        ],
+    },
+}
 
 
 def build_seagull_configuration(count: int) -> tuple:

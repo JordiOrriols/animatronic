@@ -36,7 +36,12 @@ def isolate_optional_sequences(monkeypatch):
     monkeypatch.setattr(seagull_config, "generative_sequences", {})
 
 
-def test_seagull_reports_enabled_mine_sequence(monkeypatch):
+def test_seagull_reports_enabled_mine_sequence(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    for clip in generative_sequences["mine"]["audio"]["files"]:
+        path = tmp_path / clip["path"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"test audio placeholder")
     monkeypatch.setenv("PROJECT_ID", "seagull")
     monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
     monkeypatch.setattr(seagull_config, "generative_sequences", generative_sequences)
