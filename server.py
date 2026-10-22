@@ -76,6 +76,8 @@ def _build_menu_items(capabilities: dict) -> tuple:
         menu_items.append(("auto", "[a] Automatic mode"))
     if has_xbox:
         menu_items.append(("xbox", "[x] Xbox controller"))
+    if capabilities.get("manual", False) and is_calibrated:
+        menu_items.append(("manual", "[m] Manual servo control"))
     menu_items.append(("calibrate", "[c] Calibrate"))
     if has_animation:
         menu_items.append(("evaluate", "[e] Evaluate"))
@@ -130,6 +132,9 @@ async def show_options(websocket, capabilities=None, servos=None):
     elif selected_key == "calibrate":
         logger.info("Calibrate:")
         await calibrate(websocket, servos)
+
+    elif selected_key == "manual":
+        await manual_control(websocket, servos)
 
     elif selected_key == "evaluate":
         logger.info("Evaluate:")
@@ -282,7 +287,8 @@ async def _read_calibration_key(fd: int) -> bytes:
     return b""
 
 
-async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:
+async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int,
+                        action=None, bounds=None) -> int:
     """Preview five-degree arrow-key adjustments; Enter accepts the current value."""
     if not sys.stdin.isatty():
         raise RuntimeError("Calibration requires an interactive terminal (TTY)")
@@ -301,15 +307,45 @@ async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int)
                 raise EOFError("Calibration cancelled from terminal")
             if key not in (b"up", b"down"):
                 continue
-            value += 5 if key == b"up" else -5
+            target = value + (5 if key == b"up" else -5)
+            if bounds is not None:
+                target = max(bounds[0], min(bounds[1], target))
+            if target == value:
+                continue
+            value = target
             await send_message(
                 websocket,
-                WEBSOCKET_MESSAGES["calibrate-move"],
+                action or WEBSOCKET_MESSAGES["calibrate-move"],
                 {"servo_pin": servo_pin, "position": value},
             )
     finally:
         termios.tcsetattr(fd, termios.TCSANOW, settings)
         print()
+
+
+async def manual_control(websocket, servos):
+    """Adjust one calibrated servo without saving, then return it to rest."""
+    if not servos:
+        raise ValueError("No servos reported for manual control")
+    menu = TerminalMenu(
+        [f"{servo['name']} (pin {servo['pin']})" for servo in servos],
+        title="Select servo for manual control",
+    )
+    selected = menu.show()
+    if not isinstance(selected, int):
+        logger.warning("Manual servo selection cancelled")
+        await send_message(websocket, WEBSOCKET_MESSAGES["standby"])
+        return
+    servo = servos[selected]
+    pin = servo["pin"]
+    await send_message(websocket, WEBSOCKET_MESSAGES["manual-start"], {"servo_pin": pin})
+    try:
+        await _adjust_value(
+            websocket, pin, f"Manual {servo['name']}", servo["rest"],
+            action=WEBSOCKET_MESSAGES["manual-move"], bounds=(servo["min"], servo["max"]),
+        )
+    finally:
+        await send_message(websocket, WEBSOCKET_MESSAGES["manual-stop"], {"servo_pin": pin})
 
 
 async def _calibrate_servo(websocket, servo: dict):
@@ -375,6 +411,8 @@ async def send_message(websocket, action: str, *data):
         WEBSOCKET_MESSAGES["play"], WEBSOCKET_MESSAGES["evaluate"],
         WEBSOCKET_MESSAGES["xbox-start"], WEBSOCKET_MESSAGES["calibrate-neutral"],
         WEBSOCKET_MESSAGES["calibrate-move"], WEBSOCKET_MESSAGES["calibrate-save"],
+        WEBSOCKET_MESSAGES["manual-start"], WEBSOCKET_MESSAGES["manual-move"],
+        WEBSOCKET_MESSAGES["manual-stop"],
     ):
         audio = SEQUENCE_AUDIO.get(id(websocket))
         if audio is not None:

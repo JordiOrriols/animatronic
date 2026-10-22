@@ -55,6 +55,13 @@ def _timing(value) -> dict:
         raise ValueError("min_beat_interval_ms must be positive")
     if times["min_beat_interval_ms"] > times["max_beat_interval_ms"]:
         raise ValueError("min_beat_interval_ms exceeds max_beat_interval_ms")
+    for pause in ("intro_pause_ms", "final_pause_ms"):
+        if f"min_{pause}" in timing or f"max_{pause}" in timing:
+            minimum = number(timing.get(f"min_{pause}", times[pause]), f"min_{pause}")
+            maximum = number(timing.get(f"max_{pause}", times[pause]), f"max_{pause}")
+            if minimum > maximum:
+                raise ValueError(f"min_{pause} exceeds max_{pause}")
+            times[f"min_{pause}"], times[f"max_{pause}"] = minimum, maximum
     return times
 
 
@@ -110,7 +117,8 @@ def validate_sequence(config: dict) -> dict:
         default=0,
     )
     # Independent random variants may shorten the gap between movement starts.
-    minimum_gap = min(times["min_beat_interval_ms"], times["final_pause_ms"])
+    minimum_gap = min(times["min_beat_interval_ms"],
+                      times.get("min_final_pause_ms", times["final_pause_ms"]))
     if pulse_ms and pulse_ms + max(offsets) - min(offsets) > minimum_gap:
         raise ValueError("Audio offsets and pulse durations would overlap consecutive beats")
     minimum_wait = number(config.get("min_wait_ms", 15000), "min_wait_ms")
@@ -215,7 +223,7 @@ def build_timeline(config: dict, lengths_ms: dict[str, float],
         origin + first["animation_offset_ms"] + pulse_ms,
     )
     start = max(
-        first_end + timing["intro_pause_ms"],
+        first_end + _random_pause(timing, "intro_pause_ms"),
         origin + pulse_ms + first["animation_offset_ms"] - selected[1]["animation_offset_ms"],
     )
     starts = [origin, start]
@@ -223,7 +231,7 @@ def build_timeline(config: dict, lengths_ms: dict[str, float],
         starts.append(starts[-1] + random.uniform(
             timing["min_beat_interval_ms"], timing["max_beat_interval_ms"]
         ))
-    starts.append(starts[-1] + timing["final_pause_ms"])
+    starts.append(starts[-1] + _random_pause(timing, "final_pause_ms"))
     beats = [
         {"path": clip["path"], "audio_ms": audio_start,
          "movement_ms": audio_start + clip["animation_offset_ms"]}
@@ -234,6 +242,12 @@ def build_timeline(config: dict, lengths_ms: dict[str, float],
         for beat in beats
     )
     return {"beats": beats, "end_ms": end_ms}
+
+
+def _random_pause(timing: dict, name: str) -> float:
+    if f"min_{name}" not in timing:
+        return timing[name]
+    return random.uniform(timing[f"min_{name}"], timing[f"max_{name}"])
 
 
 def _flock_timeline(config: dict, lengths_ms: dict[str, float],
@@ -248,7 +262,7 @@ def _flock_timeline(config: dict, lengths_ms: dict[str, float],
             continue
         calls = random.choice(flock["join_after_beats"])
         beat = first["beats"][calls - 1]
-        join_ms = beat["audio_ms"] + lengths_ms[beat["path"]] + random.uniform(
+        stagger_ms = random.uniform(
             flock["min_stagger_ms"], flock["max_stagger_ms"]
         )
         settings = member_config(config, bird)
@@ -257,7 +271,8 @@ def _flock_timeline(config: dict, lengths_ms: dict[str, float],
         first_beat = timeline["beats"][0]
         first_action = min(first_beat["audio_ms"], first_beat["movement_ms"])
         # Prepare ahead of the join cue, with margin for the Pi worker's 20 ms ticks.
-        start_ms = max(join_ms, preparation + 100)
+        start_ms = max(beat["audio_ms"] + lengths_ms[beat["path"]], preparation + 100)
+        start_ms += stagger_ms
         prepare_ms = start_ms - preparation - 100
         shift_ms = start_ms - first_action
         members[bird] = {
@@ -294,9 +309,11 @@ def validate_movement_timeline(config: dict, timeline: dict) -> dict:
         (s["out_ms"] + s["back_ms"] for s in config["servos"].values()
          if s["mode"] == "pulse"), default=0,
     )
-    if any(b - a < pulse_ms for a, b in zip(times, times[1:])):
+    if any(b - a < pulse_ms and not math.isclose(b - a, pulse_ms, rel_tol=0, abs_tol=1e-6)
+           for a, b in zip(times, times[1:])):
         raise ValueError("Sequence movement timestamps overlap")
     end_ms = number(timeline.get("end_ms"), "end_ms")
-    if end_ms < times[-1] + pulse_ms:
+    last_end = times[-1] + pulse_ms
+    if end_ms < last_end and not math.isclose(end_ms, last_end, rel_tol=0, abs_tol=1e-6):
         raise ValueError("Sequence end precedes the last pulse completion")
     return {"beats": [dict(beat) for beat in beats], "end_ms": end_ms}

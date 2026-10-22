@@ -27,7 +27,9 @@ import projects.seagull.config as seagull_config
 from common.project import Project
 from common.config import WEBSOCKET_MESSAGES
 from common.sequence_config import build_timeline
-from projects.seagull.config import generative_sequences
+from projects.seagull.config import build_seagull_configuration
+
+generative_sequences = build_seagull_configuration(1)[2]
 
 
 @pytest.fixture(autouse=True)
@@ -61,6 +63,37 @@ def test_seagull_reports_enabled_mine_sequence(monkeypatch, tmp_path):
     assert all(os.path.isfile(clip["path"]) for clip in settings["mine"]["audio"]["files"])
 
 
+def test_manual_moves_respect_limits_and_do_not_stage_or_save_calibration(monkeypatch):
+    monkeypatch.setenv("PROJECT_ID", "seagull")
+    monkeypatch.setattr(project_module, "load_dotenv", lambda: None)
+    servo = MockServo(name="head", pin=1, min_limit=40, max_limit=130)
+    other = MockServo(name="wings", pin=2, current=100)
+    monkeypatch.setitem(project_module.servos_data_object, "seagull", [servo, other])
+    monkeypatch.setattr(project_module, "has_calibration", lambda *args: True)
+
+    def no_save(*args):
+        pytest.fail("Manual control must not write calibration")
+
+    monkeypatch.setattr(project_module, "save_calibration", no_save)
+    project = Project(init_servos=False)
+    before = servo.to_calibration_dict()
+    project.manual_rest(1)
+    project.manual_move(1, -10)
+    assert servo.get_current_position() == 40
+    project.manual_move(1, 200)
+    assert servo.get_current_position() == 130
+    project.manual_rest(1)
+    assert servo.get_current_position() == 90
+    assert other.get_current_position() == 100
+    assert servo.to_calibration_dict() == before
+    project.calibrate_commit()
+    with pytest.raises(ValueError, match="Unknown servo"):
+        project.manual_move(99, 90)
+    monkeypatch.setattr(project_module, "has_calibration", lambda *args: False)
+    with pytest.raises(ValueError, match="requires saved"):
+        project.manual_move(1, 90)
+
+
 @pytest.mark.parametrize("cancel", [False, True])
 def test_auto_sequence_pauses_all_controllers_then_resumes_or_cancels(monkeypatch, cancel):
     monkeypatch.setenv("PROJECT_ID", "seagull")
@@ -70,6 +103,9 @@ def test_auto_sequence_pauses_all_controllers_then_resumes_or_cancels(monkeypatc
     yaw = MockServo(name="head-yaw", current=65)
     monkeypatch.setitem(project_module.servos_data_object, "seagull", [pitch, beak, yaw])
     config = copy.deepcopy(generative_sequences["mine"])
+    for key in ("min_intro_pause_ms", "max_intro_pause_ms",
+                "min_final_pause_ms", "max_final_pause_ms"):
+        config["timing"].pop(key, None)
     config["enabled"] = True
     config["servos"].pop("wings")
     config["restore_ms"] = 10

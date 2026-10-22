@@ -121,6 +121,7 @@ class Project(Logger):
         """Report which optional features this project's configuration supports,
         so the server can only show options the client can actually run."""
         return {
+            "manual": True,
             "animation": self.__animation_data is not None,
             "generative": bool(self._generative_settings) or bool(self.get_sequence_settings()),
             "xbox": bool(self._xbox_settings),
@@ -420,6 +421,27 @@ class Project(Logger):
         for servo in self.__servos_data:
             if servo.get_pin() == servo_pin:
                 servo.sleep()
+
+    def _manual_servo(self, servo_pin: int) -> AniServo:
+        for servo in self.__servos_data:
+            if servo.get_pin() == servo_pin:
+                if not has_calibration(self.__project, [servo.get_name()]):
+                    raise ValueError("Manual control requires saved servo calibration")
+                return servo
+        raise ValueError(f"Unknown servo pin: {servo_pin}")
+
+    def manual_rest(self, servo_pin: int) -> None:
+        """Stop Auto and return only the selected calibrated servo to rest."""
+        servo = self._manual_servo(servo_pin)
+        self.auto_stop()
+        servo.sleep()
+
+    def manual_move(self, servo_pin: int, position: int) -> None:
+        """Move within saved limits without changing or staging calibration."""
+        servo = self._manual_servo(servo_pin)
+        self.auto_stop()
+        servo.move_to_angle(max(servo.get_physical_limit_min(),
+                               min(servo.get_physical_limit_max(), position)))
 
     def calibrate_move(self, servo_pin: int, position: int):
         """Live-preview a servo position while searching for new calibration

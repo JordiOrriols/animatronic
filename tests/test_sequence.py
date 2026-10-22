@@ -11,7 +11,9 @@ from common.sequence import ServoSequence
 from common.servo import AniServo
 from common.sequence_config import build_timeline, validate_sequence
 from common.sequence_audio import SequenceAudio
-from projects.seagull.config import generative_sequences
+from projects.seagull.config import build_seagull_configuration
+
+generative_sequences = build_seagull_configuration(1)[2]
 
 
 def test_sequence_return_annotation_supports_python_before_310():
@@ -101,6 +103,41 @@ def test_beat_intervals_are_random_within_configured_range(config):
     assert len(gaps) > 1
 
 
+def test_opening_rhythm_and_final_gaps_are_independently_randomized(config):
+    config["audio"]["files"] = [{"path": "sound/seagull/a.mp3", "animation_offset_ms": 0}]
+    config["timing"] = {
+        "min_intro_pause_ms": 200, "max_intro_pause_ms": 1000,
+        "min_beat_interval_ms": 400, "max_beat_interval_ms": 1400,
+        "min_final_pause_ms": 400, "max_final_pause_ms": 1300,
+        "min_repeated_beats": 4, "max_repeated_beats": 4,
+    }
+    openings, endings, rhythm = set(), set(), set()
+    for _ in range(30):
+        beats = build_timeline(config, {"sound/seagull/a.mp3": 500})["beats"]
+        opening = beats[1]["audio_ms"] - beats[0]["audio_ms"] - 500
+        final = beats[-1]["audio_ms"] - beats[-2]["audio_ms"]
+        assert 200 <= opening <= 1000
+        assert 400 <= final <= 1300
+        openings.add(round(opening))
+        endings.add(round(final))
+        for first, second in zip(beats[1:-2], beats[2:-1]):
+            gap = second["audio_ms"] - first["audio_ms"]
+            assert 400 <= gap <= 1400
+            rhythm.add(round(gap))
+    assert min(len(openings), len(endings), len(rhythm)) > 1
+
+
+@pytest.mark.parametrize("pause", ["intro_pause_ms", "final_pause_ms"])
+def test_invalid_random_pause_ranges_are_rejected(config, pause):
+    config["timing"].update({f"min_{pause}": 1000, f"max_{pause}": 200})
+    with pytest.raises(ValueError, match="exceeds"):
+        validate_sequence(config)
+    config["timing"].update({f"min_{pause}": 100, f"max_{pause}": 200})
+    if pause == "final_pause_ms":
+        with pytest.raises(ValueError, match="overlap"):
+            validate_sequence(config)
+
+
 def test_beat_interval_range_is_validated(config):
     config["timing"].pop("beat_interval_ms")
     config["timing"].update(min_beat_interval_ms=800, max_beat_interval_ms=350)
@@ -166,6 +203,17 @@ def test_schedule_timeout_and_overlap_are_explicit(config):
     with pytest.raises(ValueError, match="overlap"):
         sequence.arm({"beats": [{"movement_ms": 0}, {"movement_ms": 200}],
                       "end_ms": 1000}, 1, 500)
+
+
+def test_timeline_validation_accepts_only_sub_microsecond_rounding(config):
+    from common.sequence_config import validate_movement_timeline
+
+    first = 401.1982239704228
+    timeline = {"beats": [{"movement_ms": first}], "end_ms": first + 300 - 1e-10}
+    validate_movement_timeline(validate_sequence(config), timeline)
+    timeline["end_ms"] = first + 299
+    with pytest.raises(ValueError, match="precedes"):
+        validate_movement_timeline(validate_sequence(config), timeline)
 
 
 async def wait_until(condition, timeout=5.0):

@@ -45,6 +45,12 @@ Each event has:
   Fractions describe calibrated travel relative to neutral, not absolute angles.
 - `restore_ms`: eased restoration duration (default 600).
 
+Opening and closing pauses can also use `min_intro_pause_ms` /
+`max_intro_pause_ms` and `min_final_pause_ms` / `max_final_pause_ms`. Each bird
+draws its own pauses per performance. These ranges override the corresponding
+fixed pause, which remains the fallback for a missing range endpoint. The
+minimum final pause must still accommodate pulse durations and clip offsets.
+
 For `mode: "hold"`, the servo eases to `position_1`, holds through the
 sequence, then eases to `position_2`. For `mode: "pulse"`, it prepares at
 `position_1`, moves to `position_2` over `out_ms`, and back over `back_ms` per
@@ -101,8 +107,8 @@ The generated `mine` sequence includes a `flock` section:
         # The other birds have their own disjoint lists.
     },
     "join_after_beats": [1, 2],
-    "min_stagger_ms": 100,
-    "max_stagger_ms": 400,
+        "min_stagger_ms": 250,
+        "max_stagger_ms": 1200,
 }
 ```
 
@@ -123,6 +129,13 @@ clips or long preparation times can delay a join until preparation can safely
 finish. Followers do not share the leader's subsequent beats:
 their clips, random intervals, repetition counts, and finishing times are chosen
 independently. Overlap is allowed, not forced; calls are not locked in unison.
+
+The seagull defaults now use a 250–1200 ms follower stagger, a random 200–1000 ms
+intro pause, 400–1400 ms rhythmic gaps, and a random 400–1300 ms final pause.
+The follower stagger is added **after** allowing enough preparation time.
+Short leader clips therefore cannot collapse both followers onto the same
+earliest possible start. Calls may still overlap or occasionally coincide
+naturally; the scheduler does not force strict turn-taking.
 
 The next group wait starts only after all birds finish restoring. Cancellation,
 Auto stop, disconnect, or a group scheduling error cancels the entire group's

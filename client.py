@@ -72,6 +72,17 @@ def handler(message):
         data = message["data"][0]
         runtime_project.calibrate_move(int(data["servo_pin"]), int(data["position"]))
 
+    elif message["action"] == WEBSOCKET_MESSAGES["manual-move"]:
+        data = message["data"][0]
+        runtime_project.manual_move(int(data["servo_pin"]), int(data["position"]))
+
+    elif message["action"] in (
+        WEBSOCKET_MESSAGES["manual-start"], WEBSOCKET_MESSAGES["manual-stop"],
+    ):
+        runtime_project.manual_rest(int(message["data"][0]["servo_pin"]))
+        if message["action"] == WEBSOCKET_MESSAGES["manual-stop"]:
+            runtime_client.send(WEBSOCKET_MESSAGES["finished"])
+
     elif message["action"] == WEBSOCKET_MESSAGES["calibrate-neutral"]:
         runtime_project.calibrate_neutral(int(message["data"][0]["servo_pin"]))
 

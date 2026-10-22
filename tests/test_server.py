@@ -670,3 +670,69 @@ def test_incomplete_escape_sequence_does_not_hang(calibration_terminal):
         assert await asyncio.wait_for(task, 1) == 90
 
     asyncio.run(exercise())
+
+
+def test_manual_menu_requires_capability_and_calibration():
+    items, _ = server_app._build_menu_items({"manual": True, "calibrated": True})
+    assert ("manual", "[m] Manual servo control") in items
+    for capabilities in ({}, {"manual": True, "calibrated": False}):
+        items, _ = server_app._build_menu_items(capabilities)
+        assert all(key != "manual" for key, _ in items)
+
+
+def test_show_options_routes_manual_selection(monkeypatch):
+    called = []
+
+    class ManualMenu(FakeTerminalMenu):
+        def show(self):
+            return next(index for index, label in enumerate(self.options) if "[m]" in label)
+
+    async def manual(websocket, servos):
+        called.extend(servos)
+
+    monkeypatch.setattr(server_app, "TerminalMenu", ManualMenu)
+    monkeypatch.setattr(server_app, "manual_control", manual)
+    servo = {"name": "head", "pin": 1, "min": 20, "max": 160, "rest": 90}
+    asyncio.run(server_app.show_options(FakeWebSocket(), {"manual": True}, [servo]))
+    assert called == [servo]
+
+
+def test_manual_control_clamps_arrows_and_returns_to_rest_without_saving(
+    monkeypatch, calibration_terminal
+):
+    sent = []
+    servo = {"name": "beak", "pin": 3, "min": 82, "max": 97, "rest": 90}
+
+    async def send(websocket, action, *data):
+        sent.append((action, data[0]))
+
+    monkeypatch.setattr(server_app, "send_message", send)
+    monkeypatch.setattr(server_app, "TerminalMenu", FakeTerminalMenu)
+    os.write(calibration_terminal[0], b"\x1b[A" * 3 + b"\x1b[B" * 4 + b"\n")
+    asyncio.run(server_app.manual_control(FakeWebSocket(), [servo]))
+    assert sent[0] == (server_app.WEBSOCKET_MESSAGES["manual-start"], {"servo_pin": 3})
+    assert sent[-1] == (server_app.WEBSOCKET_MESSAGES["manual-stop"], {"servo_pin": 3})
+    assert [data["position"] for action, data in sent
+            if action == server_app.WEBSOCKET_MESSAGES["manual-move"]] == [95, 97, 92, 87, 82]
+    assert all("calibrate" not in action for action, _ in sent)
+    assert servo == {"name": "beak", "pin": 3, "min": 82, "max": 97, "rest": 90}
+
+
+def test_manual_control_returns_to_rest_on_input_failure(monkeypatch):
+    sent = []
+
+    async def send(websocket, action, *data):
+        sent.append(action)
+
+    async def adjust(*args, **kwargs):
+        raise EOFError("terminal closed")
+
+    monkeypatch.setattr(server_app, "send_message", send)
+    monkeypatch.setattr(server_app, "TerminalMenu", FakeTerminalMenu)
+    monkeypatch.setattr(server_app, "_adjust_value", adjust)
+    with pytest.raises(EOFError):
+        asyncio.run(server_app.manual_control(FakeWebSocket(), [
+            {"name": "head", "pin": 1, "min": 20, "max": 160, "rest": 90}
+        ]))
+    assert sent == [server_app.WEBSOCKET_MESSAGES["manual-start"],
+                    server_app.WEBSOCKET_MESSAGES["manual-stop"]]

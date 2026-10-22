@@ -44,6 +44,9 @@ def flock(monkeypatch):
     data, idle, sequences, xbox = seagull_config.build_seagull_configuration(3)
     servos = [Servo(servo.get_name(), servo.get_pin()) for servo in data]
     config = sequences["mine"]
+    for key in ("min_intro_pause_ms", "max_intro_pause_ms",
+                "min_final_pause_ms", "max_final_pause_ms"):
+        config["timing"].pop(key, None)
     config.update(min_wait_ms=0, max_wait_ms=0, restore_ms=40)
     config["timing"].update(
         intro_pause_ms=20, min_beat_interval_ms=60, max_beat_interval_ms=100,
@@ -87,7 +90,7 @@ def test_each_bird_keeps_its_voice_as_leader_or_follower(voiced_flock, leader):
             offsets[beat["path"]]) for beat in schedule["beats"])
         assert member_config(sequence.config, bird)["audio"]["random_per_beat"] is True
         end = max(beat["audio_ms"] + lengths[beat["path"]] for beat in schedule["beats"])
-        assert schedule["end_ms"] >= end
+        assert schedule["end_ms"] >= end - 1e-6
 
 
 def test_voice_fallback_partial_overrides_and_single_clip_performance(voiced_flock):
@@ -275,7 +278,7 @@ def test_followers_join_after_one_or_two_calls_with_independent_timelines(flock,
             ["seagull-2", "seagull-1", "seagull-3"]] == [5, 6, 7]
     for bird, call in [("seagull-1", 1), ("seagull-3", 2)]:
         trigger = leader["beats"][call - 1]
-        expected_start = max(trigger["audio_ms"] + lengths[trigger["path"]] + 20, 120)
+        expected_start = max(trigger["audio_ms"] + lengths[trigger["path"]], 120) + 20
         assert members[bird]["beats"][0]["audio_ms"] == expected_start
         assert members[bird]["prepare_ms"] == expected_start - 120
         assert members[bird]["beats"][0]["audio_ms"] >= members[bird]["prepare_ms"] + 20
@@ -285,6 +288,23 @@ def test_followers_join_after_one_or_two_calls_with_independent_timelines(flock,
     for beat in timeline["beats"]:
         assert beat["audio_ms"] == beat["movement_ms"]
     assert timeline["end_ms"] == max(item["end_ms"] for item in members.values())
+
+
+def test_short_leader_clip_does_not_collapse_followers_to_same_start(flock, monkeypatch):
+    _, _, config, _, lengths = flock
+    config["flock"]["join_after_beats"] = [1]
+    config["flock"].update(min_stagger_ms=10, max_stagger_ms=30)
+    monkeypatch.setattr("common.sequence_config.random.choice", lambda choices: choices[0])
+    staggers = iter([10, 30])
+
+    def uniform(minimum, maximum):
+        return next(staggers) if (minimum, maximum) == (10, 30) else minimum
+
+    monkeypatch.setattr("common.sequence_config.random.uniform", uniform)
+    timeline = build_timeline(config, lengths, "seagull-1")
+    starts = [timeline["members"][bird]["beats"][0]["audio_ms"]
+              for bird in ("seagull-2", "seagull-3")]
+    assert starts == [130, 150]
 
 
 def test_flock_preserves_signed_clip_offsets_and_nonoverlapping_pulses(flock):

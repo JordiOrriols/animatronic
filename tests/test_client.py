@@ -41,6 +41,12 @@ class FakeProject:
     def calibrate_commit(self):
         self.calls.append(("calibrate-commit",))
 
+    def manual_move(self, servo_pin, position):
+        self.calls.append(("manual-move", servo_pin, position))
+
+    def manual_rest(self, servo_pin):
+        self.calls.append(("manual-rest", servo_pin))
+
     def evaluate(self):
         self.calls.append(("evaluate",))
 
@@ -69,6 +75,20 @@ class FakeClient:
 
     def ready(self, handler):
         return None
+
+
+def test_manual_messages_never_save_calibration(monkeypatch):
+    client, project = FakeClient(), FakeProject()
+    monkeypatch.setattr(client_app.RUNTIME, "client", client)
+    monkeypatch.setattr(client_app.RUNTIME, "project", project)
+    for action, data in [
+        ("manual-start", {"servo_pin": 2}),
+        ("manual-move", {"servo_pin": 2, "position": 105}),
+        ("manual-stop", {"servo_pin": 2}),
+    ]:
+        client_app.handler({"action": client_app.WEBSOCKET_MESSAGES[action], "data": [data]})
+    assert project.calls == [("manual-rest", 2), ("manual-move", 2, 105), ("manual-rest", 2)]
+    assert client.sent == [(client_app.WEBSOCKET_MESSAGES["finished"], ())]
 
 
 def test_client_handler_routes_messages(monkeypatch):

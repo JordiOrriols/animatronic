@@ -236,6 +236,10 @@ Once the server (Mac/PC or a Pi with sound) and one or more clients (each animat
    - `[a] Automatic mode` - starts idle/generative movement until you press Enter.
    - `[x] Xbox controller` - streams a physical Xbox controller (attached to the server) to the client in near real-time.
    - `[c] Calibrate` - runs the guided per-servo calibration flow (see below).
+   - `[m] Manual servo control` - select one calibrated servo, move it with Up/Down
+     in 5-degree steps, and press Enter to return it to rest. Saved limits are
+     enforced; this mode never saves or modifies calibration. Requires updated
+     server and client.
    - `[e] Evaluate` - checks the loaded animation against the unit's calibrated servo limits and reports any deviations.
    - `[s] Standby` - returns every servo to its rest position.
    - `[r] Reboot` / `[e] Exit` - reboots or shuts down the Raspberry Pi.

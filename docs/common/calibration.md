@@ -38,6 +38,20 @@ print(load_calibration(project_id))
 
 ## Notes
 
+### Manual servo control (without calibration)
+
+Choose **[m] Manual servo control** on the server, then select one servo.
+The selected servo first returns to its saved rest position. Up/Down moves it
+immediately in 5-degree steps, restricted to its saved Min/Max limits. Enter
+finishes and returns that servo to rest; input errors/cancellation also request
+the return. No calibration values are staged, changed, or written to disk.
+Normal disconnect cleanup still returns the project to rest.
+
+Manual mode is offered only when the client reports support and all configured
+servos are calibrated. The client also checks the selected servo's calibration
+and enforces its limits. Update both server and client to use this feature.
+The same interactive terminal requirement as calibration applies.
+
 - Interactive calibration eases to the saved neutral/rest position, or 90 degrees if none is available, using `calibrate-neutral`. Neutral, Min, and Max are then adjusted with Up/Down arrows (increase/decrease by 5 degrees immediately, with no Enter per step); Enter accepts the current position. Unrelated keys are ignored. An interactive terminal is required on the server (local or SSH). Input does not block websocket processing, and terminal settings are restored on completion, error, or cancellation. Min starts at the confirmed neutral, and Max starts at the confirmed Min. Switching phases does not send a movement command; old endpoint values are shown for reference only, never applied automatically.
 - Saving leaves each servo at its last manually reached position. There is no automatic Standby/return-to-neutral command at the end; select Standby explicitly when desired. Calibration bypasses saved limits, so observe the mechanism during every step and stop before reaching a mechanical obstruction.
 - `CALIBRATION_ID_ENV_KEY` is `"CALIBRATION_ID"`. Set it to `default` to use the file seeded with a project's original hardcoded values, leave it unset on a brand new unit to have a UUIDv4 generated automatically on first calibration, or set it manually if you want to reuse/copy an existing unit's file.

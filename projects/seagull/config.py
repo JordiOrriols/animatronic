@@ -106,13 +106,15 @@ generative_sequences = {
             "random_per_beat": True,
         },
         "timing": {
-            "intro_pause_ms": 200,
+            "min_intro_pause_ms": 200,
+            "max_intro_pause_ms": 1000,
             # Each gap between rhythmic beats is chosen randomly in this range.
             "min_beat_interval_ms": 400,
-            "max_beat_interval_ms": 800,
+            "max_beat_interval_ms": 1400,
             "min_repeated_beats": 3,
             "max_repeated_beats": 9,
-            "final_pause_ms": 500,
+            "min_final_pause_ms": 400,
+            "max_final_pause_ms": 1300,
         },
         # Pulses (out_ms + back_ms) must fit in min_beat_interval_ms.
         "servos": {
@@ -226,8 +228,8 @@ def build_seagull_configuration(count: int) -> tuple:
         config["flock"] = {
             "members": members,
             "join_after_beats": [1, 2],
-            "min_stagger_ms": 100,
-            "max_stagger_ms": 400,
+            "min_stagger_ms": 250,
+            "max_stagger_ms": 1200,
         }
         if name == "mine":
             config["flock"]["audio_by_member"] = {
