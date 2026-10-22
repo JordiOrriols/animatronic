@@ -4,6 +4,9 @@ import json
 import asyncio
 import threading
 import sys
+import os
+import termios
+import tty
 from time import sleep
 from playsound import playsound
 from simple_term_menu import TerminalMenu
@@ -234,25 +237,79 @@ async def handler(websocket):
                     logger.info("Client session ended - looking for clients again.")
 
 
-async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:
-    """Interactively nudge a value in +/-5 degree increments, sending a live
-    calibrate-move preview after every nudge. Any other input confirms and
-    returns the current value."""
-    value = start_value
-    logger.input(f'{label}: type "+" or "-" to adjust. Press any other key to confirm.')
-    while True:
-        operation = input(f"{label} ({value}): ")
-        if operation == "+":
-            value += 5
-        elif operation == "-":
-            value -= 5
+async def _read_terminal_byte(fd: int) -> bytes:
+    """Wait for terminal input without blocking websocket processing."""
+    loop = asyncio.get_running_loop()
+    pending = loop.create_future()
+
+    def readable():
+        try:
+            data = os.read(fd, 1)
+            if not data:
+                raise EOFError("Calibration terminal input closed")
+        except (OSError, EOFError) as error:
+            if not pending.done():
+                pending.set_exception(error)
         else:
-            return value
-        await send_message(
-            websocket,
-            WEBSOCKET_MESSAGES["calibrate-move"],
-            {"servo_pin": servo_pin, "position": value},
-        )
+            if not pending.done():
+                pending.set_result(data)
+
+    loop.add_reader(fd, readable)
+    try:
+        return await pending
+    finally:
+        loop.remove_reader(fd)
+
+
+async def _read_calibration_key(fd: int) -> bytes:
+    """Decode standard and application-mode arrows, ignoring other escape keys."""
+    key = await _read_terminal_byte(fd)
+    if key != b"\x1b":
+        return key
+    sequence = b""
+    for _ in range(32):
+        try:
+            byte = await asyncio.wait_for(_read_terminal_byte(fd), timeout=0.1)
+        except asyncio.TimeoutError:
+            return b""
+        sequence += byte
+        if len(sequence) == 1:
+            if byte not in (b"[", b"O"):
+                return b""
+        elif b"@" <= byte <= b"~":
+            return {b"[A": b"up", b"OA": b"up",
+                    b"[B": b"down", b"OB": b"down"}.get(sequence, b"")
+    return b""
+
+
+async def _adjust_value(websocket, servo_pin: int, label: str, start_value: int) -> int:
+    """Preview five-degree arrow-key adjustments; Enter accepts the current value."""
+    if not sys.stdin.isatty():
+        raise RuntimeError("Calibration requires an interactive terminal (TTY)")
+    fd = sys.stdin.fileno()
+    settings = termios.tcgetattr(fd)
+    value = start_value
+    logger.input(f"{label}: Up/Down adjusts by 5 degrees; Enter accepts.")
+    try:
+        tty.setcbreak(fd, termios.TCSANOW)
+        while True:
+            print(f"\r{label} ({value}): ", end="", flush=True)
+            key = await _read_calibration_key(fd)
+            if key in (b"\r", b"\n"):
+                return value
+            if key in (b"\x03", b"\x04"):
+                raise EOFError("Calibration cancelled from terminal")
+            if key not in (b"up", b"down"):
+                continue
+            value += 5 if key == b"up" else -5
+            await send_message(
+                websocket,
+                WEBSOCKET_MESSAGES["calibrate-move"],
+                {"servo_pin": servo_pin, "position": value},
+            )
+    finally:
+        termios.tcsetattr(fd, termios.TCSANOW, settings)
+        print()
 
 
 async def _calibrate_servo(websocket, servo: dict):

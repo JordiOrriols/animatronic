@@ -1,10 +1,33 @@
 import asyncio
 import json
+import os
+import pty
+import termios
 import threading
 
 import pytest
 
 import server as server_app
+
+
+@pytest.fixture
+def calibration_terminal(monkeypatch):
+    master, slave = pty.openpty()
+    settings = termios.tcgetattr(slave)
+    with os.fdopen(os.dup(slave), "r") as stream:
+        monkeypatch.setattr(server_app.sys, "stdin", stream)
+        try:
+            yield master, slave
+        finally:
+            try:
+                restored = termios.tcgetattr(slave)
+                # macOS may set this transient flag when queued input is reprocessed.
+                restored[3] &= ~getattr(termios, "PENDIN", 0)
+                settings[3] &= ~getattr(termios, "PENDIN", 0)
+                assert restored == settings
+            finally:
+                os.close(master)
+                os.close(slave)
 
 
 def test_print_banner_uses_version_file(monkeypatch, capsys):
@@ -434,7 +457,7 @@ def test_calibrate_without_servos_logs_error_and_returns(monkeypatch):
     assert called["menu"] is False
 
 
-def test_adjust_value_nudges_then_confirms(monkeypatch):
+def test_adjust_value_nudges_then_confirms(monkeypatch, calibration_terminal):
     sent = []
 
     async def fake_send_message(websocket, action, *data):
@@ -442,8 +465,7 @@ def test_adjust_value_nudges_then_confirms(monkeypatch):
 
     monkeypatch.setattr(server_app, "send_message", fake_send_message)
 
-    inputs = iter(["+", "-", "-", "done"])
-    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    os.write(calibration_terminal[0], b"\x1b[A\x1b[B\x1b[B\n")
 
     result = asyncio.run(server_app._adjust_value(FakeWebSocket(), 1, "Min", 100))
 
@@ -451,7 +473,7 @@ def test_adjust_value_nudges_then_confirms(monkeypatch):
     assert [action for action, _ in sent] == [server_app.WEBSOCKET_MESSAGES["calibrate-move"]] * 3
 
 
-def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
+def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch, calibration_terminal):
     sent = []
 
     async def fake_send_message(websocket, action, *data):
@@ -465,8 +487,7 @@ def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
 
     monkeypatch.setattr(server_app, "TerminalMenu", AllMenu)
 
-    inputs = iter(["x", "x", "x"])
-    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    os.write(calibration_terminal[0], b"\n\n\n")
 
     servos = [{"name": "head", "pin": 1, "min": 10, "max": 170, "rest": 90}]
     asyncio.run(server_app.calibrate(FakeWebSocket(), servos))
@@ -481,7 +502,7 @@ def test_calibrate_all_servos_runs_neutral_min_max_flow(monkeypatch):
     assert save_payload == {"servo_pin": 1, "neutral": 90, "min": 90, "max": 90}
 
 
-def test_calibrate_selects_single_servo_not_all(monkeypatch):
+def test_calibrate_selects_single_servo_not_all(monkeypatch, calibration_terminal):
     sent = []
 
     async def fake_send_message(websocket, action, *data):
@@ -495,8 +516,7 @@ def test_calibrate_selects_single_servo_not_all(monkeypatch):
 
     monkeypatch.setattr(server_app, "TerminalMenu", SingleMenu)
 
-    inputs = iter(["x", "x", "x"])
-    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    os.write(calibration_terminal[0], b"\n\n\n")
 
     servos = [
         {"name": "a", "pin": 1, "min": 0, "max": 180, "rest": 90},
@@ -508,15 +528,16 @@ def test_calibrate_selects_single_servo_not_all(monkeypatch):
     assert save_payload == [{"servo_pin": 2, "neutral": 80, "min": 80, "max": 80}]
 
 
-def test_calibrate_servo_nudges_from_last_position_not_saved_limits(monkeypatch, capsys):
+def test_calibrate_servo_nudges_from_last_position_not_saved_limits(
+    monkeypatch, capsys, calibration_terminal
+):
     sent = []
 
     async def fake_send_message(websocket, action, *data):
         sent.append((action, data))
 
     monkeypatch.setattr(server_app, "send_message", fake_send_message)
-    inputs = iter(["+", "", "-", "-", "", "+", "+", "+", ""])
-    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    os.write(calibration_terminal[0], b"\x1b[A\n\x1b[B\x1b[B\n\x1b[A\x1b[A\x1b[A\n")
     servo = {"name": "head", "pin": 1, "min": 0, "max": 180, "rest": 80}
 
     asyncio.run(server_app._calibrate_servo(FakeWebSocket(), servo))
@@ -538,15 +559,16 @@ def test_calibrate_servo_nudges_from_last_position_not_saved_limits(monkeypatch,
     assert servo == {"name": "head", "pin": 1, "rest": 85, "min": 75, "max": 90}
 
 
-def test_calibrate_servo_defaults_to_neutral_90_without_saved_rest(monkeypatch):
+def test_calibrate_servo_defaults_to_neutral_90_without_saved_rest(
+    monkeypatch, calibration_terminal
+):
     sent = []
 
     async def fake_send_message(websocket, action, *data):
         sent.append((action, data))
 
     monkeypatch.setattr(server_app, "send_message", fake_send_message)
-    inputs = iter(["", "", ""])
-    monkeypatch.setattr("builtins.input", lambda *args, **kwargs: next(inputs))
+    os.write(calibration_terminal[0], b"\n\n\n")
 
     asyncio.run(server_app._calibrate_servo(FakeWebSocket(), {"name": "head", "pin": 1}))
 
@@ -557,3 +579,94 @@ def test_calibrate_servo_defaults_to_neutral_90_without_saved_rest(monkeypatch):
             ({"servo_pin": 1, "neutral": 90, "min": 90, "max": 90},),
         ),
     ]
+
+
+def test_arrow_preview_arrives_without_enter_and_loop_stays_responsive(
+    monkeypatch, calibration_terminal
+):
+    sent = []
+
+    async def send(websocket, action, *data):
+        sent.append(data[0]["position"])
+
+    monkeypatch.setattr(server_app, "send_message", send)
+
+    async def exercise():
+        task = asyncio.create_task(server_app._adjust_value(FakeWebSocket(), 1, "Min", 90))
+        try:
+            await asyncio.sleep(0)
+            os.write(calibration_terminal[0], b"\x1bOA")
+            for _ in range(100):
+                if sent:
+                    break
+                await asyncio.sleep(0.001)
+            assert sent == [95]
+            assert not task.done()
+            os.write(calibration_terminal[0], b"\x1bOB\n")
+            assert await asyncio.wait_for(task, 1) == 90
+            assert sent == [95, 90]
+        finally:
+            if not task.done():
+                task.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await task
+
+    asyncio.run(exercise())
+
+
+def test_unrelated_keys_do_not_accept_or_move(monkeypatch, calibration_terminal):
+    async def send(*args):
+        pytest.fail("Unrelated keys must not send servo commands")
+
+    monkeypatch.setattr(server_app, "send_message", send)
+    os.write(calibration_terminal[0], b"+-x\x1b[C\x1b[D\x1b[3~\n")
+    assert asyncio.run(server_app._adjust_value(FakeWebSocket(), 1, "Min", 90)) == 90
+
+
+@pytest.mark.parametrize("failure", ["cancel", "send", "eof"])
+def test_calibration_restores_terminal_and_removes_reader_on_failure(
+    monkeypatch, calibration_terminal, failure
+):
+    async def send(*args):
+        raise OSError("connection failed")
+
+    monkeypatch.setattr(server_app, "send_message", send)
+
+    async def exercise():
+        task = asyncio.create_task(server_app._adjust_value(FakeWebSocket(), 1, "Min", 90))
+        await asyncio.sleep(0)
+        if failure == "cancel":
+            task.cancel()
+            error = asyncio.CancelledError
+        elif failure == "send":
+            os.write(calibration_terminal[0], b"\x1b[A")
+            error = OSError
+        else:
+            os.write(calibration_terminal[0], b"\x04")
+            error = EOFError
+        with pytest.raises(error):
+            await asyncio.wait_for(task, 1)
+        assert not asyncio.get_running_loop().remove_reader(calibration_terminal[1])
+
+    asyncio.run(exercise())
+
+
+def test_calibration_requires_tty(monkeypatch):
+    import io
+
+    monkeypatch.setattr(server_app.sys, "stdin", io.StringIO())
+    with pytest.raises(RuntimeError, match="interactive terminal"):
+        asyncio.run(server_app._adjust_value(FakeWebSocket(), 1, "Min", 90))
+
+
+def test_incomplete_escape_sequence_does_not_hang(calibration_terminal):
+    async def exercise():
+        task = asyncio.create_task(server_app._adjust_value(FakeWebSocket(), 1, "Min", 90))
+        await asyncio.sleep(0)
+        os.write(calibration_terminal[0], b"\x1b")
+        await asyncio.sleep(0.15)
+        assert not task.done()
+        os.write(calibration_terminal[0], b"\n")
+        assert await asyncio.wait_for(task, 1) == 90
+
+    asyncio.run(exercise())
