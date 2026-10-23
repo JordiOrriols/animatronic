@@ -351,9 +351,9 @@ def test_seagull_idle_wings_are_slow_small_and_wait_after_return(
     assert len(wings) == count
     for name, settings in wings.items():
         clock[0] = 0.0
-        servo = MockServo(name=name, rest=160, current=160)
+        servo = MockServo(name=name, rest=90, current=90, min_limit=60, max_limit=90)
         controller = generative_module.GenerativeMovement(servo, settings)
-        assert controller._get_angle_bounds() == (139, 160)
+        assert controller._get_angle_bounds() == (78, 90)
         wait = controller._wait_until
         assert 4 <= wait <= 5
         clock[0] = wait - 0.01
@@ -365,20 +365,20 @@ def test_seagull_idle_wings_are_slow_small_and_wait_after_return(
         assert 1.5 <= duration <= 2
         clock[0] = wait + duration / 2
         controller.update()
-        assert 139 < servo.get_current_position() < 160
+        assert 78 < servo.get_current_position() < 90
         clock[0] = wait + duration
         controller.update()
-        assert servo.get_current_position() == 139
+        assert servo.get_current_position() == 78
         assert controller._state == "moving_rest"
         clock[0] += controller._duration
         controller.update()
-        assert servo.get_current_position() == 160
+        assert servo.get_current_position() == 90
         assert controller._state == "waiting"
         assert 4 <= controller._wait_until - clock[0] <= 5
         clock[0] = controller._wait_until - 0.01
         controller.update()
         assert controller._state == "waiting"
-        assert servo.get_current_position() == 160
+        assert servo.get_current_position() == 90
 
 
 def test_generative_movement_uses_default_bounds_when_no_config(monkeypatch):

@@ -10,11 +10,13 @@ In project Auto mode, only servos explicitly listed in `generative_settings` on 
 
 The project runs Auto updates in a background worker, leaving websocket reception available for `automatic-mode-stop`. Stop waits for any current update and the eased return to neutral to finish before the client sends its completion message.
 
-The seagull's idle wings use at most 15% of calibrated travel from neutral,
+The seagull's idle wings use at most 40% of calibrated travel from neutral,
 with eased 1.5-2 second movements out and back. After returning to rest they
 pause for a random 4-5 seconds before the next movement; this pause is in
 addition to movement time. The same settings apply independently to each bird
-in a flock. Restart the Pi client after changing its project configuration.
+in a flock. With the shipped 60-90 degree wing limits and neutral at 90,
+idle targets range from 78 to 90 degrees. Restart the Pi client after changing
+its project configuration.
 
 ## Audio-backed generative sequences
 
@@ -62,11 +64,12 @@ sequence, then eases to `position_2`. For `mode: "pulse"`, it prepares at
 `position_1`, moves to `position_2` over `out_ms`, and back over `back_ms` per
 beat, then restores its pre-event position. The seagull example pulses
 head-pitch between 50% and 90% of Max, the beak between 20% and 80% of Max,
-and the wings between 20% and 90% toward Min (their neutral is Max), leaving
+and the wings between neutral and 100% toward Min (their neutral is Max), leaving
 head-yaw at its existing position. A pulse needs enough `out_ms` for the servo
 to physically reach `position_2`; very short pulses barely move it.
-Wings make a larger 70%-travel stroke per call, out over 150 ms and back over
-180 ms. With the default zero audio offsets, each pulse starts with that bird's
+Wings make a full calibrated neutral-to-Min stroke per call, out over 190 ms and
+back over 200 ms (90 to 60 degrees and back with the shipped calibration).
+With the default zero audio offsets, each pulse starts with that bird's
 own "mine" clip, rather than following the idle movement timer.
 
 All ordinary generative controllers pause during preparation, playback, and

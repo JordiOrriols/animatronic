@@ -87,12 +87,16 @@ def test_seagull_wings_make_large_pulses_on_each_own_audio_beat(count):
         assert sequence.update(1) == "ready"
         baseline, peak = sequence.positions[wing.name]
         travel = wing.get_rest_position() - wing.get_physical_limit_min()
-        assert baseline - peak == pytest.approx(0.7 * travel)
+        assert baseline == wing.get_rest_position()
+        assert peak == wing.get_physical_limit_min()
+        assert baseline - peak == pytest.approx(travel)
         lengths = {clip["path"]: 500 for clip in bird_config["audio"]["files"]}
         timeline = build_timeline(bird_config, lengths)
         assert all(beat["movement_ms"] == beat["audio_ms"] for beat in timeline["beats"])
         sequence.arm(timeline, 1, 1000)
         settings = bird_config["servos"][wing.name]
+        assert settings["out_ms"] >= 190
+        assert settings["back_ms"] >= 200
         for beat in timeline["beats"]:
             start = 2 + beat["audio_ms"] / 1000
             sequence.update(start)
