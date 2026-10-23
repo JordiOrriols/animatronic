@@ -9,7 +9,7 @@ import pytest
 from common.config import WEBSOCKET_MESSAGES
 from common.sequence import ServoSequence
 from common.servo import AniServo
-from common.sequence_config import build_timeline, validate_sequence
+from common.sequence_config import build_timeline, member_config, validate_sequence
 from common.sequence_audio import SequenceAudio
 from projects.seagull.config import build_seagull_configuration
 
@@ -72,6 +72,35 @@ class Servo(AniServo):
     def move_to_angle(self, angle):
         self.current = angle
         self.history.append(angle)
+
+
+@pytest.mark.parametrize("count", [1, 3, 4])
+def test_seagull_wings_make_large_pulses_on_each_own_audio_beat(count):
+    _, _, sequences, _ = build_seagull_configuration(count)
+    config = validate_sequence(sequences["mine"])
+    members = list(config["flock"]["members"]) if count > 1 else [None]
+    for member in members:
+        bird_config = member_config(config, member) if member else config
+        servos = [Servo(name) for name in bird_config["servos"]]
+        wing = next(servo for servo in servos if servo.name.endswith("wings"))
+        sequence = ServoSequence(bird_config, servos, 0)
+        assert sequence.update(1) == "ready"
+        baseline, peak = sequence.positions[wing.name]
+        travel = wing.get_rest_position() - wing.get_physical_limit_min()
+        assert baseline - peak == pytest.approx(0.7 * travel)
+        lengths = {clip["path"]: 500 for clip in bird_config["audio"]["files"]}
+        timeline = build_timeline(bird_config, lengths)
+        assert all(beat["movement_ms"] == beat["audio_ms"] for beat in timeline["beats"])
+        sequence.arm(timeline, 1, 1000)
+        settings = bird_config["servos"][wing.name]
+        for beat in timeline["beats"]:
+            start = 2 + beat["audio_ms"] / 1000
+            sequence.update(start)
+            assert wing.current == pytest.approx(baseline)
+            sequence.update(start + settings["out_ms"] / 1000)
+            assert wing.current == pytest.approx(peak)
+            sequence.update(start + (settings["out_ms"] + settings["back_ms"]) / 1000)
+            assert wing.current == pytest.approx(baseline)
 
 
 def test_random_timeline_count_spacing_offsets_and_intro_pause(config, monkeypatch):

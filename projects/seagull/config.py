@@ -77,17 +77,16 @@ generative_settings = {
         "return_to_rest": False,
     },
     "wings": {
-        "min_range_fraction": 1.0,
-        "max_range_fraction": 1.0,
-        "min_duration_ms": 200,
-        "max_duration_ms": 600,
-        "min_wait_ms": 400,
-        "max_wait_ms": 1200,
+        "min_range_fraction": 0.15,
+        "max_range_fraction": 0.15,
+        "min_duration_ms": 1500,
+        "max_duration_ms": 2000,
+        "min_wait_ms": 4000,
+        "max_wait_ms": 5000,
         "random_factor": 1.0,
-        "ease_in": 0.0,
-        "ease_out": 0.0,
+        "ease_in": 0.2,
+        "ease_out": 0.2,
         "return_to_rest": True,
-        "rest_hold_ms": 150,
     },
 }
 
@@ -141,7 +140,7 @@ generative_sequences = {
             # Wings rest at Max, so their travel goes toward Min.
             "wings": {
                 "mode": "pulse",
-                "position_1": {"reference": "min", "fraction": 0.5},
+                "position_1": {"reference": "min", "fraction": 0.2},
                 "position_2": {"reference": "min", "fraction": 0.9},
                 "transition_ms": 300,
                 "out_ms": 150,

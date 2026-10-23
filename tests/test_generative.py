@@ -334,6 +334,53 @@ def test_generative_movement_moves_and_returns_to_rest(monkeypatch):
     assert servo.get_current_position() == 90
 
 
+@pytest.mark.parametrize("count", [1, 3, 4])
+@pytest.mark.parametrize("upper_endpoint", [False, True])
+def test_seagull_idle_wings_are_slow_small_and_wait_after_return(
+    monkeypatch, count, upper_endpoint
+):
+    _, idle, _, _ = build_seagull_configuration(count)
+    clock = [0.0]
+    monkeypatch.setattr(generative_module.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(
+        generative_module.random, "uniform",
+        lambda lower, upper: upper if upper_endpoint else lower,
+    )
+    monkeypatch.setattr(generative_module.random, "randint", lambda lower, upper: lower)
+    wings = {name: settings for name, settings in idle.items() if name.endswith("wings")}
+    assert len(wings) == count
+    for name, settings in wings.items():
+        clock[0] = 0.0
+        servo = MockServo(name=name, rest=160, current=160)
+        controller = generative_module.GenerativeMovement(servo, settings)
+        assert controller._get_angle_bounds() == (139, 160)
+        wait = controller._wait_until
+        assert 4 <= wait <= 5
+        clock[0] = wait - 0.01
+        controller.update()
+        assert servo.history == []
+        clock[0] = wait
+        controller.update()
+        duration = controller._duration
+        assert 1.5 <= duration <= 2
+        clock[0] = wait + duration / 2
+        controller.update()
+        assert 139 < servo.get_current_position() < 160
+        clock[0] = wait + duration
+        controller.update()
+        assert servo.get_current_position() == 139
+        assert controller._state == "moving_rest"
+        clock[0] += controller._duration
+        controller.update()
+        assert servo.get_current_position() == 160
+        assert controller._state == "waiting"
+        assert 4 <= controller._wait_until - clock[0] <= 5
+        clock[0] = controller._wait_until - 0.01
+        controller.update()
+        assert controller._state == "waiting"
+        assert servo.get_current_position() == 160
+
+
 def test_generative_movement_uses_default_bounds_when_no_config(monkeypatch):
     servo = MockServo(current=90)
     monkeypatch.setattr(generative_module.time, "monotonic", lambda: 0.0)
