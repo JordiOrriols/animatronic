@@ -141,7 +141,7 @@ generative_sequences = {
             "wings": {
                 "mode": "pulse",
                 "position_1": {"reference": "neutral", "fraction": 0.0},
-                "position_2": {"reference": "min", "fraction": 1.0},
+                "position_2": {"reference": "max", "fraction": 0.7},
                 "transition_ms": 300,
                 "out_ms": 190,
                 "back_ms": 200,
