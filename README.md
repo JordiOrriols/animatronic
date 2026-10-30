@@ -280,6 +280,11 @@ The project version lives in a single file at the repository root, [`.version`](
 
 ### Running tests and linting
 
+The stability workflow uses read-only repository access and does not persist
+checkout credentials. Actions are pinned to commit SHAs; Dependabot proposes
+weekly updates.
+
+
 This project keeps a full pytest suite (with coverage) and a pylint-clean codebase:
 
 ```
